@@ -13,11 +13,27 @@ COLOR_HIGHLIGHT = 6
 # Dynamic state variables
 focus_mode = "COMMAND"  # COMMAND or MENU
 selected_menu_idx = 0
+menu_state = "MAIN"  # MAIN or CURRICULUM
 menu_options = [
     "1. Course Curriculum",
     "2. Tariffs & Pricing",
     "3. System Docs"
 ]
+
+class AcademyCurriculumEngine:
+    def __init__(self):
+        self.modules = {
+            "1": {"title": "Cyber Security: iptables Firewalls", "status": "READY"},
+            "2": {"title": "Local AI Infrastructure: ollama & Llama 3.2", "status": "MOCK_MODE"},
+            "3": {"title": "IoT Automation: Headless Raspberry Pi Bash", "status": "LOCKED"},
+            "4": {"title": "Digital Forensics: Sherlock OSINT Pipelines", "status": "LOCKED"},
+            "5": {"title": "Cloud DevOps: Docker Compose & Nginx Matrix", "status": "LOCKED"}
+        }
+
+    def render_modules_list(self) -> list:
+        return [f"[{k}] {v['title']} ({v['status']})" for k, v in self.modules.items()]
+
+curriculum_engine = AcademyCurriculumEngine()
 
 class SocraticMentor:
     def __init__(self):
@@ -72,12 +88,7 @@ terminal_logs = [
 
 # Socratic dialogues for menu selections
 curriculum_text = (
-    "ank: Here is your roadmap:\n"
-    "• Module 1: Linux Terminal & Shell Mechanics\n"
-    "• Module 2: Network Topologies & Bind Mounts\n"
-    "• Module 3: Docker-compose Isolation Gates\n"
-    "• Module 4: gVisor Sandboxing & Cloud DevOps\n"
-    "How does understanding isolation before coding help you?"
+    "ank: Choose a module to inspect its engineering track details."
 )
 
 pricing_text = (
@@ -94,6 +105,35 @@ docs_text = (
     "• Evaluation: SOLO Taxonomy semantic grader\n"
     "Need further telemetry details?"
 )
+
+module_texts = {
+    "1": (
+        "ank: [MODULE 1: CYBER SECURITY]\n\n"
+        "Your task is to defend a server from a 10,000-node botnet. "
+        "We will use iptables rules to drop malicious traffic at the packet level. "
+        "How does filtering packets at the kernel level compare to application-level firewalling?"
+    ),
+    "2": (
+        "ank: [MODULE 2: LOCAL AI INFRASTRUCTURE]\n\n"
+        "You will deploy ollama locally with Llama 3.2 to write a log auditing scanner. "
+        "When using an LLM to analyze system logs, how do you prevent hallucinated audit reports?"
+    ),
+    "3": (
+        "ank: [MODULE 3: IOT AUTOMATION]\n\n"
+        "Telemetry data from a remote headless Raspberry Pi sensor network must be safely collected over SSH. "
+        "Why is public-key authentication preferred over passwords for automated script synchronization?"
+    ),
+    "4": (
+        "ank: [MODULE 4: DIGITAL FORENSICS]\n\n"
+        "Run sherlock pipelines to track usernames across social networks and filter findings using grep, awk, and sed. "
+        "How do regex engines process large raw logs differently than normal search engines?"
+    ),
+    "5": (
+        "ank: [MODULE 5: CLOUD DEVOPS]\n\n"
+        "Build self-healing microservices behind an Nginx reverse proxy with Docker Compose. "
+        "How does a bind mount configuration differ from a named volume in container data persistence?"
+    )
+}
 
 def wrap_text(text, width):
     """Wraps text helper to fit terminal window width limits."""
@@ -180,15 +220,42 @@ def process_command(cmd):
     return True
 
 def trigger_menu_choice(idx):
-    if idx == 0:
-        set_mentor_text(curriculum_text)
-        terminal_logs.append("[SYSTEM] Requesting Course Curriculum module data...")
-    elif idx == 1:
-        set_mentor_text(pricing_text)
-        terminal_logs.append("[SYSTEM] Requesting Pricing telemetry logs...")
-    elif idx == 2:
-        set_mentor_text(docs_text)
-        terminal_logs.append("[SYSTEM] Accessing System documentation database...")
+    global menu_state, menu_options, selected_menu_idx
+    if menu_state == "MAIN":
+        if idx == 0:
+            menu_state = "CURRICULUM"
+            menu_options = curriculum_engine.render_modules_list() + ["<- Back to Main Menu"]
+            selected_menu_idx = 0
+            set_mentor_text(curriculum_text)
+            terminal_logs.append("[SYSTEM] Entering Curriculum selection menu.")
+            return False
+        elif idx == 1:
+            set_mentor_text(pricing_text)
+            terminal_logs.append("[SYSTEM] Requesting Pricing telemetry logs...")
+            return True
+        elif idx == 2:
+            set_mentor_text(docs_text)
+            terminal_logs.append("[SYSTEM] Accessing System documentation database...")
+            return True
+    elif menu_state == "CURRICULUM":
+        if idx == 5:  # Back to Main Menu
+            menu_state = "MAIN"
+            menu_options = [
+                "1. Course Curriculum",
+                "2. Tariffs & Pricing",
+                "3. System Docs"
+            ]
+            selected_menu_idx = 0
+            set_mentor_text("ank: Telemetry established. Navigate option panels or type commands in shell.")
+            terminal_logs.append("[SYSTEM] Returning to Main Menu.")
+            return False
+        else:
+            module_key = str(idx + 1)
+            if module_key in module_texts:
+                set_mentor_text(module_texts[module_key])
+                terminal_logs.append(f"[SYSTEM] Inspecting Module {module_key}: {curriculum_engine.modules[module_key]['title']}")
+            return True
+    return True
 
 def main(stdscr):
     global focus_mode, selected_menu_idx, warning_state
@@ -277,21 +344,22 @@ def main(stdscr):
         win_ank.addstr(0, 2, "[ ANK MONITOR ]")
         win_ank.attroff(curses.color_pair(ank_border_color) | curses.A_BOLD)
 
+        # Render Selector Options (Fixed at the bottom of the ANK pane)
+        options_count = len(menu_options)
+        options_start_y = h_panes - options_count - 2
+
         # Print streaming mentor text
         y_cursor = 2
         for line in mentor_visible_lines:
             wrapped = wrap_text(line, w_ank - 4)
             for w_line in wrapped:
-                if y_cursor < h_panes - 6:
+                if y_cursor < options_start_y - 3:
                     win_ank.attron(curses.color_pair(ank_border_color))
                     win_ank.addstr(y_cursor, 2, w_line)
                     win_ank.attroff(curses.color_pair(ank_border_color))
                     y_cursor += 1
             if line != mentor_visible_lines[-1]:
                 y_cursor += 1
-
-        # Render Selector Options (Fixed at the bottom of the ANK pane)
-        options_start_y = h_panes - 5
 
         # Render active animation frame
         animation_y = options_start_y - 2
@@ -428,9 +496,9 @@ def main(stdscr):
             elif ch == curses.KEY_DOWN:
                 selected_menu_idx = (selected_menu_idx + 1) % len(menu_options)
             elif ch in (10, 13, curses.KEY_ENTER):
-                trigger_menu_choice(selected_menu_idx)
-                # Auto toggle focus back to command line for seamless Socratic reply
-                focus_mode = "COMMAND"
+                if trigger_menu_choice(selected_menu_idx):
+                    # Auto toggle focus back to command line for seamless Socratic reply
+                    focus_mode = "COMMAND"
 
 if __name__ == "__main__":
     try:
