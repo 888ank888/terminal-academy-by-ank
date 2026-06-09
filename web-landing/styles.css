@@ -29,10 +29,13 @@
     padding: 0;
 }
 
+body, input, button, select {
+    font-family: 'JetBrains Mono', monospace !important;
+}
+
 body {
     background-color: var(--bg-dark);
     color: var(--text-primary);
-    font-family: var(--font-sans);
     line-height: 1.6;
     overflow-x: hidden;
     position: relative;
@@ -874,8 +877,10 @@ main {
 
 /* Footer */
 footer {
-    border-top: 1px solid var(--border-color);
-    padding: 2.5rem 2rem;
+    margin-top: 60px;
+    padding: 40px 20px;
+    border-top: 1px solid #00ff66;
+    text-align: center;
     background: #030304;
 }
 
@@ -908,19 +913,22 @@ footer {
     gap: 1.5rem;
 }
 
-.github-footer-link {
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    display: flex;
+.github-showcase-link {
+    display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    transition: var(--transition-smooth);
+    gap: 12px;
+    font-size: 1.2rem;
+    color: #00ff66;
+    text-decoration: none;
+    padding: 10px 20px;
+    border: 1px solid #00ff66;
+    transition: all 0.2s ease;
 }
 
-.github-footer-link:hover {
-    color: var(--color-green);
+.github-showcase-link:hover {
+    background: #00ff66;
+    color: #000000;
+    box-shadow: 0 0 15px #00ff66;
 }
 
 .footer-meta {

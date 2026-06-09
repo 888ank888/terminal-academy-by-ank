@@ -158,12 +158,12 @@ SOLO Level 3 Explanation Required to proceed.</div>
                 <form id="waitlistForm">
                     <div class="form-group">
                         <label class="form-label" for="email">Email Address</label>
-                        <input class="form-control" type="email" id="email" placeholder="name@domain.com" required>
+                        <input class="form-control" type="email" id="email" placeholder="name@domain.com">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label" for="discord">Discord Tag</label>
-                            <input class="form-control" type="text" id="discord" placeholder="username#0000" required>
+                            <input class="form-control" type="text" id="discord" placeholder="username#0000">
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="age">Age</label>
@@ -198,8 +198,8 @@ SOLO Level 3 Explanation Required to proceed.</div>
         <div class="footer-container">
             <div class="footer-logo">CODENAME: TERMINAL ACADEMY</div>
             <div class="footer-links">
-                <a href="https://github.com/codename-terminal/academy" target="_blank" class="github-footer-link" title="GitHub Project">
-                    <img src="assets/github-pixel.png" alt="GitHub" class="github-pixel-icon" width="16" height="16">
+                <a href="https://github.com/codename-terminal/academy" target="_blank" class="github-showcase-link" title="GitHub Project">
+                    <img src="assets/github-pixel.png" alt="GitHub" class="github-pixel-icon" width="20" height="20">
                     <span>GitHub</span>
                 </a>
             </div>
@@ -253,6 +253,12 @@ SOLO Level 3 Explanation Required to proceed.</div>
             const email = document.getElementById('email').value.trim();
             const discord = document.getElementById('discord').value.trim();
             const age = parseInt(document.getElementById('age').value);
+
+            if (!email && !discord) {
+                formStatus.style.color = 'var(--color-red)';
+                formStatus.textContent = '> ERR: At least Email or Discord must be filled.';
+                return;
+            }
 
             // UI feedback: loading state
             submitBtn.disabled = true;
