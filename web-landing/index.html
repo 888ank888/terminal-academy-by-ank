@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CODENAME: TERMINAL ACADEMY — Systems Thinking & DevOps for Teens</title>
+    <meta name="description" content="Next-gen EdTech platform teaching real systems engineering, Linux administration, and DevOps to teens 12-16. Learn through CLI tools and Socratic AI mentoring.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="header-container">
+            <div class="logo-wrapper">
+                <div class="ping-indicator" id="pingIndicator" title="System Connection Active"></div>
+                <div class="logo">CODENAME: TERMINAL ACADEMY</div>
+            </div>
+            <nav class="nav-links">
+                <a href="#features" class="nav-link">Methodology</a>
+                <a href="#waitlist" class="nav-link">Waitlist</a>
+                <a href="https://github.com/codename-terminal/academy" target="_blank" class="github-header-link" title="Open Source Repository">
+                    <svg class="github-icon" viewBox="0 0 16 16" width="20" height="20" fill="currentColor">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                    </svg>
+                </a>
+                <button class="cta-nav" onclick="document.getElementById('waitlist').scrollIntoView({behavior: 'smooth'})">Apply Now</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main>
+        
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <div class="hero-tag">PHASE 1: CLOSED BETA</div>
+                <h1 class="hero-title">
+                    Systems Thinking & <span class="accent-gradient">DevOps</span> for Teens.
+                </h1>
+                <p class="hero-description">
+                    Ditch toy-like drag-and-drop Scratch coding. We guide 12-16 year olds through real-world terminal operations, server management, and network architecture via a text-based CLI client.
+                </p>
+                <div class="hero-bullets">
+                    <div class="bullet-item">
+                        <span class="bullet-icon">⚡</span>
+                        <span>Learn Docker, Linux administration, and systems design.</span>
+                    </div>
+                    <div class="bullet-item">
+                        <span class="bullet-icon">⚡</span>
+                        <span>Interactive Socratic AI mentor that never spoils answers.</span>
+                    </div>
+                    <div class="bullet-item">
+                        <span class="bullet-icon">⚡</span>
+                        <span>Self-hosted sandbox environments on lightweight runtimes.</span>
+                    </div>
+                </div>
+                <div class="hero-actions">
+                    <button class="btn btn-primary" onclick="document.getElementById('waitlist').scrollIntoView({behavior: 'smooth'})">Join Waitlist</button>
+                    <a href="#features" class="btn btn-secondary">Learn More</a>
+                </div>
+            </div>
+
+            <!-- Terminal Simulator / Telemetry -->
+            <div class="telemetry-card">
+                <!-- Decorative Corner Indicators -->
+                <img src="assets/ank(B&W).png" alt="Decorative Node A" class="corner-indicator top-right">
+                <img src="assets/ank2(B&W).png" alt="Decorative Node B" class="corner-indicator bottom-left">
+
+                <div class="terminal-header">
+                    <div class="terminal-controls">
+                        <div class="dot red"></div>
+                        <div class="dot yellow"></div>
+                        <div class="dot green"></div>
+                    </div>
+                    <div class="terminal-title">socratic_mentor_v1.0.sh</div>
+                </div>
+                <div class="terminal-body">
+                    <div class="terminal-log log-info">Initializing Terminal Environment... OK</div>
+                    <div class="terminal-log log-info">Connecting to Socratic Mentor... ONLINE</div>
+                    <div class="prompt-line"><span class="terminal-input">docker-compose up -d --build</span></div>
+                    <div class="terminal-log log-info">Building backend-service... OK
+Recreating container: linux-sandbox-01... OK</div>
+                    <div class="terminal-log log-warning">Explanation Gate triggered!
+SOLO Level 3 Explanation Required to proceed.</div>
+                    <div class="terminal-log log-error">Mentor: "Explain in your own words: how does specifying a read-only bind mount protect your system config?"</div>
+                    
+                    <div class="pixel-art-box">
+                        <img src="assets/animation-loading.gif" alt="Gate Loading State" class="terminal-loader">
+                        <div class="pixel-placeholder-img glitch-text">
+                            [=== GATE LOCKED ===]<br>
+                            EXPLANATION GATE: PENDING
+                        </div>
+                    </div>
+                    
+                    <div class="telemetry-grid">
+                        <div class="telemetry-item">
+                            <span class="telemetry-label">Sandbox CPU</span>
+                            <span class="telemetry-value" id="cpuValue">0.4%</span>
+                        </div>
+                        <div class="telemetry-item">
+                            <span class="telemetry-label">Gate Status</span>
+                            <span class="telemetry-value" id="gateStatus" style="color: var(--color-amber);">PENDING</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features-section" id="features">
+            <div class="section-header">
+                <span class="section-subtitle">Methodology</span>
+                <h2 class="section-title">Why Systems Thinking Matters</h2>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">⛓️</div>
+                    <h3 class="feature-title">Explanation Gate Protocol</h3>
+                    <p class="feature-desc">Students cannot copy-paste code to succeed. Our gate system evaluates their answers using the SOLO taxonomy (Level 3) to ensure they understand the structural mechanics of their commands.</p>
+                    <div class="feature-tech">SOLO TAXONOMY / EVAL</div>
+                </div>
+                
+                <!-- Card 2 with Socratic AI Mentor Image Avatar -->
+                <div class="feature-card">
+                    <div class="feature-avatar-wrapper">
+                        <img src="assets/ank2.png" alt="Socratic AI Mentor" class="feature-avatar">
+                        <h3 class="feature-title">Socratic Guidance</h3>
+                    </div>
+                    <p class="feature-desc">Instead of giving direct answers or commands, the AI mentor guides students by asking thought-provoking questions, building troubleshooting and critical thinking skills.</p>
+                    <div class="feature-tech">PROMPT ENGINEERING</div>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3 class="feature-title">Production DevOps Stack</h3>
+                    <p class="feature-desc">Teens learn exactly what professional engineers use: Linux, Docker, docker-compose, SSH keys, network routing, and security. No visual abstractions.</p>
+                    <div class="feature-tech">DOCKER / GVISOR / K8S</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Waitlist Form Section -->
+        <section class="waitlist-section" id="waitlist">
+            <div class="waitlist-info">
+                <span class="section-subtitle" style="color: var(--color-cyan);">JOIN THE WAITLIST</span>
+                <h2 class="waitlist-title">Be the first to enter the Terminal.</h2>
+                <p class="waitlist-description">
+                    We are launching a limited closed beta. Drop your email, Discord tag, and age below to secure an early slot for your teen or yourself.
+                </p>
+                <div class="waitlist-telemetry">
+                    <div>&gt; INITIALIZING CLIENT WAITLIST PROMPT...</div>
+                    <div>&gt; REGISTRATION_LIMIT = 250_USERS</div>
+                    <div>&gt; DB_TARGET: FIRESTORE_CLOUD</div>
+                </div>
+            </div>
+            
+            <div class="waitlist-card">
+                <form id="waitlistForm">
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email Address</label>
+                        <input class="form-control" type="email" id="email" placeholder="name@domain.com" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="discord">Discord Tag</label>
+                            <input class="form-control" type="text" id="discord" placeholder="username#0000" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="age">Age</label>
+                            <input class="form-control" type="number" id="age" min="10" max="99" placeholder="14" required>
+                        </div>
+                    </div>
+                    <button class="form-submit-btn" type="submit" id="submitBtn">
+                        <span>Deploy Registration</span>
+                        <span class="submit-arrow">-&gt;</span>
+                    </button>
+                    <div class="form-status" id="formStatus"></div>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Success Modal Overlay -->
+    <div class="overlay" id="successOverlay">
+        <div class="modal">
+            <div class="modal-icon">✓</div>
+            <h3 class="modal-title">Registration Deployed</h3>
+            <p class="modal-desc">
+                Your credentials have been logged in the Firebase waitlist database. We will ping you on Discord or email as soon as a slot opens up in the node registry.
+            </p>
+            <button class="btn btn-primary" onclick="closeModal()">Return to Terminal</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-logo">CODENAME: TERMINAL ACADEMY</div>
+            <div class="footer-links">
+                <a href="https://github.com/codename-terminal/academy" target="_blank" class="github-footer-link" title="GitHub Project">
+                    <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                    </svg>
+                    <span>GitHub</span>
+                </a>
+            </div>
+            <div class="footer-meta">NODE: ACTIVE // LATENCY: 24ms // VER: 0.1.0-BETA</div>
+        </div>
+    </footer>
+
+    <!-- Firebase SDK Scripts -->
+    <script type="module">
+        // Import the SDKs we need from CDN
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Web app's Firebase configuration (placeholders as requested)
+        const firebaseConfig = {
+            apiKey: "AIzaSyPlaceholder-MockConfigAPIKeyString123",
+            authDomain: "terminal-academy.firebaseapp.com",
+            projectId: "terminal-academy",
+            storageBucket: "terminal-academy.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef123456"
+        };
+
+        // Initialize Firebase
+        let db = null;
+        let isMock = true;
+
+        try {
+            // Check if user has updated the configuration with actual credentials
+            if (firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("Placeholder")) {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                isMock = false;
+                console.log("Firebase initialized successfully with live configuration.");
+            } else {
+                console.warn("Firebase initialized in DEMO/MOCK mode. Real Firestore writes will be emulated.");
+            }
+        } catch (e) {
+            console.error("Firebase initialization failed, falling back to mock mode:", e);
+        }
+
+        // Form handler
+        const waitlistForm = document.getElementById('waitlistForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const formStatus = document.getElementById('formStatus');
+        const successOverlay = document.getElementById('successOverlay');
+
+        waitlistForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const discord = document.getElementById('discord').value.trim();
+            const age = parseInt(document.getElementById('age').value);
+
+            // UI feedback: loading state
+            submitBtn.disabled = true;
+            submitBtn.querySelector('span').textContent = 'Deploying...';
+            formStatus.style.color = 'var(--text-secondary)';
+            formStatus.textContent = '> Syncing telemetry packets...';
+
+            const payload = {
+                email: email,
+                discord: discord,
+                age: age,
+                timestamp: isMock ? new Date().toISOString() : serverTimestamp()
+            };
+
+            // Simulate slight delay for professional visual pacing
+            setTimeout(async () => {
+                if (isMock) {
+                    console.log("[MOCK DB WRITE] Waitlist registration payload:", payload);
+                    showSuccess();
+                } else {
+                    try {
+                        const docRef = await addDoc(collection(db, "waitlist"), payload);
+                        console.log("Document written with ID: ", docRef.id);
+                        showSuccess();
+                    } catch (error) {
+                        console.error("Error writing document to Firestore: ", error);
+                        formStatus.style.color = 'var(--color-red)';
+                        formStatus.textContent = `> ERR: Database rejected write. (${error.message})`;
+                        submitBtn.disabled = false;
+                        submitBtn.querySelector('span').textContent = 'Deploy Registration';
+                    }
+                }
+            }, 1000);
+        });
+
+        function showSuccess() {
+            formStatus.style.color = 'var(--color-green)';
+            formStatus.textContent = '> Done. Terminal access queued.';
+            successOverlay.classList.add('active');
+            waitlistForm.reset();
+            submitBtn.disabled = false;
+            submitBtn.querySelector('span').textContent = 'Deploy Registration';
+        }
+
+        // Expose close modal function globally
+        window.closeModal = function() {
+            successOverlay.classList.remove('active');
+            formStatus.textContent = '';
+        }
+
+        // Fun dynamic CPU & state telemetry tick
+        const cpuEl = document.getElementById('cpuValue');
+        setInterval(() => {
+            const mockCpu = (Math.random() * 2 + 0.1).toFixed(1);
+            cpuEl.textContent = `${mockCpu}%`;
+        }, 3000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+FROM alpine:3.18
+
+# Install bash, curl, python3, and utilities for the student sandbox
+RUN apk update && apk add --no-cache \
+    bash \
+    curl \
+    python3 \
+    openssh-client
+
+# Create non-privileged student user (UID 10001) as mandated by security specs
+RUN adduser -D -u 10001 student
+
+USER student
+WORKDIR /home/student
+
+CMD ["/bin/bash"]

@@ -1,0 +1,12 @@
+# System files
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+
+# Local environment
+.env
+venv/
+env/
