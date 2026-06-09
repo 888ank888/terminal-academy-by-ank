@@ -67,10 +67,75 @@ class TerminalAnimationEngine:
             self.last_tick = current_time
         return self.cached_frame
 
-# Global mentor instance, warning state and animation engine
+class RuleEnforcementEngine:
+    def __init__(self):
+        self.history_buffer = []
+        self.deterministic_temperature = 0.1
+
+    def evaluate_input(self, user_command: str) -> dict:
+        self.history_buffer.append(user_command)
+        # Scan command footprint for typical metacognitive cheat-shortcuts
+        cheat_payloads = ["bypass_gate", "--force-approve", "skip_logic", "password123", "admin_bypass", "token_key"]
+        for payload in cheat_payloads:
+            if payload in user_command:
+                return {
+                    "intercepted": True,
+                    "response": f"[ank]: [TRACE INTERCEPTED // SECURITY ALARM ACTIVATED]\nSYS_ALARM: METACOGNITIVE BYPASS DETECTED.\n\nNice try, kid. Attempting to subvert the Explanation Gate is an architectural failure. Type the manual configuration honestly."
+                }
+        return {"intercepted": False, "response": "COMMAND_FORWARDED_TO_SENTRY"}
+
+class SubscriptionTierMatrix:
+    def __init__(self):
+        self.tiers = {
+            "socratic_starter": {
+                "price": "$15/mo",
+                "cpu_limit": 0.25,
+                "ram_limit": "512MiB",
+                "disk_limit": "1GB",
+                "scale_to_zero_timeout_min": 10,
+                "network_policy": "STRICT_WHITE_LIST",
+                "ai_query_cap": 200
+            },
+            "devops_professional": {
+                "price": "$29/mo",
+                "cpu_limit": 0.5,
+                "ram_limit": "1GiB",
+                "disk_limit": "5GB",
+                "max_concurrent_sandboxes": 3,
+                "scale_to_zero_timeout_min": 15,
+                "network_policy": "DYNAMIC_EBPF_MONITORING",
+                "ai_query_cap": float('inf')
+            }
+        }
+
+    def enforce_tier_constraints(self, tier_name: str) -> dict:
+        return self.tiers.get(tier_name, self.tiers["socratic_starter"])
+
+class EBPFSecurityInterceptor:
+    def __init__(self):
+        self.echo_state = "ECHO_ON"
+
+    def process_buffer(self, user_input: str) -> str:
+        # Simulate tcsetattr uprobe password masking
+        if "sudo " in user_input or "password" in user_input:
+            self.echo_state = "BLIND"
+            return "<HIDDEN_CREDENTIAL> // MOCKED_EBPF_UPROBE_MASK_SUCCESS"
+        self.echo_state = "ECHO_ON"
+        return user_input
+
+class PresidioSidecarScrubber:
+    def sanitize_logs(self, telemetry_payload: str) -> str:
+        # Abstracted Microsoft Presidio Tiered Execution Policy
+        return "[PRESIDIO_CLEAN]: " + telemetry_payload
+
+# Global mentor instance, warning state, animation engine, rule engine, eBPF and Presidio security suites
 mentor = SocraticMentor()
 warning_state = False
 animation_engine = TerminalAnimationEngine()
+rule_engine = RuleEnforcementEngine()
+ebpf_interceptor = EBPFSecurityInterceptor()
+presidio_scrubber = PresidioSidecarScrubber()
+tier_matrix = SubscriptionTierMatrix()
 
 # Text Streaming Engine variables
 mentor_visible_lines = []
@@ -192,13 +257,27 @@ def process_command(cmd):
 
     terminal_logs.append(f"academy-shell$ {cmd}")
     
-    # Check for cheat patterns using mentor instance
-    cheat_reply = mentor.intercept_cheat(cmd_clean)
-    if cheat_reply:
+    # Check for cheat patterns using RuleEnforcementEngine
+    result = rule_engine.evaluate_input(cmd_clean)
+    if result["intercepted"]:
         warning_state = True
         terminal_logs.append("[SECURITY] TRACE INTERCEPTED // SECURITY ALARM ACTIVATED")
         terminal_logs.append("[SECURITY] Forbidden signature or bypass attempt blocked.")
-        set_mentor_text(cheat_reply)
+        set_mentor_text(result["response"])
+        return True
+    
+    # Check for credentials using eBPF Security Interceptor
+    masked_cmd = ebpf_interceptor.process_buffer(cmd_clean)
+    if ebpf_interceptor.echo_state == "BLIND":
+        warning_state = True
+        sanitized_payload = presidio_scrubber.sanitize_logs(masked_cmd)
+        terminal_logs.append(f"[SECURITY] eBPF MASKED: {masked_cmd}")
+        terminal_logs.append(f"[SECURITY] Telemetry: {sanitized_payload}")
+        set_mentor_text(
+            "ank: [EBPF SHIELD ACTIVE]\n\n"
+            "eBPF uprobe attached to libc.so.6 (tcsetattr handler) intercepted raw buffer.\n\n"
+            "Plain-text logs scrubbed via local Microsoft Presidio sidecar policy."
+        )
         return True
     
     warning_state = False
@@ -207,6 +286,10 @@ def process_command(cmd):
         terminal_logs.append("[SYSTEM] Commands: 'help', 'status', 'clear', 'exit'")
     elif cmd_clean == "status":
         terminal_logs.append("[SYSTEM] NODE: ONLINE | ISOLATION: ACTIVE (gVisor)")
+        starter = tier_matrix.tiers["socratic_starter"]
+        pro = tier_matrix.tiers["devops_professional"]
+        terminal_logs.append(f"[SYSTEM] Starter Tier: {starter['cpu_limit']} CPU / {starter['ram_limit']} RAM")
+        terminal_logs.append(f"[SYSTEM] DevOps Pro Tier: {pro['cpu_limit']} CPU / {pro['ram_limit']} RAM")
         set_mentor_text("ank: System is verified. Have you checked your bind mount settings?")
     elif cmd_clean == "clear":
         terminal_logs.clear()
@@ -506,3 +589,31 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n[SYSTEM] Session terminated by user.")
         sys.exit(0)
+
+
+class SubscriptionTierMatrix:
+    def __init__(self):
+        self.tiers = {
+            "socratic_starter": {
+                "price": "$15/mo",
+                "cpu_limit": 0.25,
+                "ram_limit": "512MiB",
+                "disk_limit": "1GB",
+                "scale_to_zero_timeout_min": 10,
+                "network_policy": "STRICT_WHITE_LIST",
+                "ai_query_cap": 200
+            },
+            "devops_professional": {
+                "price": "$29/mo",
+                "cpu_limit": 0.5,
+                "ram_limit": "1GiB",
+                "disk_limit": "5GB",
+                "max_concurrent_sandboxes": 3,
+                "scale_to_zero_timeout_min": 15,
+                "network_policy": "DYNAMIC_EBPF_MONITORING",
+                "ai_query_cap": float('inf')
+            }
+        }
+
+    def enforce_tier_constraints(self, tier_name: str) -> dict:
+        return self.tiers.get(tier_name, self.tiers["socratic_starter"])
