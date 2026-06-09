@@ -106,6 +106,8 @@ SOLO Level 3 Explanation Required to proceed.</div>
             </div>
         </section>
 
+        <img src="assets/section-divider.png" alt="Console Section Divider" class="section-divider">
+
         <!-- Features Section -->
         <section class="features-section" id="features">
             <div class="section-header">
@@ -139,6 +141,8 @@ SOLO Level 3 Explanation Required to proceed.</div>
             </div>
         </section>
 
+        <img src="assets/section-divider.png" alt="Console Section Divider" class="section-divider">
+
         <!-- Waitlist Form Section -->
         <section class="waitlist-section" id="waitlist">
             <div class="waitlist-info">
@@ -169,6 +173,16 @@ SOLO Level 3 Explanation Required to proceed.</div>
                             <label class="form-label" for="age">Age</label>
                             <input class="form-control" type="number" id="age" min="10" max="99" placeholder="14" required>
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="primaryOS">Primary OS</label>
+                        <select class="form-control form-select" id="primaryOS">
+                            <option value="" disabled selected>Select your operating system</option>
+                            <option value="macOS Intel">macOS Intel</option>
+                            <option value="macOS Apple Silicon">macOS Apple Silicon</option>
+                            <option value="Linux">Linux</option>
+                            <option value="Windows WSL2">Windows WSL2</option>
+                        </select>
                     </div>
                     <button class="form-submit-btn" type="submit" id="submitBtn">
                         <span>Deploy Registration</span>
@@ -253,6 +267,7 @@ SOLO Level 3 Explanation Required to proceed.</div>
             const email = document.getElementById('email').value.trim();
             const discord = document.getElementById('discord').value.trim();
             const age = parseInt(document.getElementById('age').value);
+            const primaryOS = document.getElementById('primaryOS').value;
 
             if (!email && !discord) {
                 formStatus.style.color = 'var(--color-red)';
@@ -270,6 +285,7 @@ SOLO Level 3 Explanation Required to proceed.</div>
                 email: email,
                 discord: discord,
                 age: age,
+                primaryOS: primaryOS || "Not specified",
                 timestamp: isMock ? new Date().toISOString() : serverTimestamp()
             };
 

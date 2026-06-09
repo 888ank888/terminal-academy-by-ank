@@ -936,3 +936,29 @@ footer {
     font-size: 0.7rem;
     color: var(--text-muted);
 }
+
+.section-divider {
+    display: block;
+    width: 100%;
+    max-width: 1200px;
+    height: auto;
+    margin: 4.5rem auto;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.form-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='%2300ff66' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.25rem;
+    padding-right: 2.5rem;
+    cursor: pointer;
+}
+
+.form-select option {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+}
