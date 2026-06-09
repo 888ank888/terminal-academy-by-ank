@@ -153,6 +153,16 @@ header {
 
 .github-header-link:hover {
     color: var(--color-green);
+}
+
+.github-pixel-icon {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    transition: var(--transition-smooth);
+}
+
+.github-header-link:hover .github-pixel-icon,
+.github-footer-link:hover .github-pixel-icon {
     filter: drop-shadow(0 0 8px var(--color-green));
 }
 
@@ -410,6 +420,7 @@ main {
 
 .prompt-line {
     display: flex;
+    align-items: center;
     gap: 0.5rem;
     color: var(--color-cyan);
 }
@@ -421,6 +432,17 @@ main {
 
 .terminal-input {
     color: var(--text-primary);
+}
+
+.terminal-cursor-block {
+    display: inline-block;
+    width: 12px;
+    height: 20px;
+    background-image: url('assets/terminal-cursor.gif');
+    background-size: contain;
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
 }
 
 .terminal-log {
