@@ -44,6 +44,45 @@ class AcademyCurriculumEngine:
             "4": {"title": "Digital Forensics: Sherlock OSINT Pipelines",       "status": "LOCKED"},
             "5": {"title": "DDoS Defense: iptables Packet Filtering",           "status": "LOCKED"},
         }
+        self.active_module = None
+        self.module_state  = 0
+
+    def activate_module(self, module_key: str) -> str:
+        """Initializes the interactive lab state for the selected module."""
+        self.active_module = module_key
+        self.module_state = 0
+        if module_key == "1" and self.modules["1"]["status"] == "READY":
+            self.modules["1"]["status"] = "IN_PROGRESS"
+        
+        return module_texts.get(module_key, f"ank: Module {module_key} loaded.")
+
+    def evaluate_command(self, cmd: str) -> str | None:
+        """
+        Monitors Work Terminal history for module progression milestones.
+        Returns a string response from ank if a state transition occurs, else None.
+        """
+        if self.active_module == "1":
+            # State 0: waiting for ssh-keygen
+            if self.module_state == 0 and "ssh-keygen" in cmd:
+                self.module_state = 1
+                return (
+                    "ank: [MODULE 1: PROGRESSION]\n\n"
+                    "Keypair generated. Good.\n"
+                    "Now, deploy the public key to the remote authorized_keys file. "
+                    "How do you plan to securely transfer it?"
+                )
+            # State 1: waiting for ssh-copy-id or similar
+            elif self.module_state == 1 and ("ssh-copy-id" in cmd or "cat ~/.ssh/id_" in cmd):
+                self.module_state = 2
+                self.modules["1"]["status"] = "COMPLETED"
+                self.modules["2"]["status"] = "READY"
+                return (
+                    "ank: [MODULE 1: COMPLETED]\n\n"
+                    "Public key deployed. Password auth disabled.\n"
+                    "Module 1 passed. Module 2 [Local AI] is now unlocked. "
+                    "Press [TAB] to return to the Curriculum menu."
+                )
+        return None
 
     def render_modules_list(self) -> list:
         return [f"[{k}] {v['title']} ({v['status']})" for k, v in self.modules.items()]
@@ -986,6 +1025,12 @@ def process_command(cmd: str) -> bool:
             # Strip the echo that would double-log; add it here once.
             terminal_logs.append(f"academy-shell$ {cleared_cmd}")
             terminal_logs.append(f"[SYSTEM] Executing: {cleared_cmd}")
+            
+            # --- Curriculum Engine Progression ---
+            prog_text = curriculum_engine.evaluate_command(cleared_cmd.lower())
+            if prog_text:
+                mentor_renderer.set_text(prog_text)
+                
             return True
 
         elif solo_gate.attempts >= solo_gate.MAX_ATTEMPTS:
@@ -1114,6 +1159,11 @@ def process_command(cmd: str) -> bool:
     else:
         terminal_logs.append(f"[SYSTEM] Command '{cmd}' not found. Try 'help'.")
 
+    # --- Curriculum Engine Progression ---
+    prog_text = curriculum_engine.evaluate_command(cmd_lower)
+    if prog_text:
+        mentor_renderer.set_text(prog_text)
+
     return True
 
 
@@ -1162,11 +1212,14 @@ def trigger_menu_choice(idx: int) -> bool:
         else:
             module_key = str(idx + 1)
             if module_key in module_texts:
-                mentor_renderer.set_text(module_texts[module_key])
+                mentor_text = curriculum_engine.activate_module(module_key)
+                mentor_renderer.set_text(mentor_text)
                 terminal_logs.append(
-                    f"[SYSTEM] Inspecting Module {module_key}: "
+                    f"[SYSTEM] Lab initialized: Module {module_key} - "
                     f"{curriculum_engine.modules[module_key]['title']}"
                 )
+                # Rebuild menu options to reflect potential IN_PROGRESS status
+                menu_options = curriculum_engine.render_modules_list() + ["<- Back to Main Menu"]
             return True
 
     return True
