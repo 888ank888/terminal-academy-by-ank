@@ -236,6 +236,456 @@ class RuleEnforcementEngine:
 
 
 # ---------------------------------------------------------------------------
+# SOLO Evaluation Gate  (T = 0.1 — deterministic keyword-rubric scoring)
+# ---------------------------------------------------------------------------
+class SoloEvaluationGate:
+    """
+    Intercepts destructive or privileged CLI commands and requires the student
+    to supply a SOLO Taxonomy Level 3 (Relational) structural explanation
+    before the command is allowed to proceed.
+
+    Temperature T = 0.1 is enforced architecturally:
+      - Evaluation is deterministic keyword-rubric scoring, not stochastic.
+      - The same explanation always produces the same pass/fail result.
+      - No LLM inference call is made; rubrics are pre-scripted per command
+        category, anchored to structural mechanical concepts (not synonyms).
+      - This mirrors Piaget's Formal Operational stage: the evaluator demands
+        abstract structural reasoning, not rote surface description.
+
+    Gate lifecycle (managed by process_command):
+      IDLE     → command classified → ARMED (gate_question displayed)
+      ARMED    → explanation submitted → evaluate_explanation()
+      PASS     → original command forwarded / simulated, gate → IDLE
+      FAIL x<3 → sharper Socratic redirect, gate stays ARMED, attempt++
+      FAIL x=3 → gate resets, student must retype the command to retry
+    """
+
+    # Maximum explanation attempts before the gate resets
+    MAX_ATTEMPTS = 3
+
+    # Minimum unique rubric keyword hits required to pass SOLO L3
+    MIN_HITS = 3
+
+    # ---------------------------------------------------------------------------
+    # Destructive / privileged command classification patterns.
+    # Checked as substrings against the lowercased, stripped command.
+    # Order matters: more specific patterns listed first.
+    # ---------------------------------------------------------------------------
+    COMMAND_PATTERNS: list[tuple[str, str]] = [
+        ("ssh-keygen",            "key_management"),
+        ("ssh ",                   "ssh_remote"),
+        ("sshd",                   "ssh_daemon"),
+        ("fail2ban",               "intrusion_prevention"),
+        ("iptables",               "firewall"),
+        ("nftables",               "firewall"),
+        ("systemctl",              "service_control"),
+        ("journalctl",             "service_control"),
+        ("chmod",                  "permissions"),
+        ("chown",                  "permissions"),
+        ("useradd",                "user_management"),
+        ("userdel",                "user_management"),
+        ("usermod",                "user_management"),
+        ("passwd",                 "auth_change"),
+        ("crontab",                "scheduling"),
+        ("rm -rf",                 "destructive_fs"),
+        ("dd if=",                 "disk_write"),
+        ("mkfs",                   "disk_format"),
+        ("ollama",                 "local_ai"),
+        ("sherlock",               "osint"),
+    ]
+
+    # ---------------------------------------------------------------------------
+    # SOLO L3 Rubrics — per command category.
+    # 'keywords': structural mechanical terms the student MUST reference.
+    # 'min_hits': distinct keyword hits required (default MIN_HITS=3 applies).
+    # 'gate_question': the Socratic question ank poses before execution.
+    # 'fail_redirect': sharpened re-prompt on incorrect/shallow explanation.
+    # ---------------------------------------------------------------------------
+    RUBRICS: dict[str, dict] = {
+        "ssh_remote": {
+            "keywords": [
+                "key", "keypair", "public", "private", "handshake", "cipher",
+                "challenge", "signature", "asymmetric", "replay", "known_hosts",
+                "fingerprint", "kex", "diffie", "elliptic", "authenticated",
+            ],
+            "gate_question": (
+                "ank: [EXPLANATION GATE — SSH_REMOTE]\n\n"
+                "Before that SSH session opens, explain the key-exchange "
+                "handshake. What prevents a man-in-the-middle from replaying "
+                "a captured session token on the next connection?"
+            ),
+            "fail_redirect": (
+                "ank: Surface-level. The word 'secure' is not an explanation.\n\n"
+                "Describe the cryptographic sequence: keypair generation, "
+                "challenge-response, and why asymmetric auth defeats replay "
+                "attacks that symmetric passwords cannot."
+            ),
+        },
+        "ssh_daemon": {
+            "keywords": [
+                "config", "sshd_config", "port", "permitrootlogin", "pubkeyauth",
+                "passwordauthentication", "allowusers", "maxauthtries", "listenaddress",
+                "reload", "daemon", "socket", "bind",
+            ],
+            "gate_question": (
+                "ank: [EXPLANATION GATE — SSHD CONFIG]\n\n"
+                "You are about to touch the SSH daemon. "
+                "Walk me through the three sshd_config directives that have the "
+                "highest security impact and explain what kernel resource each "
+                "one controls at the socket/process level."
+            ),
+            "fail_redirect": (
+                "ank: That is a description, not an architecture.\n\n"
+                "Name the directives. State what each one changes at the "
+                "socket-bind or process-credential level. Generic answers "
+                "indicate you have not read the man page."
+            ),
+        },
+        "key_management": {
+            "keywords": [
+                "private", "public", "rsa", "ed25519", "ecdsa", "entropy",
+                "random", "passphrase", "authorized_keys", "permissions",
+                "600", "700", ".ssh", "agent", "identity",
+            ],
+            "gate_question": (
+                "ank: [EXPLANATION GATE — KEY GENERATION]\n\n"
+                "You are generating a cryptographic keypair. "
+                "What entropy source does ssh-keygen pull from on Linux, "
+                "and why does the private key file permission need to be 600 "
+                "rather than 644? Explain the kernel enforcement mechanism."
+            ),
+            "fail_redirect": (
+                "ank: You said 'security'. That is not an entropy source.\n\n"
+                "Name /dev/urandom or /dev/random. Explain the permission "
+                "check: which syscall enforces 600, and what happens at the "
+                "inode level when a world-readable key is rejected by sshd?"
+            ),
+        },
+        "firewall": {
+            "keywords": [
+                "chain", "table", "hook", "netfilter", "kernel", "packet",
+                "rule", "match", "target", "prerouting", "postrouting",
+                "input", "output", "forward", "drop", "accept", "reject",
+                "conntrack", "nat", "mangle", "raw",
+            ],
+            "gate_question": (
+                "ank: [EXPLANATION GATE — FIREWALL RULE]\n\n"
+                "Before that iptables rule is applied: describe the netfilter "
+                "chain traversal order for an inbound packet. "
+                "Which hook fires first, and why does PREROUTING NAT happen "
+                "before the routing decision?"
+            ),
+            "fail_redirect": (
+                "ank: 'Blocks traffic' is not chain traversal.\n\n"
+                "Name the five built-in chains in order for inbound traffic. "
+                "Explain what happens at the netfilter hook before the packet "
+                "reaches the socket buffer. If you cannot, you should not be "
+                "writing firewall rules in production."
+            ),
+        },
+        "intrusion_prevention": {
+            "keywords": [
+                "jail", "filter", "action", "ban", "unban", "log", "regex",
+                "maxretry", "findtime", "bantime", "backend", "iptables",
+                "systemd", "pyinotify", "polling", "inotify",
+            ],
+            "gate_question": (
+                "ank: [EXPLANATION GATE — INTRUSION PREVENTION]\n\n"
+                "fail2ban is about to modify your firewall. Explain the "
+                "data pipeline: from a failed SSH attempt appearing in the "
+                "journal, through the regex filter, to the iptables ban action. "
+                "What is the role of 'findtime' vs 'bantime'?"
+            ),
+            "fail_redirect": (
+                "ank: You described the output, not the pipeline.\n\n"
+                "Walk me through: journal entry → filter regex match → "
+                "action trigger → iptables -I chain. What does findtime "
+                "set as a sliding window, and what happens to the ban after "
+                "bantime expires?"
+            ),
+        },
+        "service_control": {
+            "keywords": [
+                "unit", "daemon", "cgroup", "pid", "fork", "exec", "socket",
+                "dependency", "target", "wants", "requires", "after", "before",
+                "dbus", "journal", "active", "inactive", "failed", "activating",
+                "state machine",
+            ],
+            "gate_question": (
+                "ank: [EXPLANATION GATE — SERVICE CONTROL]\n\n"
+                "Before systemctl executes: explain the unit state machine. "
+                "What transitions occur between 'activating' and 'active', "
+                "and what causes a transition to 'failed' vs 'inactive'?"
+            ),
+            "fail_redirect": (
+                "ank: You described what the command does, not the state machine.\n\n"
+                "Name the unit states in sequence. Explain what 'Requires=' "
+                "vs 'Wants=' means for dependency resolution at activation time. "
+                "If a required unit fails, what happens to your target unit?"
+            ),
+        },
+        "permissions": {
+            "keywords": [
+                "inode", "owner", "group", "other", "read", "write", "execute",
+                "octal", "rwx", "setuid", "setgid", "sticky", "dac",
+                "discretionary", "capability", "effective", "real",
+            ],
+            "gate_question": (
+                "ank: [EXPLANATION GATE — FILE PERMISSIONS]\n\n"
+                "Explain what the kernel checks at the inode level when "
+                "a process calls open(). Walk through DAC: owner UID match, "
+                "group match, other — in order. What does setuid bit do "
+                "to the effective UID at exec time?"
+            ),
+            "fail_redirect": (
+                "ank: 'rwx' is not an explanation of enforcement.\n\n"
+                "Describe the kernel's DAC check order: owner → group → other. "
+                "Name the syscall involved. Explain what effective UID vs real "
+                "UID means and why setuid is a privilege escalation vector."
+            ),
+        },
+        "user_management": {
+            "keywords": [
+                "uid", "gid", "passwd", "shadow", "/etc/passwd", "/etc/shadow",
+                "hash", "salt", "login", "shell", "home", "group", "wheel",
+                "sudoers", "pam",
+            ],
+            "gate_question": (
+                "ank: [EXPLANATION GATE — USER MANAGEMENT]\n\n"
+                "Before this user operation runs: explain where Linux stores "
+                "user credentials and why /etc/shadow exists separately from "
+                "/etc/passwd. What hashing scheme protects passwords at rest "
+                "and why is unsalted MD5 cryptographically broken for this use?"
+            ),
+            "fail_redirect": (
+                "ank: The shadow file is not just 'more secure'. Explain it.\n\n"
+                "State the permission bits on /etc/shadow vs /etc/passwd. "
+                "Name the hash algorithm in modern shadow entries (e.g. $6$). "
+                "Explain what the salt field prevents in a rainbow table attack."
+            ),
+        },
+        "auth_change": {
+            "keywords": [
+                "hash", "salt", "shadow", "pam", "crypt", "algorithm",
+                "strength", "entropy", "dictionary", "brute", "complexity",
+                "policy", "expiry", "aging",
+            ],
+            "gate_question": (
+                "ank: [EXPLANATION GATE — AUTH CHANGE]\n\n"
+                "You are changing a credential. Explain the full pipeline: "
+                "plaintext input → PAM module stack → hashing → shadow write. "
+                "What makes a password hash computationally resistant to "
+                "offline brute-force attacks?"
+            ),
+            "fail_redirect": (
+                "ank: 'Strong password' is a policy, not a mechanism.\n\n"
+                "Name the PAM module handling password hashing. Explain what "
+                "bcrypt or SHA-512 cost factors do to GPU-based cracking speed. "
+                "What does a salt prevent at the hash table lookup level?"
+            ),
+        },
+        "scheduling": {
+            "keywords": [
+                "cron", "crond", "crontab", "field", "minute", "hour",
+                "day", "month", "weekday", "environment", "path", "shell",
+                "log", "mail", "stderr", "stdout", "redirect",
+            ],
+            "gate_question": (
+                "ank: [EXPLANATION GATE — TASK SCHEDULING]\n\n"
+                "Before that cron entry lands: walk me through the five "
+                "time-field syntax in order, including what '*' vs '*/n' means. "
+                "Why does a cron job need an explicit PATH definition and "
+                "what happens to stderr output by default?"
+            ),
+            "fail_redirect": (
+                "ank: You know cron runs things. That is not the question.\n\n"
+                "Name the five fields left-to-right. Explain */15 in the "
+                "minute field. State what environment variable is missing "
+                "in cron that causes scripts to fail silently in production."
+            ),
+        },
+        "destructive_fs": {
+            "keywords": [
+                "recursive", "inode", "directory", "unlink", "syscall",
+                "kernel", "filesystem", "dentry", "vfs", "reference count",
+                "no prompt", "force", "irreversible", "journal", "ext4",
+            ],
+            "gate_question": (
+                "ank: [EXPLANATION GATE — DESTRUCTIVE FS OPERATION]\n\n"
+                "rm -rf is irreversible. Before you run it: explain what "
+                "happens at the VFS layer. Walk through the unlink() syscall, "
+                "dentry removal, and inode reference counting. "
+                "At what point is data actually unrecoverable?"
+            ),
+            "fail_redirect": (
+                "ank: 'Deletes files' is the manual page summary, not a "
+                "kernel-level explanation.\n\n"
+                "Describe unlink() → dentry cache invalidation → inode "
+                "reference count decrement. When does the disk block get "
+                "freed? What does ext4 journaling record before the unlink?"
+            ),
+        },
+        "disk_write": {
+            "keywords": [
+                "block", "sector", "raw", "device", "input", "output",
+                "if=", "of=", "bs", "count", "seek", "skip", "copy",
+                "overwrite", "mbr", "partition", "filesystem",
+            ],
+            "gate_question": (
+                "ank: [EXPLANATION GATE — RAW DISK WRITE]\n\n"
+                "dd writes directly to block devices, bypassing the "
+                "filesystem layer entirely. Explain: what is a block device "
+                "in Linux, what does 'bs=' control at the kernel I/O path, "
+                "and why does writing to /dev/sda with a wrong of= destroy "
+                "the partition table with zero warning?"
+            ),
+            "fail_redirect": (
+                "ank: You described what dd does. Explain why it is dangerous "
+                "at the kernel level.\n\n"
+                "State what happens when you open /dev/sda vs /dev/sda1. "
+                "Explain how bs= maps to a write() syscall buffer size. "
+                "What kernel protection (if any) prevents overwriting a "
+                "mounted filesystem's superblock?"
+            ),
+        },
+        "disk_format": {
+            "keywords": [
+                "superblock", "inode table", "block group", "journal",
+                "filesystem", "format", "ext4", "xfs", "btrfs",
+                "metadata", "mount", "mkfs", "partition",
+            ],
+            "gate_question": (
+                "ank: [EXPLANATION GATE — FILESYSTEM FORMAT]\n\n"
+                "mkfs destroys existing data permanently. Before it runs: "
+                "explain what structures a filesystem format writes to disk. "
+                "What is a superblock, what is the inode table, and why does "
+                "ext4 require a journal for crash consistency?"
+            ),
+            "fail_redirect": (
+                "ank: 'Creates a filesystem' is the end result, not the process.\n\n"
+                "Describe what mkfs.ext4 writes: superblock location, block "
+                "group descriptors, inode table allocation, and journal "
+                "initialization. What does mounting the filesystem read first "
+                "and what happens if that structure is corrupted?"
+            ),
+        },
+        "local_ai": {
+            "keywords": [
+                "model", "inference", "temperature", "token", "context",
+                "prompt", "quantization", "llama", "gguf", "gpu", "cpu",
+                "vram", "hallucination", "grounding", "schema",
+            ],
+            "gate_question": (
+                "ank: [EXPLANATION GATE — LOCAL AI INFERENCE]\n\n"
+                "Before ollama loads the model: explain what model quantization "
+                "is and why GGUF Q4_K_M reduces VRAM footprint. "
+                "When temperature is set to 0.1 for log auditing, what does "
+                "that do to the token probability distribution at inference time?"
+            ),
+            "fail_redirect": (
+                "ank: 'Smaller model' is marketing, not architecture.\n\n"
+                "Explain quantization: float32 → int4 weight compression, "
+                "precision loss tradeoff, and perplexity impact. "
+                "State what logit scaling at T=0.1 does mathematically to "
+                "the softmax output distribution."
+            ),
+        },
+        "osint": {
+            "keywords": [
+                "enumerate", "username", "platform", "http", "request",
+                "response", "status", "regex", "grep", "awk", "sed",
+                "pipeline", "filter", "scrape", "rate", "throttle",
+            ],
+            "gate_question": (
+                "ank: [EXPLANATION GATE — OSINT PIPELINE]\n\n"
+                "Sherlock makes HTTP requests to hundreds of platforms. "
+                "Explain how it determines a username exists vs does not exist "
+                "on a given site. What HTTP status codes and response body "
+                "patterns does it use, and what is the false-positive risk?"
+            ),
+            "fail_redirect": (
+                "ank: 'It searches the internet' is not a pipeline explanation.\n\n"
+                "Describe: GET request → HTTP 200 vs 404 vs redirect logic → "
+                "response body keyword match → result classification. "
+                "Why do some platforms return 200 for non-existent users "
+                "and how does sherlock handle that?"
+            ),
+        },
+    }
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        """Return gate to IDLE state."""
+        self.active           = False
+        self.pending_cmd      = ""
+        self.category         = ""
+        self.attempts         = 0
+
+    def classify_command(self, cmd_lower: str) -> str | None:
+        """
+        Returns the category string if `cmd_lower` matches a destructive
+        pattern, else None. Checked in declaration order (most-specific first).
+        """
+        for pattern, category in self.COMMAND_PATTERNS:
+            if pattern in cmd_lower:
+                return category
+        return None
+
+    def gate_prompt(self) -> str:
+        """Returns the Socratic gate question for the current category."""
+        rubric = self.RUBRICS.get(self.category, {})
+        return rubric.get(
+            "gate_question",
+            f"ank: [EXPLANATION GATE]\n\nExplain the structural mechanics "
+            f"of '{self.pending_cmd}' before execution is permitted.",
+        )
+
+    def evaluate_explanation(self, explanation: str) -> dict:
+        """
+        Deterministic SOLO L3 scorer (T = 0.1).
+
+        Counts distinct rubric keyword hits in the lowercased explanation.
+        Requires MIN_HITS unique hits to pass. Returns:
+          passed      : bool
+          hits        : int   — number of structural keywords found
+          required    : int   — threshold
+          feedback    : str   — ank response (pass congratulation or redirect)
+        """
+        rubric   = self.RUBRICS.get(self.category, {})
+        keywords = rubric.get("keywords", [])
+        required = rubric.get("min_hits", self.MIN_HITS)
+        expl_low = explanation.lower()
+
+        hits = sum(1 for kw in keywords if kw in expl_low)
+
+        if hits >= required:
+            return {
+                "passed": True,
+                "hits":   hits,
+                "required": required,
+                "feedback": (
+                    f"ank: [{hits}/{len(keywords)} structural markers detected — SOLO L3 PASS]\n\n"
+                    f"Good. You understand the mechanism. Command cleared for execution.\n"
+                    f"Remember: knowing why is the only gate that matters here."
+                ),
+            }
+        else:
+            redirect = rubric.get("fail_redirect", "ank: Shallow. Try again with structural depth.")
+            return {
+                "passed":   False,
+                "hits":     hits,
+                "required": required,
+                "feedback": (
+                    f"ank: [{hits}/{required} structural markers — SOLO L3 FAIL "
+                    f"(attempt {self.attempts}/{self.MAX_ATTEMPTS})]\n\n"
+                    f"{redirect}"
+                ),
+            }
+
+
+# ---------------------------------------------------------------------------
 # Subscription Tier Matrix  (single authoritative definition)
 # FIX: duplicate dead-code copy at lines 594-620 removed.
 # ---------------------------------------------------------------------------
@@ -355,6 +805,7 @@ ebpf_interceptor = EBPFSecurityInterceptor()
 presidio_scrubber = PresidioSidecarScrubber()
 tier_matrix      = SubscriptionTierMatrix()
 mentor_renderer  = StreamingMentorRenderer()
+solo_gate        = SoloEvaluationGate()      # Explanation gate singleton
 
 # Work terminal output log
 terminal_logs = [
@@ -499,9 +950,12 @@ def process_command(cmd: str) -> bool:
     Returns False to signal a clean exit, True to continue the session.
 
     Cheat detection pipeline (layered):
-      1. SocraticMentor.intercept_cheat()  — pattern-match layer (FIX: now wired)
+      0. SoloEvaluationGate explanation branch — if gate is ARMED, score
+         the submitted text as an explanation, not as a command.
+      1. SocraticMentor.intercept_cheat()  — pattern-match layer
       2. RuleEnforcementEngine.evaluate_input() — secondary payload scan
-      3. EBPFSecurityInterceptor.process_buffer() — credential masking
+      3. SoloEvaluationGate command classifier — arm gate on destructive cmds
+      4. EBPFSecurityInterceptor.process_buffer() — credential masking
     """
     global warning_state
 
@@ -509,10 +963,55 @@ def process_command(cmd: str) -> bool:
     if not cmd_clean:
         return True
 
-    terminal_logs.append(f"academy-shell$ {cmd}")
     keystroke_analyzer.register_command()
-
     cmd_lower = cmd_clean.lower()
+
+    # --- Layer 0: SOLO Explanation Gate — active branch ---
+    # If the gate is ARMED, treat this submission as an explanation attempt.
+    # The original command is NOT re-echoed to terminal_logs here.
+    if solo_gate.active:
+        solo_gate.attempts += 1
+        result = solo_gate.evaluate_explanation(cmd_clean)
+
+        if result["passed"]:
+            terminal_logs.append(
+                f"[SOLO-GATE] PASS ({result['hits']}/{result['required']} markers) "
+                f"— command '{solo_gate.pending_cmd}' cleared."
+            )
+            cleared_cmd = solo_gate.pending_cmd
+            solo_gate.reset()
+            warning_state = False
+            mentor_renderer.set_text(result["feedback"])
+            # Forward the cleared command back through processing (now gate is IDLE)
+            # Strip the echo that would double-log; add it here once.
+            terminal_logs.append(f"academy-shell$ {cleared_cmd}")
+            terminal_logs.append(f"[SYSTEM] Executing: {cleared_cmd}")
+            return True
+
+        elif solo_gate.attempts >= solo_gate.MAX_ATTEMPTS:
+            terminal_logs.append(
+                f"[SOLO-GATE] LOCKED — {solo_gate.MAX_ATTEMPTS} failed attempts. "
+                "Gate reset. Retype the command to try again."
+            )
+            solo_gate.reset()
+            warning_state = True
+            mentor_renderer.set_text(
+                "ank: [EXPLANATION GATE LOCKED]\n\n"
+                "Three failed attempts. The gate resets.\n\n"
+                "Retype the original command when you are ready to explain it properly. "
+                "Structural understanding is not optional here."
+            )
+        else:
+            warning_state = True
+            terminal_logs.append(
+                f"[SOLO-GATE] FAIL — attempt {solo_gate.attempts}/{solo_gate.MAX_ATTEMPTS}. "
+                f"({result['hits']}/{result['required']} structural markers found)"
+            )
+            mentor_renderer.set_text(result["feedback"])
+        return True
+
+    # Gate is IDLE — normal command processing below.
+    terminal_logs.append(f"academy-shell$ {cmd}")
 
     # --- Layer 1: SocraticMentor pattern intercept ---
     mentor_interception = mentor.intercept_cheat(cmd_lower)
@@ -533,6 +1032,35 @@ def process_command(cmd: str) -> bool:
         return True
 
     # --- Layer 3: eBPF credential masking ---
+    masked_cmd = ebpf_interceptor.process_buffer(cmd_lower)
+    if ebpf_interceptor.echo_state == "BLIND":
+        warning_state = True
+        sanitized = presidio_scrubber.sanitize_logs(masked_cmd)
+        terminal_logs.append(f"[SECURITY] eBPF MASKED: {masked_cmd}")
+        terminal_logs.append(f"[SECURITY] Telemetry: {sanitized}")
+        mentor_renderer.set_text(
+            "ank: [EBPF SHIELD ACTIVE]\n\n"
+            "eBPF uprobe attached to libc.so.6 (tcsetattr handler) intercepted raw buffer.\n\n"
+            "Plain-text logs scrubbed via local Microsoft Presidio sidecar policy."
+        )
+        return True
+
+    # --- Layer 3: SOLO Evaluation Gate — arm on destructive commands ---
+    category = solo_gate.classify_command(cmd_lower)
+    if category:
+        solo_gate.active      = True
+        solo_gate.pending_cmd = cmd_clean
+        solo_gate.category    = category
+        solo_gate.attempts    = 0
+        warning_state         = True
+        terminal_logs.append(
+            f"[SOLO-GATE] ARMED — '{cmd_clean}' classified as [{category}]. "
+            "Explain before execution."
+        )
+        mentor_renderer.set_text(solo_gate.gate_prompt())
+        return True
+
+    # --- Layer 4: eBPF credential masking ---
     masked_cmd = ebpf_interceptor.process_buffer(cmd_lower)
     if ebpf_interceptor.echo_state == "BLIND":
         warning_state = True
