@@ -36,23 +36,23 @@
             <p class="sub-label">A high-fidelity retro-digital training system for future systems engineers.</p>
             
             <!-- Live CSS Mini-Console -->
-            <div class="mini-console panel" style="width: 100%; max-width: 600px; margin: 2rem auto 0; text-align: left; font-family: var(--font-mono); font-size: 0.95rem;">
-                <div class="console-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem; margin-bottom: 1rem;">
-                    <div style="display: flex; gap: 6px;">
-                        <span style="width: 10px; height: 10px; border-radius: 50%; background: #ff5f56; display: inline-block;"></span>
-                        <span style="width: 10px; height: 10px; border-radius: 50%; background: #ffbd2e; display: inline-block;"></span>
-                        <span style="width: 10px; height: 10px; border-radius: 50%; background: #27c93f; display: inline-block;"></span>
+            <div class="mini-console panel">
+                <div class="console-header">
+                    <div class="console-dots">
+                        <span class="dot dot-red"></span>
+                        <span class="dot dot-yellow"></span>
+                        <span class="dot dot-green"></span>
                     </div>
-                    <span style="font-size: 0.8rem; color: var(--text-muted);">socratic_shell_v1.sh</span>
+                    <span class="console-title">socratic_shell_v1.sh</span>
                 </div>
-                <div class="console-body" id="consoleBody" style="min-height: 150px; display: flex; flex-direction: column; gap: 0.5rem; color: var(--text-secondary);">
-                    <div style="color: var(--text-muted);">&gt; Initializing systems wargame...</div>
-                    <div style="color: var(--color-cyan); font-weight: bold;">[!] Explanation Gate locked at Level 3.</div>
-                    <div id="mentorText" style="color: var(--text-primary); font-weight: 500;">Ank: "Click below to query the systems mentor."</div>
+                <div class="console-body" id="consoleBody">
+                    <div class="console-init">&gt; Initializing systems wargame...</div>
+                    <div class="console-alert">[!] Explanation Gate locked at Level 3.</div>
+                    <div id="mentorText" class="console-welcome">Ank: "Click below to query the systems mentor."</div>
                 </div>
-                <div class="console-actions" style="margin-top: 1.5rem; display: flex; gap: 1rem;">
-                    <button class="form-submit-btn" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.95rem; border-radius: 12px;" onclick="triggerMentorQuery(1)">Query: Reverse Proxy</button>
-                    <button class="form-submit-btn" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.95rem; border-radius: 12px;" onclick="triggerMentorQuery(2)">Query: Bind Mounts</button>
+                <div class="console-actions">
+                    <button class="form-submit-btn" onclick="triggerMentorQuery(1)">Query: Reverse Proxy</button>
+                    <button class="form-submit-btn" onclick="triggerMentorQuery(2)">Query: Bind Mounts</button>
                 </div>
             </div>
         </section>
