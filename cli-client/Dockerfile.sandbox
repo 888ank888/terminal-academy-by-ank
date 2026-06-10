@@ -5,7 +5,9 @@ RUN apk update && apk add --no-cache \
     bash \
     curl \
     python3 \
-    openssh-client
+    openssh-client \
+    openssh-server \
+    sudo
 
 # Create non-privileged student user (UID 10001) as mandated by security specs
 RUN adduser -D -u 10001 student
