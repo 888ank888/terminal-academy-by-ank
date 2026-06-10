@@ -210,6 +210,28 @@
         </div>
     </div>
 
+    <!-- KWS Parental Verification Modal Overlay -->
+    <div class="overlay" id="kwsOverlay">
+        <div class="modal" style="max-width: 480px;">
+            <div class="modal-icon" style="color: var(--color-amber); border-color: var(--color-amber);">⚠</div>
+            <h3 class="modal-title">KWS PARENT_GRAPH GATE</h3>
+            <p class="modal-desc">
+                [COPPA PROTOCOL] Users aged 12-16 require parental authorization. Enter a parent/guardian email to request credentials via Kids Web Services:
+            </p>
+            <form id="kwsForm" style="width: 100%; display: flex; flex-direction: column; gap: 1rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" for="parentEmail">Parent/Guardian Email Address</label>
+                    <input class="form-control" type="email" id="parentEmail" placeholder="ENTER PARENT EMAIL" required>
+                </div>
+                <button type="submit" class="form-submit-btn" style="background: var(--color-amber); box-shadow: 0 0 12px rgba(255, 153, 0, 0.3);">
+                    <span>AUTHORIZE VIA KWS</span>
+                    <span class="submit-arrow">-&gt;</span>
+                </button>
+            </form>
+            <button class="form-submit-btn" style="width: auto; padding: 0.6rem 1.2rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); box-shadow: none;" onclick="closeKwsModal()">Cancel</button>
+        </div>
+    </div>
+
     <!-- Firebase SDK Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -248,6 +270,9 @@
         const formStatus = document.getElementById('formStatus');
         const successOverlay = document.getElementById('successOverlay');
 
+        let isParentVerified = false;
+        let pendingWaitlistPayload = null;
+
         waitlistForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -262,7 +287,20 @@
                 return;
             }
 
-            // UI feedback: loading state
+            // Check COPPA constraint for users aged 12-16
+            if (age >= 12 && age <= 16 && !isParentVerified) {
+                pendingWaitlistPayload = { email, discord, age, primaryOS };
+                document.getElementById('kwsOverlay').classList.add('active');
+                formStatus.style.color = 'var(--color-amber)';
+                formStatus.textContent = '> KWS parental verification challenge pending...';
+                return;
+            }
+
+            submitWaitlist(email, discord, age, primaryOS);
+        });
+
+        // Refactored waitlist submit function
+        function submitWaitlist(email, discord, age, primaryOS) {
             submitBtn.disabled = true;
             submitBtn.querySelector('span').textContent = 'DEPLOYING...';
             formStatus.style.color = 'var(--text-secondary)';
@@ -276,7 +314,6 @@
                 timestamp: isMock ? new Date().toISOString() : serverTimestamp()
             };
 
-            // Simulate slight delay for professional visual pacing
             setTimeout(async () => {
                 if (isMock) {
                     console.log("[MOCK DB WRITE] Waitlist registration payload:", payload);
@@ -295,7 +332,44 @@
                     }
                 }
             }, 1000);
+        }
+
+        // KWS Parental Verification submit listener
+        const kwsForm = document.getElementById('kwsForm');
+        kwsForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const parentEmail = document.getElementById('parentEmail').value.trim();
+            const kwsSubmitBtn = kwsForm.querySelector('button[type="submit"]');
+            kwsSubmitBtn.disabled = true;
+            kwsSubmitBtn.querySelector('span').textContent = 'VERIFYING PARENT GRAPH...';
+
+            // Simulate Kids Web Services ParentGraph verification handshake
+            setTimeout(() => {
+                isParentVerified = true;
+                kwsSubmitBtn.disabled = false;
+                kwsSubmitBtn.querySelector('span').textContent = 'AUTHORIZE VIA KWS';
+                document.getElementById('kwsOverlay').classList.remove('active');
+                
+                if (pendingWaitlistPayload) {
+                    formStatus.style.color = 'var(--color-green)';
+                    formStatus.textContent = '> KWS consent token registered. Resuming deployment...';
+                    submitWaitlist(
+                        pendingWaitlistPayload.email,
+                        pendingWaitlistPayload.discord,
+                        pendingWaitlistPayload.age,
+                        pendingWaitlistPayload.primaryOS
+                    );
+                    pendingWaitlistPayload = null;
+                }
+            }, 1200);
         });
+
+        window.closeKwsModal = function() {
+            document.getElementById('kwsOverlay').classList.remove('active');
+            formStatus.style.color = 'var(--color-red)';
+            formStatus.textContent = '> ERR: Parental authorization cancelled.';
+            pendingWaitlistPayload = null;
+        }
 
         function showSuccess() {
             formStatus.style.color = 'var(--color-green)';
