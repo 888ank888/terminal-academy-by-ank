@@ -21,8 +21,10 @@
                     <a href="#roles" class="nav-link">ROLES</a>
                     <a href="#testimonials" class="nav-link">TELEMETRY</a>
                     <a href="https://polar.sh/terminal-academy/products/starter" class="nav-link">WAITLIST</a>
-                    <a href="https://github.com/codename-terminal/academy" target="_blank" class="github-header-link" title="Open Source Repository">
-                        <img src="assets/github-pixel.png" alt="GitHub" class="github-pixel-icon" width="20" height="20">
+                    <a href="https://github.com/codename-terminal/academy" target="_blank" class="github-header-link" title="Open Source Repository" style="color: var(--text-primary); display: flex; align-items: center;">
+                        <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor" style="transition: var(--transition-smooth);">
+                            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                        </svg>
                     </a>
                 </nav>
             </div>
@@ -32,9 +34,30 @@
         <section class="hero-section" id="hero">
             <h1 class="glitch-title">SCALE YOUR ENGINEERING TEAM</h1>
             <p class="sub-label">A high-fidelity retro-digital training system for future systems engineers.</p>
+            
+            <!-- Live CSS Mini-Console -->
+            <div class="mini-console panel" style="width: 100%; max-width: 600px; margin: 2rem auto 0; text-align: left; font-family: var(--font-mono); font-size: 0.95rem;">
+                <div class="console-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                    <div style="display: flex; gap: 6px;">
+                        <span style="width: 10px; height: 10px; border-radius: 50%; background: #ff5f56; display: inline-block;"></span>
+                        <span style="width: 10px; height: 10px; border-radius: 50%; background: #ffbd2e; display: inline-block;"></span>
+                        <span style="width: 10px; height: 10px; border-radius: 50%; background: #27c93f; display: inline-block;"></span>
+                    </div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">socratic_shell_v1.sh</span>
+                </div>
+                <div class="console-body" id="consoleBody" style="min-height: 150px; display: flex; flex-direction: column; gap: 0.5rem; color: var(--text-secondary);">
+                    <div style="color: var(--text-muted);">&gt; Initializing systems wargame...</div>
+                    <div style="color: var(--color-cyan); font-weight: bold;">[!] Explanation Gate locked at Level 3.</div>
+                    <div id="mentorText" style="color: var(--text-primary); font-weight: 500;">Ank: "Click below to query the systems mentor."</div>
+                </div>
+                <div class="console-actions" style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                    <button class="form-submit-btn" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.95rem; border-radius: 12px;" onclick="triggerMentorQuery(1)">Query: Reverse Proxy</button>
+                    <button class="form-submit-btn" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.95rem; border-radius: 12px;" onclick="triggerMentorQuery(2)">Query: Bind Mounts</button>
+                </div>
+            </div>
         </section>
 
-        <img src="assets/section-divider.png" alt="Console Section Divider" class="section-divider">
+        <div class="section-divider"></div>
 
         <!-- Services / Process Matrix -->
         <section class="services-matrix" id="services">
@@ -73,7 +96,7 @@
             </div>
         </section>
 
-        <img src="assets/section-divider.png" alt="Console Section Divider" class="section-divider">
+        <div class="section-divider"></div>
 
         <!-- Roles Ledger Block -->
         <section class="roles-ledger" id="roles">
@@ -99,19 +122,16 @@
             </div>
         </section>
 
-        <img src="assets/section-divider.png" alt="Console Section Divider" class="section-divider">
+        <div class="section-divider"></div>
 
         <!-- Testimonial Console -->
         <section class="testimonial-console" id="testimonials">
-            <div class="telemetry-background">
-                <img src="assets/telemetry-map.png" alt="World Telemetry Map" class="telemetry-map-img">
-            </div>
             <div class="console-overlay-glow"></div>
             <div class="slider-compartment">
                 <div class="testimonial-slider">
                     <div class="testimonial-card">
-                        <div class="avatar-slot">
-                            <img src="assets/avatar-1.png" alt="Developer Avatar 1" class="pixel-avatar">
+                        <div class="avatar-slot" style="background: linear-gradient(135deg, var(--color-ember), var(--color-deep-blue)); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; font-size: 1.5rem; font-family: var(--font-geometric); width: 80px; height: 80px; box-shadow: var(--glow-ember);">
+                            NL
                         </div>
                         <div class="testimonial-text">
                             <p class="quote">"THE GRADUATES FROM TERMINAL ACADEMY RE-ENGINEERED OUR CI/CD PIPELINES AND REDUCED OUTAGE INCIDENTS BY 40%."</p>
@@ -125,7 +145,7 @@
             </div>
         </section>
 
-        <img src="assets/section-divider.png" alt="Console Section Divider" class="section-divider">
+        <div class="section-divider"></div>
 
         <!-- Waitlist / Voxel Lead Form -->
         <section class="panel form-console" id="waitlist">
@@ -169,8 +189,10 @@
             <div class="footer-container">
                 <div class="footer-logo">TERMINAL_ACADEMY // B2B_PORTAL</div>
                 <div class="footer-links">
-                    <a href="https://github.com/codename-terminal/academy" target="_blank" class="github-showcase-link" title="GitHub Project">
-                        <img src="assets/github-pixel.png" alt="GitHub" class="github-pixel-icon" width="20" height="20">
+                    <a href="https://github.com/codename-terminal/academy" target="_blank" class="github-showcase-link" title="GitHub Project" style="border-radius: 12px; display: inline-flex; align-items: center; gap: 8px;">
+                        <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                        </svg>
                         <span>GitHub</span>
                     </a>
                 </div>
@@ -394,23 +416,71 @@
             window.history.replaceState({}, document.title, newUrl);
         }
 
-        window.copyToken = function() {
-            const tokenVal = document.getElementById('tokenText').textContent;
-            navigator.clipboard.writeText(tokenVal).then(() => {
-                const copyBtn = document.querySelector('#tokenOverlay .token-container button');
-                const origText = copyBtn.textContent;
-                copyBtn.textContent = 'DONE';
-                setTimeout(() => {
-                    copyBtn.textContent = origText;
-                }, 1500);
-            }).catch(err => {
-                console.error('Failed to copy token: ', err);
-            });
-        }
-
         window.closeTokenModal = function() {
             document.getElementById('tokenOverlay').classList.remove('active');
         }
+
+        const mentorDialogues = {
+            1: [
+                "docker-compose exec nginx nginx -s reload",
+                "Ank: 'How does Nginx reload configurations without interrupting active connections?'",
+                "Tip: Look up master/worker process lifecycle dynamics."
+            ],
+            2: [
+                "docker run -v /app/config:/config:ro node-app",
+                "Ank: 'How does specifying a read-only (:ro) bind mount shield the host environment?'",
+                "Tip: Read-only prevents the guest container from mutating host state."
+            ]
+        };
+
+        window.triggerMentorQuery = function(type) {
+            const lines = mentorDialogues[type];
+            const body = document.getElementById('consoleBody');
+            body.innerHTML = '';
+            
+            const buttons = document.querySelectorAll('.console-actions button');
+            buttons.forEach(btn => btn.disabled = true);
+            
+            let currentLineIdx = 0;
+            
+            function typeNextLine() {
+                if (currentLineIdx >= lines.length) {
+                    buttons.forEach(btn => btn.disabled = false);
+                    return;
+                }
+                
+                const lineText = lines[currentLineIdx];
+                const div = document.createElement('div');
+                
+                let textPrefix = '';
+                if (currentLineIdx === 0) {
+                    div.style.color = 'var(--color-cyan)';
+                    textPrefix = 'guest@terminal:~$ ';
+                } else if (currentLineIdx === 1) {
+                    div.style.color = 'var(--text-primary)';
+                    div.style.fontWeight = 'bold';
+                } else {
+                    div.style.color = 'var(--color-amber)';
+                }
+                
+                body.appendChild(div);
+                div.textContent = textPrefix;
+                
+                let charIdx = 0;
+                const interval = setInterval(() => {
+                    if (charIdx < lineText.length) {
+                        div.textContent += lineText[charIdx];
+                        charIdx++;
+                    } else {
+                        clearInterval(interval);
+                        currentLineIdx++;
+                        setTimeout(typeNextLine, 300);
+                    }
+                }, 15);
+            }
+            
+            typeNextLine();
+        };
     </script>
 </body>
 </html>
