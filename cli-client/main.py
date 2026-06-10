@@ -34,16 +34,36 @@ menu_options = [
 # ---------------------------------------------------------------------------
 class AcademyCurriculumEngine:
     def __init__(self):
+        # Syllabus v2 — ordered by ascending operational complexity.
+        # Progression gate: students must pass SOLO L3 explanation before
+        # the next module unlocks. Status reflects current sandbox readiness.
         self.modules = {
-            "1": {"title": "Cyber Security: iptables Firewalls",          "status": "READY"},
-            "2": {"title": "Local AI Infrastructure: ollama & Llama 3.2", "status": "MOCK_MODE"},
-            "3": {"title": "IoT Automation: Headless Raspberry Pi Bash",   "status": "LOCKED"},
-            "4": {"title": "Digital Forensics: Sherlock OSINT Pipelines",  "status": "LOCKED"},
-            "5": {"title": "Cloud DevOps: Docker Compose & Nginx Matrix",  "status": "LOCKED"},
+            "1": {"title": "Secure Remote Access: SSH Hardening & Key Auth",  "status": "READY"},
+            "2": {"title": "Local AI Infrastructure: ollama & Llama 3.2",      "status": "MOCK_MODE"},
+            "3": {"title": "IoT Automation: Headless Raspberry Pi Bash",        "status": "LOCKED"},
+            "4": {"title": "Digital Forensics: Sherlock OSINT Pipelines",       "status": "LOCKED"},
+            "5": {"title": "DDoS Defense: iptables Packet Filtering",           "status": "LOCKED"},
         }
 
     def render_modules_list(self) -> list:
         return [f"[{k}] {v['title']} ({v['status']})" for k, v in self.modules.items()]
+
+    def build_boot_syllabus(self) -> str:
+        """
+        Generates the dynamic syllabus index injected into the mentor's
+        post-auth boot message. Renders status badge inline per module.
+        """
+        status_badge = {
+            "READY":     "[READY]",
+            "MOCK_MODE": "[MOCK] ",
+            "LOCKED":    "[LOCK] ",
+        }
+        lines = ["ank: ACADEMY SYLLABUS — 5-MODULE HACKER TRACK\n"]
+        for k, v in self.modules.items():
+            badge = status_badge.get(v['status'], "[???] ")
+            lines.append(f"  {k}. {badge} {v['title']}")
+        lines.append("\nType a module number or [TAB] to open Curriculum.")
+        return "\n".join(lines)
 
 
 curriculum_engine = AcademyCurriculumEngine()
@@ -366,34 +386,59 @@ docs_text = (
     "Need further telemetry details?"
 )
 
+# ---------------------------------------------------------------------------
+# Module Socratic Dialogue Scripts — Syllabus v2
+# Each entry: header → scenario brief → SOLO L3 Relational gate question.
+# ank never gives the answer. Questions probe structural mechanics only.
+# ---------------------------------------------------------------------------
 module_texts = {
     "1": (
-        "ank: [MODULE 1: CYBER SECURITY]\n\n"
-        "Your task is to defend a server from a 10,000-node botnet. "
-        "We will use iptables rules to drop malicious traffic at the packet level. "
-        "How does filtering packets at the kernel level compare to application-level firewalling?"
+        "ank: [MODULE 1: SECURE REMOTE ACCESS]\n\n"
+        "A production server accepts password-based SSH logins. "
+        "Your mission: harden it to key-only auth, disable root login, "
+        "and configure fail2ban to jail brute-force IPs.\n\n"
+        "Before you touch sshd_config — explain the cryptographic "
+        "difference between password auth and public-key auth. "
+        "Why does one fail against replay attacks and the other does not?"
     ),
     "2": (
         "ank: [MODULE 2: LOCAL AI INFRASTRUCTURE]\n\n"
-        "You will deploy ollama locally with Llama 3.2 to write a log auditing scanner. "
-        "When using an LLM to analyze system logs, how do you prevent hallucinated audit reports?"
+        "You will deploy ollama locally with Llama 3.2 to build a "
+        "log auditing scanner that flags anomalous systemd journal entries.\n\n"
+        "When feeding raw system logs to an LLM for security analysis, "
+        "what architectural controls prevent the model from hallucinating "
+        "audit findings that never occurred? Think about temperature, "
+        "retrieval grounding, and output schema enforcement."
     ),
     "3": (
         "ank: [MODULE 3: IOT AUTOMATION]\n\n"
-        "Telemetry data from a remote headless Raspberry Pi sensor network must be safely "
-        "collected over SSH. "
-        "Why is public-key authentication preferred over passwords for automated script synchronization?"
+        "A fleet of headless Raspberry Pi sensors transmits telemetry "
+        "over SSH to a central aggregator. Credentials must never be "
+        "embedded in scripts.\n\n"
+        "How does ssh-agent forwarding differ from copying a private key "
+        "to the remote host? Which attack surface does each approach "
+        "expose, and why does one violate the principle of least privilege?"
     ),
     "4": (
-        "ank: [MODULE 4: DIGITAL FORENSICS]\n\n"
-        "Run sherlock pipelines to track usernames across social networks and filter findings "
-        "using grep, awk, and sed. "
-        "How do regex engines process large raw logs differently than normal search engines?"
+        "ank: [MODULE 4: DIGITAL FORENSICS — OSINT]\n\n"
+        "Run sherlock to enumerate a target username across 400+ platforms. "
+        "Filter findings through grep, awk, and sed pipelines to produce "
+        "a structured JSON threat report.\n\n"
+        "Regex engines and search engines both match patterns in text. "
+        "Explain precisely why grep -P processes a 2 GB log file in "
+        "milliseconds while a naive substring search degrades to O(n*m). "
+        "What algorithmic property makes one viable for forensic pipelines?"
     ),
     "5": (
-        "ank: [MODULE 5: CLOUD DEVOPS]\n\n"
-        "Build self-healing microservices behind an Nginx reverse proxy with Docker Compose. "
-        "How does a bind mount configuration differ from a named volume in container data persistence?"
+        "ank: [MODULE 5: DDOS DEFENSE — IPTABLES]\n\n"
+        "A 10,000-node botnet is hammering your server at 4 Gbps. "
+        "You have 30 seconds before the host goes down. "
+        "Deploy iptables rules to drop malicious SYN floods at the "
+        "PREROUTING chain before they reach application space.\n\n"
+        "Filtering at the netfilter kernel hook vs. an application-layer "
+        "WAF — explain the stack depth difference. Why does one survive "
+        "at 4 Gbps and the other cannot? Describe the data path from "
+        "NIC interrupt to process table entry."
     ),
 }
 
@@ -610,9 +655,9 @@ def main(stdscr):
     stdscr.nodelay(True)
     stdscr.keypad(True)
 
-    # Prime the mentor with the welcome message
+    # Prime the mentor with the dynamic syllabus boot sequence
     mentor_renderer.set_text(
-        "ank: Telemetry established. Navigate option panels or type commands in shell."
+        curriculum_engine.build_boot_syllabus()
     )
 
     input_buffer: list[str] = []
