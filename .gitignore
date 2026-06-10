@@ -10,3 +10,8 @@ __pycache__/
 .env
 venv/
 env/
+*.log
+tmp/
+.gemini/
+**/__pycache__/
+**/.DS_Store

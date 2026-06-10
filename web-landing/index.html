@@ -3,103 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CODENAME: TERMINAL ACADEMY — Systems Thinking & DevOps for Teens</title>
-    <meta name="description" content="Next-gen EdTech platform teaching real systems engineering, Linux administration, and DevOps to teens 12-16. Learn through CLI tools and Socratic AI mentoring.">
+    <title>Terminal Academy // Scale Your Engineering Team</title>
+    <meta name="description" content="A high-fidelity retro-digital training system for future systems and DevOps engineers. Scale your engineering team.">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
-    <!-- Header Navigation -->
-    <header>
-        <div class="header-container">
-            <div class="logo-wrapper">
-                <div class="ping-indicator" id="pingIndicator" title="System Connection Active"></div>
-                <div class="logo">CODENAME: TERMINAL ACADEMY</div>
+    <div class="container">
+        <!-- Header Navigation Console -->
+        <header>
+            <div class="header-container">
+                <div class="logo-wrapper">
+                    <div class="ping-indicator" id="pingIndicator" title="System Connection Active"></div>
+                    <div class="logo">TERMINAL_ACADEMY // B2B_PORTAL</div>
+                </div>
+                <nav class="nav-links">
+                    <a href="#services" class="nav-link">SERVICES</a>
+                    <a href="#roles" class="nav-link">ROLES</a>
+                    <a href="#testimonials" class="nav-link">TELEMETRY</a>
+                    <a href="#waitlist" class="nav-link">WAITLIST</a>
+                    <a href="https://github.com/codename-terminal/academy" target="_blank" class="github-header-link" title="Open Source Repository">
+                        <img src="assets/github-pixel.png" alt="GitHub" class="github-pixel-icon" width="20" height="20">
+                    </a>
+                </nav>
             </div>
-            <nav class="nav-links">
-                <a href="#features" class="nav-link">Methodology</a>
-                <a href="#waitlist" class="nav-link">Waitlist</a>
-                <a href="https://github.com/codename-terminal/academy" target="_blank" class="github-header-link" title="Open Source Repository">
-                    <img src="assets/github-pixel.png" alt="GitHub" class="github-pixel-icon" width="20" height="20">
-                </a>
-                <button class="cta-nav" onclick="document.getElementById('waitlist').scrollIntoView({behavior: 'smooth'})">Apply Now</button>
-            </nav>
-        </div>
-    </header>
+        </header>
 
-    <!-- Main Container -->
-    <main>
-        
         <!-- Hero Section -->
-        <section class="hero-section">
-            <div class="hero-content">
-                <div class="hero-tag">PHASE 1: CLOSED BETA</div>
-                <h1 class="hero-title">
-                    Systems Thinking & <span class="accent-gradient">DevOps</span> for Teens.
-                </h1>
-                <p class="hero-description">
-                    Ditch toy-like drag-and-drop Scratch coding. We guide 12-16 year olds through real-world terminal operations, server management, and network architecture via a text-based CLI client.
-                </p>
-                <div class="hero-bullets">
-                    <div class="bullet-item">
-                        <span class="bullet-icon">⚡</span>
-                        <span>Learn Docker, Linux administration, and systems design.</span>
-                    </div>
-                    <div class="bullet-item">
-                        <span class="bullet-icon">⚡</span>
-                        <span>Interactive Socratic AI mentor that never spoils answers.</span>
-                    </div>
-                    <div class="bullet-item">
-                        <span class="bullet-icon">⚡</span>
-                        <span>Self-hosted sandbox environments on lightweight runtimes.</span>
-                    </div>
+        <section class="hero-section" id="hero">
+            <h1 class="glitch-title">SCALE YOUR ENGINEERING TEAM</h1>
+            <p class="sub-label">A high-fidelity retro-digital training system for future systems engineers.</p>
+            <div class="voxel-heart-container">
+                <img src="assets/animation.gif" alt="3D Voxel Engine Loop" class="voxel-hero-img">
+            </div>
+        </section>
+
+        <img src="assets/section-divider.png" alt="Console Section Divider" class="section-divider">
+
+        <!-- Services / Process Matrix -->
+        <section class="services-matrix" id="services">
+            <div class="panel card">
+                <div class="card-header">
+                    <span class="card-id">SYS_MOD_01</span>
+                    <span class="card-status active">ONLINE</span>
                 </div>
-                <div class="hero-actions">
-                    <button class="btn btn-primary" onclick="document.getElementById('waitlist').scrollIntoView({behavior: 'smooth'})">Join Waitlist</button>
-                    <a href="#features" class="btn btn-secondary">Learn More</a>
+                <h3>WEB DEVELOPMENT</h3>
+                <p>Train engineers in HTTP mechanics, reverse proxies, and low-latency cache architectures.</p>
+            </div>
+            <div class="panel card">
+                <div class="card-header">
+                    <span class="card-id">SYS_MOD_02</span>
+                    <span class="card-status active">ONLINE</span>
+                </div>
+                <h3>DATA ANALYTICS</h3>
+                <p>Build robust data processing pipelines, structured SQL logging, and log sanitization logic.</p>
+            </div>
+            <div class="panel card">
+                <div class="card-header">
+                    <span class="card-id">SYS_MOD_03</span>
+                    <span class="card-status active">ONLINE</span>
+                </div>
+                <h3>DEVOPS MATRIX</h3>
+                <p>Master docker-compose orchestration, gVisor runtime sandboxing, and eBPF kernel event filters.</p>
+            </div>
+        </section>
+
+        <img src="assets/section-divider.png" alt="Console Section Divider" class="section-divider">
+
+        <!-- Roles Ledger Block -->
+        <section class="roles-ledger" id="roles">
+            <div class="ledger-header">
+                <span class="ledger-subtitle">CURRICULUM CAPABILITIES</span>
+                <h2 class="ledger-title">ROLES WE PROVIDE</h2>
+            </div>
+            <div class="roles-container">
+                <div class="role-line">
+                    <h2>BACKEND ENGINEERING</h2>
+                    <span class="tags">.NET // JAVA // NODE</span>
+                </div>
+                <hr class="pixel-divider">
+                <div class="role-line">
+                    <h2>FRONTEND ENGINEERING</h2>
+                    <span class="tags">REACT // VANILLA // CURSES</span>
+                </div>
+                <hr class="pixel-divider">
+                <div class="role-line">
+                    <h2>DEVOPS ARCHITECTURE</h2>
+                    <span class="tags">DOCKER // GVISOR // LINUX</span>
                 </div>
             </div>
+        </section>
 
-            <!-- Terminal Simulator / Telemetry -->
-            <div class="telemetry-card">
-                <!-- Decorative Corner Indicators -->
-                <img src="assets/ank(B&W).png" alt="Decorative Node A" class="corner-indicator top-right">
-                <img src="assets/ank2(B&W).png" alt="Decorative Node B" class="corner-indicator bottom-left">
+        <img src="assets/section-divider.png" alt="Console Section Divider" class="section-divider">
 
-                <div class="terminal-header">
-                    <div class="terminal-controls">
-                        <div class="dot red"></div>
-                        <div class="dot yellow"></div>
-                        <div class="dot green"></div>
-                    </div>
-                    <div class="terminal-title">socratic_mentor_v1.0.sh</div>
-                </div>
-                <div class="terminal-body">
-                    <div class="terminal-log log-info">Initializing Terminal Environment... OK</div>
-                    <div class="terminal-log log-info">Connecting to Socratic Mentor... ONLINE</div>
-                    <div class="prompt-line"><span class="terminal-input">docker-compose up -d --build</span><span class="terminal-cursor-block"></span></div>
-                    <div class="terminal-log log-info">Building backend-service... OK
-Recreating container: linux-sandbox-01... OK</div>
-                    <div class="terminal-log log-warning">Explanation Gate triggered!
-SOLO Level 3 Explanation Required to proceed.</div>
-                    <div class="terminal-log log-error">Mentor: "Explain in your own words: how does specifying a read-only bind mount protect your system config?"</div>
-                    
-                    <div class="pixel-art-box">
-                        <img src="assets/animation-loading.gif" alt="Gate Loading State" class="terminal-loader">
-                        <div class="pixel-placeholder-img glitch-text">
-                            [=== GATE LOCKED ===]<br>
-                            EXPLANATION GATE: PENDING
+        <!-- Testimonial Console -->
+        <section class="testimonial-console" id="testimonials">
+            <div class="telemetry-background">
+                <img src="assets/telemetry-map.png" alt="World Telemetry Map" class="telemetry-map-img">
+            </div>
+            <div class="console-overlay-glow"></div>
+            <div class="slider-compartment">
+                <div class="testimonial-slider">
+                    <div class="testimonial-card">
+                        <div class="avatar-slot">
+                            <img src="assets/avatar-1.png" alt="Developer Avatar 1" class="pixel-avatar">
                         </div>
-                    </div>
-                    
-                    <div class="telemetry-grid">
-                        <div class="telemetry-item">
-                            <span class="telemetry-label">Sandbox CPU</span>
-                            <span class="telemetry-value" id="cpuValue">0.4%</span>
-                        </div>
-                        <div class="telemetry-item">
-                            <span class="telemetry-label">Gate Status</span>
-                            <span class="telemetry-value" id="gateStatus" style="color: var(--color-amber);">PENDING</span>
+                        <div class="testimonial-text">
+                            <p class="quote">"THE GRADUATES FROM TERMINAL ACADEMY RE-ENGINEERED OUR CI/CD PIPELINES AND REDUCED OUTAGE INCIDENTS BY 40%."</p>
+                            <div class="author-row">
+                                <span class="author">NODE_LEAD // INFRASTRUCTURE SEC</span>
+                                <span class="latency">LATENCY: 14ms</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -108,126 +121,76 @@ SOLO Level 3 Explanation Required to proceed.</div>
 
         <img src="assets/section-divider.png" alt="Console Section Divider" class="section-divider">
 
-        <!-- Features Section -->
-        <section class="features-section" id="features">
-            <div class="section-header">
-                <span class="section-subtitle">Methodology</span>
-                <h2 class="section-title">Why Systems Thinking Matters</h2>
-            </div>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">⛓️</div>
-                    <h3 class="feature-title">Explanation Gate Protocol</h3>
-                    <p class="feature-desc">Students cannot copy-paste code to succeed. Our gate system evaluates their answers using the SOLO taxonomy (Level 3) to ensure they understand the structural mechanics of their commands.</p>
-                    <div class="feature-tech">SOLO TAXONOMY / EVAL</div>
+        <!-- Waitlist / Voxel Lead Form -->
+        <section class="panel form-console" id="waitlist">
+            <h2>JOIN THE WAITLIST</h2>
+            <p class="form-desc">Deploy your registry credentials to queue terminal access permissions.</p>
+            <form id="waitlistForm">
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address</label>
+                    <input class="form-control" type="email" id="email" placeholder="ENTER EMAIL ADDRESS" required>
                 </div>
-                
-                <!-- Card 2 with Socratic AI Mentor Image Avatar -->
-                <div class="feature-card">
-                    <div class="feature-avatar-wrapper">
-                        <img src="assets/ank2.png" alt="Socratic AI Mentor" class="feature-avatar">
-                        <h3 class="feature-title">Socratic Guidance</h3>
-                    </div>
-                    <p class="feature-desc">Instead of giving direct answers or commands, the AI mentor guides students by asking thought-provoking questions, building troubleshooting and critical thinking skills.</p>
-                    <div class="feature-tech">PROMPT ENGINEERING</div>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">🌐</div>
-                    <h3 class="feature-title">Production DevOps Stack</h3>
-                    <p class="feature-desc">Teens learn exactly what professional engineers use: Linux, Docker, docker-compose, SSH keys, network routing, and security. No visual abstractions.</p>
-                    <div class="feature-tech">DOCKER / GVISOR / K8S</div>
-                </div>
-            </div>
-        </section>
-
-        <img src="assets/section-divider.png" alt="Console Section Divider" class="section-divider">
-
-        <!-- Waitlist Form Section -->
-        <section class="waitlist-section" id="waitlist">
-            <div class="waitlist-info">
-                <span class="section-subtitle" style="color: var(--color-cyan);">JOIN THE WAITLIST</span>
-                <h2 class="waitlist-title">Be the first to enter the Terminal.</h2>
-                <p class="waitlist-description">
-                    We are launching a limited closed beta. Drop your email, Discord tag, and age below to secure an early slot for your teen or yourself.
-                </p>
-                <div class="waitlist-telemetry">
-                    <div>&gt; INITIALIZING CLIENT WAITLIST PROMPT...</div>
-                    <div>&gt; REGISTRATION_LIMIT = 250_USERS</div>
-                    <div>&gt; DB_TARGET: FIRESTORE_CLOUD</div>
-                </div>
-            </div>
-            
-            <div class="waitlist-card">
-                <form id="waitlistForm">
+                <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label" for="email">Email Address</label>
-                        <input class="form-control" type="email" id="email" placeholder="name@domain.com">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="discord">Discord Tag</label>
-                            <input class="form-control" type="text" id="discord" placeholder="username#0000">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="age">Age</label>
-                            <input class="form-control" type="number" id="age" min="10" max="99" placeholder="14" required>
-                        </div>
+                        <label class="form-label" for="discord">Discord Tag</label>
+                        <input class="form-control" type="text" id="discord" placeholder="USERNAME#0000" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="primaryOS">Primary OS</label>
-                        <select class="form-control form-select" id="primaryOS">
-                            <option value="" disabled selected>Select your operating system</option>
-                            <option value="macOS Intel">macOS Intel</option>
-                            <option value="macOS Apple Silicon">macOS Apple Silicon</option>
-                            <option value="Linux">Linux</option>
-                            <option value="Windows WSL2">Windows WSL2</option>
-                        </select>
+                        <label class="form-label" for="age">Age</label>
+                        <input class="form-control" type="number" id="age" min="10" max="99" placeholder="14" required>
                     </div>
-                    <button class="form-submit-btn" type="submit" id="submitBtn">
-                        <span>Deploy Registration</span>
-                        <span class="submit-arrow">-&gt;</span>
-                    </button>
-                    <div class="form-status" id="formStatus"></div>
-                </form>
-            </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="primaryOS">Primary OS</label>
+                    <select class="form-control form-select" id="primaryOS" required>
+                        <option value="" disabled selected>SELECT PRIMARY OS</option>
+                        <option value="macOS Intel">macOS (Intel)</option>
+                        <option value="macOS Apple Silicon">macOS (Apple Silicon)</option>
+                        <option value="Linux">Linux Kernel Native</option>
+                        <option value="Windows WSL2">Windows (WSL2)</option>
+                    </select>
+                </div>
+                <button type="submit" id="submitBtn" class="form-submit-btn">
+                    <span>SUBMIT CREDENTIALS</span>
+                    <span class="submit-arrow">-&gt;</span>
+                </button>
+                <div class="form-status" id="formStatus"></div>
+            </form>
         </section>
 
-    </main>
+        <!-- Footer Console -->
+        <footer>
+            <div class="footer-container">
+                <div class="footer-logo">TERMINAL_ACADEMY // B2B_PORTAL</div>
+                <div class="footer-links">
+                    <a href="https://github.com/codename-terminal/academy" target="_blank" class="github-showcase-link" title="GitHub Project">
+                        <img src="assets/github-pixel.png" alt="GitHub" class="github-pixel-icon" width="20" height="20">
+                        <span>GitHub</span>
+                    </a>
+                </div>
+                <div class="footer-meta">NODE: ACTIVE // SEC_STREAM: SECURE // VER: 2026.06.10</div>
+            </div>
+        </footer>
+    </div>
 
     <!-- Success Modal Overlay -->
     <div class="overlay" id="successOverlay">
         <div class="modal">
             <div class="modal-icon">✓</div>
-            <h3 class="modal-title">Registration Deployed</h3>
+            <h3 class="modal-title">Credentials Logged</h3>
             <p class="modal-desc">
-                Your credentials have been logged in the Firebase waitlist database. We will ping you on Discord or email as soon as a slot opens up in the node registry.
+                Your registry request has been deployed to the waitlist database. We will sync status updates via Discord or Email as soon as access is verified.
             </p>
-            <button class="btn btn-primary" onclick="closeModal()">Return to Terminal</button>
+            <button class="form-submit-btn" style="width: auto; padding: 0.8rem 1.6rem;" onclick="closeModal()">Return to Console</button>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer>
-        <div class="footer-container">
-            <div class="footer-logo">CODENAME: TERMINAL ACADEMY</div>
-            <div class="footer-links">
-                <a href="https://github.com/codename-terminal/academy" target="_blank" class="github-showcase-link" title="GitHub Project">
-                    <img src="assets/github-pixel.png" alt="GitHub" class="github-pixel-icon" width="20" height="20">
-                    <span>GitHub</span>
-                </a>
-            </div>
-            <div class="footer-meta">NODE: ACTIVE // LATENCY: 24ms // VER: 0.1.0-BETA</div>
-        </div>
-    </footer>
-
     <!-- Firebase SDK Scripts -->
     <script type="module">
-        // Import the SDKs we need from CDN
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Web app's Firebase configuration (placeholders as requested)
+        // Web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyPlaceholder-MockConfigAPIKeyString123",
             authDomain: "terminal-academy.firebaseapp.com",
@@ -242,7 +205,6 @@ SOLO Level 3 Explanation Required to proceed.</div>
         let isMock = true;
 
         try {
-            // Check if user has updated the configuration with actual credentials
             if (firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("Placeholder")) {
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
@@ -277,7 +239,7 @@ SOLO Level 3 Explanation Required to proceed.</div>
 
             // UI feedback: loading state
             submitBtn.disabled = true;
-            submitBtn.querySelector('span').textContent = 'Deploying...';
+            submitBtn.querySelector('span').textContent = 'DEPLOYING...';
             formStatus.style.color = 'var(--text-secondary)';
             formStatus.textContent = '> Syncing telemetry packets...';
 
@@ -304,7 +266,7 @@ SOLO Level 3 Explanation Required to proceed.</div>
                         formStatus.style.color = 'var(--color-red)';
                         formStatus.textContent = `> ERR: Database rejected write. (${error.message})`;
                         submitBtn.disabled = false;
-                        submitBtn.querySelector('span').textContent = 'Deploy Registration';
+                        submitBtn.querySelector('span').textContent = 'SUBMIT CREDENTIALS';
                     }
                 }
             }, 1000);
@@ -312,25 +274,17 @@ SOLO Level 3 Explanation Required to proceed.</div>
 
         function showSuccess() {
             formStatus.style.color = 'var(--color-green)';
-            formStatus.textContent = '> Done. Terminal access queued.';
+            formStatus.textContent = '> Done. Registry node created.';
             successOverlay.classList.add('active');
             waitlistForm.reset();
             submitBtn.disabled = false;
-            submitBtn.querySelector('span').textContent = 'Deploy Registration';
+            submitBtn.querySelector('span').textContent = 'SUBMIT CREDENTIALS';
         }
 
-        // Expose close modal function globally
         window.closeModal = function() {
             successOverlay.classList.remove('active');
             formStatus.textContent = '';
         }
-
-        // Fun dynamic CPU & state telemetry tick
-        const cpuEl = document.getElementById('cpuValue');
-        setInterval(() => {
-            const mockCpu = (Math.random() * 2 + 0.1).toFixed(1);
-            cpuEl.textContent = `${mockCpu}%`;
-        }, 3000);
     </script>
 </body>
 </html>
