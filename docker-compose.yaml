@@ -11,6 +11,8 @@ services:
     runtime: runsc  # Enforces gVisor userspace virtualization shim
     init: true      # Handles signals properly and prevents zombie processes
     read_only: true # Enforces a read-only root filesystem for extra security
+    volumes:
+      - ./infra/gvisor_events.sock:/var/run/gvisor_events.sock:rw # Mount gVisor seccheck socket
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=131072k
       - /home/student:rw,noexec,nosuid,size=262144k # Allow minimal home dir storage
@@ -23,6 +25,15 @@ services:
         limits:
           cpus: '${SANDBOX_CPU_LIMIT:-0.25}'   # Parameterized CPU limit
           memory: '${SANDBOX_MEM_LIMIT:-512M}' # Parameterized RAM limit
+    networks:
+      - sandbox-network
+
+  # Microsoft Presidio Sidecar Service for PII Scrubbing
+  presidio-sidecar:
+    image: mcr.microsoft.com/presidio-analyzer:latest
+    container_name: academy-presidio-sidecar
+    ports:
+      - "5001:5001"
     networks:
       - sandbox-network
 
