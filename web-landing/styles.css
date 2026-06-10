@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700;800;900&family=Quicksand:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
 :root {
     --bg-main: #050506;
@@ -24,6 +24,8 @@
     --color-cyan: var(--color-deep-blue);
     
     --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-geometric: 'Poppins', sans-serif;
+    --font-rounded: 'Quicksand', sans-serif;
     --font-mono: 'JetBrains Mono', Courier New, monospace;
     --transition-smooth: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     --glow-ember: 0 0 12px rgba(255, 85, 0, 0.25);
@@ -43,6 +45,11 @@ body, input, button, select, textarea {
     font-family: var(--font-sans), sans-serif;
 }
 
+h2, h3, .modal-title, .ledger-title {
+    font-family: var(--font-rounded), sans-serif;
+    font-weight: 700;
+}
+
 body {
     background-color: var(--bg-main);
     color: var(--text-primary);
@@ -50,8 +57,8 @@ body {
     overflow-x: hidden;
     position: relative;
     background-image: 
-        radial-gradient(circle at 50% 30%, rgba(255, 85, 0, 0.03), transparent 60%),
-        radial-gradient(circle at 15% 80%, rgba(0, 68, 255, 0.02), transparent 50%);
+        radial-gradient(circle at bottom left, rgba(255, 110, 0, 0.12), transparent 55%),
+        linear-gradient(to right, #1a0f0d, #050506);
     background-size: 100% 100%, 100% 100%;
     background-position: center;
 }
@@ -105,8 +112,9 @@ header {
 }
 
 .logo {
+    font-family: var(--font-geometric), sans-serif;
     font-size: 1.35rem;
-    font-weight: 700;
+    font-weight: 900;
     letter-spacing: 2px;
     color: var(--text-primary);
     text-shadow: 0 0 8px rgba(255, 85, 0, 0.2);
@@ -182,6 +190,7 @@ header {
 }
 
 .glitch-title {
+    font-family: var(--font-geometric), sans-serif;
     font-size: 5rem;
     font-weight: 900;
     line-height: 1.05;
