@@ -20,7 +20,7 @@
                     <a href="#services" class="nav-link">SERVICES</a>
                     <a href="#roles" class="nav-link">ROLES</a>
                     <a href="#testimonials" class="nav-link">TELEMETRY</a>
-                    <a href="#waitlist" class="nav-link">WAITLIST</a>
+                    <a href="https://polar.sh/terminal-academy/products/starter" class="nav-link">WAITLIST</a>
                     <a href="https://github.com/codename-terminal/academy" target="_blank" class="github-header-link" title="Open Source Repository">
                         <img src="assets/github-pixel.png" alt="GitHub" class="github-pixel-icon" width="20" height="20">
                     </a>
@@ -48,6 +48,9 @@
                 </div>
                 <h3>WEB DEVELOPMENT</h3>
                 <p>Train engineers in HTTP mechanics, reverse proxies, and low-latency cache architectures.</p>
+                <a href="https://polar.sh/terminal-academy/products/starter" class="form-submit-btn" style="text-align: center; text-decoration: none; margin-top: auto; padding: 0.6rem; font-size: 1.1rem;">
+                    <span>ACTIVATE NODE</span>
+                </a>
             </div>
             <div class="panel card">
                 <div class="card-header">
@@ -56,6 +59,9 @@
                 </div>
                 <h3>DATA ANALYTICS</h3>
                 <p>Build robust data processing pipelines, structured SQL logging, and log sanitization logic.</p>
+                <a href="https://polar.sh/terminal-academy/products/starter" class="form-submit-btn" style="text-align: center; text-decoration: none; margin-top: auto; padding: 0.6rem; font-size: 1.1rem;">
+                    <span>ACTIVATE NODE</span>
+                </a>
             </div>
             <div class="panel card">
                 <div class="card-header">
@@ -64,6 +70,9 @@
                 </div>
                 <h3>DEVOPS MATRIX</h3>
                 <p>Master docker-compose orchestration, gVisor runtime sandboxing, and eBPF kernel event filters.</p>
+                <a href="https://polar.sh/terminal-academy/products/starter" class="form-submit-btn" style="text-align: center; text-decoration: none; margin-top: auto; padding: 0.6rem; font-size: 1.1rem;">
+                    <span>ACTIVATE NODE</span>
+                </a>
             </div>
         </section>
 
@@ -185,6 +194,22 @@
         </div>
     </div>
 
+    <!-- Token Modal Overlay -->
+    <div class="overlay" id="tokenOverlay">
+        <div class="modal">
+            <div class="modal-icon">⚙</div>
+            <h3 class="modal-title">ACCESS_GATE UNLOCKED</h3>
+            <p class="modal-desc">
+                Your payment was validated. Copy this registry activation token to authorize your CLI client:
+            </p>
+            <div class="token-container" style="background: var(--bg-main); border: 1px dashed var(--color-ember); padding: 0.8rem; width: 100%; font-family: monospace; font-size: 1.1rem; color: var(--color-ember); margin: 0.5rem 0; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box;">
+                <span id="tokenText">TA_NODE_ACTIVE_7f9b8c2e</span>
+                <button class="form-submit-btn" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.9rem; font-weight: bold; margin-left: 10px;" onclick="copyToken()">COPY</button>
+            </div>
+            <button class="form-submit-btn" style="width: auto; padding: 0.8rem 1.6rem;" onclick="closeTokenModal()">Return to Console</button>
+        </div>
+    </div>
+
     <!-- Firebase SDK Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -284,6 +309,36 @@
         window.closeModal = function() {
             successOverlay.classList.remove('active');
             formStatus.textContent = '';
+        }
+
+        // Check for checkout success parameter in url query string
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('checkout') === 'success' || urlParams.get('status') === 'success') {
+            const randHex = Math.random().toString(16).substring(2, 10).toUpperCase();
+            document.getElementById('tokenText').textContent = `TA_NODE_ACTIVE_${randHex}`;
+            document.getElementById('tokenOverlay').classList.add('active');
+            
+            // Clean up the URL search parameter without page reload
+            const newUrl = window.location.pathname + window.location.hash;
+            window.history.replaceState({}, document.title, newUrl);
+        }
+
+        window.copyToken = function() {
+            const tokenVal = document.getElementById('tokenText').textContent;
+            navigator.clipboard.writeText(tokenVal).then(() => {
+                const copyBtn = document.querySelector('#tokenOverlay .token-container button');
+                const origText = copyBtn.textContent;
+                copyBtn.textContent = 'DONE';
+                setTimeout(() => {
+                    copyBtn.textContent = origText;
+                }, 1500);
+            }).catch(err => {
+                console.error('Failed to copy token: ', err);
+            });
+        }
+
+        window.closeTokenModal = function() {
+            document.getElementById('tokenOverlay').classList.remove('active');
         }
     </script>
 </body>
