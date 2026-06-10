@@ -1,44 +1,19 @@
 version: '3.8'
 
 services:
-  # Socratic Starter Tier Sandbox
-  sandbox-starter:
+  # Dynamic Sandbox Orchestration Service
+  sandbox:
     build:
       context: ./cli-client
       dockerfile: Dockerfile.sandbox
-    image: terminal-academy/sandbox-starter:latest
-    container_name: academy-sandbox-starter
+    image: terminal-academy/sandbox:latest
+    container_name: academy-sandbox
     runtime: runsc  # Enforces gVisor userspace virtualization shim
     init: true      # Handles signals properly and prevents zombie processes
     read_only: true # Enforces a read-only root filesystem for extra security
     tmpfs:
-      - /tmp:rw,noexec,nosuid,size=65536k
-      - /home/student:rw,noexec,nosuid,size=131072k # Allow minimal home dir storage
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    deploy:
-      resources:
-        limits:
-          cpus: '0.25'
-          memory: 512M
-    networks:
-      - starter-network
-
-  # DevOps Pro Tier Sandbox
-  sandbox-pro:
-    build:
-      context: ./cli-client
-      dockerfile: Dockerfile.sandbox
-    image: terminal-academy/sandbox-pro:latest
-    container_name: academy-sandbox-pro
-    runtime: runsc  # Enforces gVisor userspace virtualization shim
-    init: true
-    read_only: true
-    tmpfs:
       - /tmp:rw,noexec,nosuid,size=131072k
-      - /home/student:rw,noexec,nosuid,size=262144k
+      - /home/student:rw,noexec,nosuid,size=262144k # Allow minimal home dir storage
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -46,18 +21,13 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.50'
-          memory: 1024M
+          cpus: '${SANDBOX_CPU_LIMIT:-0.25}'   # Parameterized CPU limit
+          memory: '${SANDBOX_MEM_LIMIT:-512M}' # Parameterized RAM limit
     networks:
-      - pro-network
+      - sandbox-network
 
 networks:
-  # Starter Tier network: completely isolated from the internet (Strict Egress/Ingress Blacklist)
-  starter-network:
-    internal: true
-    driver: bridge
-
-  # Pro Tier network: isolated bridge network for telemetry and eBPF integration
-  pro-network:
+  # Sandbox Tier network: isolated bridge network for telemetry and eBPF integration
+  sandbox-network:
     internal: true
     driver: bridge
