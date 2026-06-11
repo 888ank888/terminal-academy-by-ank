@@ -1250,23 +1250,27 @@ def main(stdscr):
     # flicker, memory churn, and crash risk during rapid resizes.
     # ---------------------------------------------------------------------------
     prev_h, prev_w = 0, 0
-    win_work   = None
-    win_ank    = None
-    win_prompt = None
+    win_work      = None
+    win_mentor    = None
+    win_telemetry = None
+    win_prompt    = None
 
     def rebuild_windows(h: int, w: int):
         """Recalculate layout and (re)create all sub-windows."""
-        nonlocal win_work, win_ank, win_prompt
-        w_work   = int(w * 0.52)
-        # FIX: cap ANK pane width so it never dominates ultra-wide terminals
-        w_ank    = min(w - w_work - 4, 60)
+        nonlocal win_work, win_mentor, win_telemetry, win_prompt
+        w_work   = int(w * 0.60)
+        w_right  = w - w_work - 4
         h_panes  = h - 5
-        win_work   = stdscr.derwin(h_panes, w_work,  1,         2)
-        win_ank    = stdscr.derwin(h_panes, w_ank,   1,         w_work + 3)
-        win_prompt = stdscr.derwin(2,       w_work,  h - 3,     2)
-        return w_work, w_ank, h_panes
+        h_mentor = int(h_panes * 0.40)
+        h_telem  = h_panes - h_mentor
 
-    w_work = w_ank = h_panes = 0   # will be set on first rebuild
+        win_work      = stdscr.derwin(h_panes, w_work,  1, 2)
+        win_mentor    = stdscr.derwin(h_mentor, w_right, 1, w_work + 3)
+        win_telemetry = stdscr.derwin(h_telem, w_right, 1 + h_mentor, w_work + 3)
+        win_prompt    = stdscr.derwin(2, w_work, h - 3, 2)
+        return w_work, w_right, h_panes, h_mentor, h_telem
+
+    w_work = w_right = h_panes = h_mentor = h_telem = 0   # will be set on first rebuild
 
     while True:
         h, w = stdscr.getmaxyx()
@@ -1295,7 +1299,7 @@ def main(stdscr):
         # --- Rebuild windows if dimensions changed ---
         if h != prev_h or w != prev_w:
             stdscr.clear()
-            w_work, w_ank, h_panes = rebuild_windows(h, w)
+            w_work, w_right, h_panes, h_mentor, h_telem = rebuild_windows(h, w)
             prev_h, prev_w = h, w
 
         # --- Advance mentor streaming animation ---
@@ -1339,68 +1343,90 @@ def main(stdscr):
             win_work.attroff(color)
 
         # -----------------------------------------------------------------------
-        # Render: Right Pane — ANK Monitor
+        # Render: Right-Top Pane — Socratic Mentor
         # -----------------------------------------------------------------------
-        win_ank.erase()
-        win_ank.attron(curses.color_pair(ank_border_color))
-        win_ank.box()
-        win_ank.attroff(curses.color_pair(ank_border_color))
+        win_mentor.erase()
+        win_mentor.attron(curses.color_pair(ank_border_color))
+        win_mentor.box()
+        win_mentor.attroff(curses.color_pair(ank_border_color))
 
-        win_ank.attron(curses.color_pair(ank_border_color) | curses.A_BOLD)
-        win_ank.addstr(0, 2, "[ ANK MONITOR ]")
-        win_ank.attroff(curses.color_pair(ank_border_color) | curses.A_BOLD)
+        win_mentor.attron(curses.color_pair(ank_border_color) | curses.A_BOLD)
+        win_mentor.addstr(0, 2, "[ SOCRATIC MENTOR ]")
+        win_mentor.attroff(curses.color_pair(ank_border_color) | curses.A_BOLD)
 
-        # Reserve space at bottom of ANK pane for menu options
-        options_count   = len(menu_options)
-        options_start_y = h_panes - options_count - 2
-
-        # Print streaming mentor dialogue
         y_cursor = 2
         visible_lines = mentor_renderer.visible_lines
         for line_idx, line in enumerate(visible_lines):
-            wrapped = wrap_text(line, w_ank - 4)
+            wrapped = wrap_text(line, w_right - 4)
             for w_line in wrapped:
-                if y_cursor >= options_start_y - 3:
+                if y_cursor >= h_mentor - 1:
                     break
-                win_ank.attron(curses.color_pair(ank_border_color))
-                win_ank.addstr(y_cursor, 2, w_line[: w_ank - 4])
-                win_ank.attroff(curses.color_pair(ank_border_color))
+                win_mentor.attron(curses.color_pair(ank_border_color))
+                win_mentor.addstr(y_cursor, 2, w_line[: w_right - 4])
+                win_mentor.attroff(curses.color_pair(ank_border_color))
                 y_cursor += 1
             else:
-                # Add blank line between paragraphs (skip after last)
-                # FIX: index-based comparison replaces broken identity check
                 if line_idx < len(visible_lines) - 1:
                     y_cursor += 1
                 continue
             break
 
+        # -----------------------------------------------------------------------
+        # Render: Right-Bottom Pane — Telemetry HUD
+        # -----------------------------------------------------------------------
+        win_telemetry.erase()
+        win_telemetry.attron(curses.color_pair(COLOR_CYAN))
+        win_telemetry.box()
+        win_telemetry.attroff(curses.color_pair(COLOR_CYAN))
+
+        win_telemetry.attron(curses.color_pair(COLOR_CYAN) | curses.A_BOLD)
+        win_telemetry.addstr(0, 2, "[ TELEMETRY HUD ]")
+        win_telemetry.attroff(curses.color_pair(COLOR_CYAN) | curses.A_BOLD)
+
+        options_count   = len(menu_options)
+        options_start_y = h_telem - options_count - 2
+
         # Processing animation frame
-        animation_y = options_start_y - 2
-        if animation_y > y_cursor:
-            frame_text  = animation_engine.get_next_frame()
-            frame_color = COLOR_GREEN if not warning_state else COLOR_ALERT
-            win_ank.attron(curses.color_pair(frame_color))
-            win_ank.addstr(animation_y, 2, frame_text[: w_ank - 4])
-            win_ank.attroff(curses.color_pair(frame_color))
+        animation_y = 2
+        frame_text  = animation_engine.get_next_frame()
+        frame_color = COLOR_GREEN if not warning_state else COLOR_ALERT
+        win_telemetry.attron(curses.color_pair(frame_color))
+        win_telemetry.addstr(animation_y, 2, frame_text[: w_right - 4])
+        win_telemetry.attroff(curses.color_pair(frame_color))
+
+        # Live telemetry text
+        telem_y = animation_y + 2
+        stats = keystroke_analyzer.session_stats()
+        telem_lines = [
+            f"CPU/RAM: {tier_matrix.tiers['devops_professional']['cpu_limit']} / {tier_matrix.tiers['devops_professional']['ram_limit']}",
+            f"eBPF Shield: {'ACTIVE (Masking)' if ebpf_interceptor.echo_state == 'BLIND' else 'STANDBY'}",
+            f"WPM: ~{stats['approx_wpm']} | Paste: {stats['paste_blocks']}"
+        ]
+        for idx, line in enumerate(telem_lines):
+            if telem_y + idx >= options_start_y - 1:
+                break
+            win_telemetry.attron(curses.color_pair(COLOR_CYAN))
+            win_telemetry.addstr(telem_y + idx, 2, line[:w_right - 4])
+            win_telemetry.attroff(curses.color_pair(COLOR_CYAN))
 
         # System utilities header
-        win_ank.attron(curses.color_pair(ank_border_color))
-        win_ank.addstr(options_start_y, 2, "=== SYSTEM UTILITIES ===")
-        win_ank.attroff(curses.color_pair(ank_border_color))
+        win_telemetry.attron(curses.color_pair(COLOR_CYAN))
+        win_telemetry.addstr(options_start_y, 2, "=== SYSTEM UTILITIES ===")
+        win_telemetry.attroff(curses.color_pair(COLOR_CYAN))
 
         # Menu options
         for opt_idx, option in enumerate(menu_options):
             y_opt = options_start_y + 1 + opt_idx
-            if y_opt >= h_panes - 1:
+            if y_opt >= h_telem - 1:
                 break
             if focus_mode == "MENU" and opt_idx == selected_menu_idx:
-                win_ank.attron(curses.color_pair(COLOR_HIGHLIGHT))
-                win_ank.addstr(y_opt, 2, f"[*] {option[:w_ank - 8]:<{w_ank - 8}} <<")
-                win_ank.attroff(curses.color_pair(COLOR_HIGHLIGHT))
+                win_telemetry.attron(curses.color_pair(COLOR_HIGHLIGHT))
+                win_telemetry.addstr(y_opt, 2, f"[*] {option[:w_right - 8]:<{w_right - 8}} <<")
+                win_telemetry.attroff(curses.color_pair(COLOR_HIGHLIGHT))
             else:
-                win_ank.attron(curses.color_pair(COLOR_DEFAULT))
-                win_ank.addstr(y_opt, 2, f"[ ] {option[:w_ank - 6]}")
-                win_ank.attroff(curses.color_pair(COLOR_DEFAULT))
+                win_telemetry.attron(curses.color_pair(COLOR_DEFAULT))
+                win_telemetry.addstr(y_opt, 2, f"[ ] {option[:w_right - 6]}")
+                win_telemetry.attroff(curses.color_pair(COLOR_DEFAULT))
 
         # -----------------------------------------------------------------------
         # Render: Bottom — Input Prompt
@@ -1445,7 +1471,8 @@ def main(stdscr):
         # Flush all panes
         stdscr.refresh()
         win_work.refresh()
-        win_ank.refresh()
+        win_mentor.refresh()
+        win_telemetry.refresh()
         win_prompt.refresh()
 
         # -----------------------------------------------------------------------
