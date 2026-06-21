@@ -1290,7 +1290,7 @@ def run_login_gate(stdscr):
             pass
             
         # Prompts
-        prompt1 = "Please enter your Access Token:"
+        prompt1 = "Please enter your Callsign (Username):"
         prompt2 = "[Press ENTER to submit | ESC or Ctrl+C to exit]"
         
         try:
@@ -1305,7 +1305,7 @@ def run_login_gate(stdscr):
             pass
             
         # Draw input field border or brackets
-        token_label = "Token: "
+        token_label = "Callsign: "
         field_width = 40
         field_start_x = start_x + (box_w - (len(token_label) + field_width + 2)) // 2
         field_y = start_y + 4
@@ -1318,12 +1318,12 @@ def run_login_gate(stdscr):
         except Exception:
             pass
             
-        # Draw masked input
-        masked_input = "*" * len(token_buffer)
-        visible_masked = masked_input[-field_width:]
+        # Draw input
+        input_str = "".join(token_buffer)
+        visible_input = input_str[-field_width:]
         try:
             stdscr.attron(curses.color_pair(COLOR_GREEN) | curses.A_BOLD)
-            stdscr.addstr(field_y, field_start_x + len(token_label) + 1, visible_masked)
+            stdscr.addstr(field_y, field_start_x + len(token_label) + 1, visible_input)
             stdscr.attroff(curses.color_pair(COLOR_GREEN) | curses.A_BOLD)
         except Exception:
             pass
@@ -1357,11 +1357,11 @@ def run_login_gate(stdscr):
         elif ch in (10, 13, curses.KEY_ENTER):
             token = "".join(token_buffer).strip()
             if not token:
-                error_msg = "Token cannot be empty"
+                error_msg = "Callsign cannot be empty"
                 continue
                 
-            # Show "Authenticating..." status
-            auth_status = "Authenticating..."
+            # Show "Initializing..." status
+            auth_status = "Initializing Session..."
             try:
                 stdscr.attron(curses.color_pair(COLOR_CYAN))
                 stdscr.addstr(start_y + 6, start_x + 2, " " * (box_w - 4))
@@ -1370,19 +1370,13 @@ def run_login_gate(stdscr):
             except Exception:
                 pass
             stdscr.refresh()
+            time.sleep(0.3)
             
-            try:
-                session = verify_session(token)
-                if session.get("authenticated"):
-                    set_cursor_visibility(False)
-                    stdscr.nodelay(True)
-                    return session
-                else:
-                    error_msg = "Invalid Token"
-            except AuthenticationError as e:
-                error_msg = str(e)
-            except Exception as e:
-                error_msg = f"Auth error: {str(e)}"
+            # Beta version bypass: assign devops_professional tier automatically
+            session = {"authenticated": True, "tier": "devops_professional", "username": token}
+            set_cursor_visibility(False)
+            stdscr.nodelay(True)
+            return session
         elif ch in (curses.KEY_BACKSPACE, 127, 8):
             if token_buffer:
                 token_buffer.pop()
