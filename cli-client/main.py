@@ -1391,7 +1391,12 @@ def main(stdscr):
     global focus_mode, selected_menu_idx, warning_state, user_tier
 
     init_colors()
-    session = run_login_gate(stdscr)
+    
+    # Beta bypass: completely skip the login screen
+    # session = run_login_gate(stdscr)
+    session = {"authenticated": True, "tier": "devops_professional", "username": "beta_tester"}
+    set_cursor_visibility(False)
+    
     user_tier = session.get("tier", "devops_professional")
     
     stdscr.nodelay(True)
