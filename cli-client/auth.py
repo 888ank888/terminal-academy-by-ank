@@ -1,4 +1,6 @@
-import requests
+import urllib.request
+import urllib.error
+import json
 
 AUTH_ENDPOINT = "https://api.terminal.academy/v1/auth"
 
@@ -13,8 +15,19 @@ def verify_session(token):
     
     # Live API path fallback
     try:
-        response = requests.post(AUTH_ENDPOINT, json={"token": token}, timeout=5)
-        response.raise_for_status()
-        return response.json()
+        data = json.dumps({"token": token}).encode("utf-8")
+        req = urllib.request.Request(
+            AUTH_ENDPOINT,
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=5) as response:
+            res_data = response.read().decode("utf-8")
+            return json.loads(res_data)
+    except urllib.error.HTTPError as e:
+        raise AuthenticationError(f"Auth server returned error {e.code}: {e.reason}")
+    except urllib.error.URLError as e:
+        raise AuthenticationError(f"Auth server unreachable: {e.reason}")
     except Exception as e:
         raise AuthenticationError(f"Auth server unreachable: {str(e)}")

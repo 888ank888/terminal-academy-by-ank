@@ -2,6 +2,7 @@ import curses
 import time
 import sys
 import collections
+from auth import verify_session, AuthenticationError
 
 # ---------------------------------------------------------------------------
 # Color Pair Constants
@@ -27,6 +28,7 @@ menu_options = [
     "2. Tariffs & Pricing",
     "3. System Docs"
 ]
+user_tier         = "devops_professional"
 
 
 # ---------------------------------------------------------------------------
@@ -1225,14 +1227,179 @@ def trigger_menu_choice(idx: int) -> bool:
     return True
 
 
+def set_cursor_visibility(visible):
+    try:
+        curses.curs_set(1 if visible else 0)
+    except Exception:
+        pass
+
+def run_login_gate(stdscr):
+    set_cursor_visibility(True)
+    stdscr.nodelay(False)
+    stdscr.keypad(True)
+    
+    token_buffer = []
+    error_msg = ""
+    
+    while True:
+        stdscr.clear()
+        h, w = stdscr.getmaxyx()
+        
+        # Guard minimum terminal size
+        if h < 24 or w < 90:
+            try:
+                stdscr.attron(curses.color_pair(COLOR_ALERT) | curses.A_BOLD)
+                stdscr.addstr(h//2, max(0, (w - 38)//2), "PLEASE RESIZE TERMINAL TO AT LEAST 90x24")
+                stdscr.attroff(curses.color_pair(COLOR_ALERT) | curses.A_BOLD)
+            except Exception:
+                pass
+            stdscr.refresh()
+            time.sleep(0.1)
+            try:
+                ch = stdscr.getch()
+            except Exception:
+                continue
+            if ch == ord('q'):
+                sys.exit(0)
+            continue
+            
+        # Draw a centered login box
+        box_h, box_w = 10, 60
+        start_y = (h - box_h) // 2
+        start_x = (w - box_w) // 2
+        
+        # Draw borders
+        border_color = curses.color_pair(COLOR_CYAN)
+        try:
+            stdscr.attron(border_color)
+            stdscr.addstr(start_y, start_x, "┌" + "─" * (box_w - 2) + "┐")
+            for y in range(start_y + 1, start_y + box_h - 1):
+                stdscr.addstr(y, start_x, "│" + " " * (box_w - 2) + "│")
+            stdscr.addstr(start_y + box_h - 1, start_x, "└" + "─" * (box_w - 2) + "┘")
+            stdscr.attroff(border_color)
+        except Exception:
+            pass
+            
+        # Draw Title
+        title = " TERMINAL ACADEMY LOGIN "
+        try:
+            stdscr.attron(curses.color_pair(COLOR_GREEN) | curses.A_BOLD)
+            stdscr.addstr(start_y, start_x + (box_w - len(title)) // 2, title)
+            stdscr.attroff(curses.color_pair(COLOR_GREEN) | curses.A_BOLD)
+        except Exception:
+            pass
+            
+        # Prompts
+        prompt1 = "Please enter your Access Token:"
+        prompt2 = "[Press ENTER to submit | ESC or Ctrl+C to exit]"
+        
+        try:
+            stdscr.attron(curses.color_pair(COLOR_DEFAULT))
+            stdscr.addstr(start_y + 2, start_x + (box_w - len(prompt1)) // 2, prompt1)
+            stdscr.attroff(curses.color_pair(COLOR_DEFAULT))
+            
+            stdscr.attron(curses.color_pair(COLOR_CYAN))
+            stdscr.addstr(start_y + 8, start_x + (box_w - len(prompt2)) // 2, prompt2)
+            stdscr.attroff(curses.color_pair(COLOR_CYAN))
+        except Exception:
+            pass
+            
+        # Draw input field border or brackets
+        token_label = "Token: "
+        field_width = 40
+        field_start_x = start_x + (box_w - (len(token_label) + field_width + 2)) // 2
+        field_y = start_y + 4
+        
+        try:
+            stdscr.attron(curses.color_pair(COLOR_DEFAULT))
+            stdscr.addstr(field_y, field_start_x, token_label + "[")
+            stdscr.addstr(field_y, field_start_x + len(token_label) + 1 + field_width, "]")
+            stdscr.attroff(curses.color_pair(COLOR_DEFAULT))
+        except Exception:
+            pass
+            
+        # Draw masked input
+        masked_input = "*" * len(token_buffer)
+        visible_masked = masked_input[-field_width:]
+        try:
+            stdscr.attron(curses.color_pair(COLOR_GREEN) | curses.A_BOLD)
+            stdscr.addstr(field_y, field_start_x + len(token_label) + 1, visible_masked)
+            stdscr.attroff(curses.color_pair(COLOR_GREEN) | curses.A_BOLD)
+        except Exception:
+            pass
+            
+        # Draw error message if any
+        if error_msg:
+            err_visible = error_msg[:box_w - 6]
+            try:
+                stdscr.attron(curses.color_pair(COLOR_ALERT) | curses.A_BOLD)
+                stdscr.addstr(start_y + 6, start_x + (box_w - len(err_visible)) // 2, err_visible)
+                stdscr.attroff(curses.color_pair(COLOR_ALERT) | curses.A_BOLD)
+            except Exception:
+                pass
+                
+        # Move cursor to the end of input
+        cursor_x = field_start_x + len(token_label) + 1 + min(len(token_buffer), field_width)
+        try:
+            stdscr.move(field_y, cursor_x)
+        except Exception:
+            pass
+        stdscr.refresh()
+        
+        # Get character input (blocking)
+        try:
+            ch = stdscr.getch()
+        except KeyboardInterrupt:
+            sys.exit(0)
+            
+        if ch == 27: # ESC key
+            sys.exit(0)
+        elif ch in (10, 13, curses.KEY_ENTER):
+            token = "".join(token_buffer).strip()
+            if not token:
+                error_msg = "Token cannot be empty"
+                continue
+                
+            # Show "Authenticating..." status
+            auth_status = "Authenticating..."
+            try:
+                stdscr.attron(curses.color_pair(COLOR_CYAN))
+                stdscr.addstr(start_y + 6, start_x + 2, " " * (box_w - 4))
+                stdscr.addstr(start_y + 6, start_x + (box_w - len(auth_status)) // 2, auth_status)
+                stdscr.attroff(curses.color_pair(COLOR_CYAN))
+            except Exception:
+                pass
+            stdscr.refresh()
+            
+            try:
+                session = verify_session(token)
+                if session.get("authenticated"):
+                    set_cursor_visibility(False)
+                    stdscr.nodelay(True)
+                    return session
+                else:
+                    error_msg = "Invalid Token"
+            except AuthenticationError as e:
+                error_msg = str(e)
+            except Exception as e:
+                error_msg = f"Auth error: {str(e)}"
+        elif ch in (curses.KEY_BACKSPACE, 127, 8):
+            if token_buffer:
+                token_buffer.pop()
+        elif 32 <= ch <= 126:
+            if len(token_buffer) < 100:
+                token_buffer.append(chr(ch))
+
 # ---------------------------------------------------------------------------
 # Main curses Entry Point
 # ---------------------------------------------------------------------------
 def main(stdscr):
-    global focus_mode, selected_menu_idx, warning_state
+    global focus_mode, selected_menu_idx, warning_state, user_tier
 
-    curses.curs_set(0)
     init_colors()
+    session = run_login_gate(stdscr)
+    user_tier = session.get("tier", "devops_professional")
+    
     stdscr.nodelay(True)
     stdscr.keypad(True)
 
@@ -1397,8 +1564,9 @@ def main(stdscr):
         # Live telemetry text
         telem_y = animation_y + 2
         stats = keystroke_analyzer.session_stats()
+        tier_info = tier_matrix.enforce_tier_constraints(user_tier)
         telem_lines = [
-            f"CPU/RAM: {tier_matrix.tiers['devops_professional']['cpu_limit']} / {tier_matrix.tiers['devops_professional']['ram_limit']}",
+            f"CPU/RAM: {tier_info['cpu_limit']} / {tier_info['ram_limit']}",
             f"eBPF Shield: {'ACTIVE (Masking)' if ebpf_interceptor.echo_state == 'BLIND' else 'STANDBY'}",
             f"WPM: ~{stats['approx_wpm']} | Paste: {stats['paste_blocks']}"
         ]
@@ -1443,7 +1611,7 @@ def main(stdscr):
             stdscr.attroff(curses.color_pair(COLOR_GREEN))
 
         if focus_mode == "COMMAND":
-            curses.curs_set(1)
+            set_cursor_visibility(True)
             win_prompt.attron(curses.color_pair(COLOR_GREEN) | curses.A_BOLD)
             win_prompt.addstr(0, 0, prompt_prefix)
             win_prompt.attroff(curses.color_pair(COLOR_GREEN) | curses.A_BOLD)
@@ -1463,7 +1631,7 @@ def main(stdscr):
             except curses.error:
                 pass
         else:
-            curses.curs_set(0)
+            set_cursor_visibility(False)
             win_prompt.attron(curses.color_pair(COLOR_DEFAULT))
             win_prompt.addstr(0, 0, "[NAVIGATING UTILITIES MENU - USE ARROWS / ENTER]")
             win_prompt.attroff(curses.color_pair(COLOR_DEFAULT))
