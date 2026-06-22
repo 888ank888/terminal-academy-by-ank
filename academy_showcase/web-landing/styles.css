@@ -14,6 +14,10 @@
     --glow-edge: rgba(5, 5, 6, 0);
     --nav-bg: rgba(5, 5, 6, 0.7);
     
+    --term-bg: #050506;
+    --term-header: #18181b;
+    --term-text: #e5e7eb;
+    
     --font-sans: 'Space Grotesk', system-ui, sans-serif;
     --font-mono: 'Fira Code', monospace;
 }
@@ -31,6 +35,10 @@ body.theme-light {
     --glow-core-2: rgba(245, 158, 11, 0.15);
     --glow-edge: rgba(248, 250, 252, 0);
     --nav-bg: rgba(255, 255, 255, 0.7);
+    
+    --term-bg: #ffffff;
+    --term-header: #f1f5f9;
+    --term-text: #1e293b;
 }
 
 /* Theme Transition Wave Effect */
@@ -275,7 +283,7 @@ body {
 
 /* Terminal Mockup */
 .terminal-mockup {
-    background: #050506;
+    background: var(--term-bg);
     border-radius: 12px;
     border: 1px solid var(--border-color);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
@@ -288,7 +296,7 @@ body {
     box-shadow: 0 35px 60px -15px rgba(255, 85, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 .terminal-header {
-    background: #18181b;
+    background: var(--term-header);
     padding: 12px 16px;
     display: flex;
     align-items: center;
@@ -318,7 +326,7 @@ body {
     padding: 24px;
     font-family: var(--font-mono);
     font-size: 0.9rem;
-    color: #e5e7eb;
+    color: var(--term-text);
     line-height: 1.6;
     height: 380px;
     overflow: hidden;
@@ -513,7 +521,7 @@ body {
 .os-selector {
     appearance: none;
     -webkit-appearance: none;
-    background: #18181b url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ff5500' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 16px center;
+    background: var(--bg-raised) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ff5500' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 16px center;
     background-size: 16px 16px;
     border: 1px solid var(--border-color);
     color: var(--text-main);
@@ -534,7 +542,7 @@ body {
     box-shadow: 0 0 0 2px rgba(255, 85, 0, 0.2);
 }
 .os-selector option {
-    background: #18181b;
+    background: var(--bg-raised);
     color: var(--text-main);
 }
 .steps-container {

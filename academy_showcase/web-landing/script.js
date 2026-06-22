@@ -471,6 +471,27 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Interactive 3D Tilt for Feature Cards (Max 5 deg)
+    const featureCards = document.querySelectorAll('.feature-card');
+    featureCards.forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+            if (window.innerWidth < 1024) return;
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = ((y - centerY) / centerY) * -5;
+            const rotateY = ((x - centerX) / centerX) * 5;
+            card.style.transform = `perspective(1000px) scale(1.02) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            card.style.transition = 'transform 0.1s ease-out';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'perspective(1000px) scale(1) rotateX(0deg) rotateY(0deg)';
+            card.style.transition = 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+        });
+    });
+
     // ==========================================
     // Theme Toggle Logic
     // ==========================================
