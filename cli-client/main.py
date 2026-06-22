@@ -40,11 +40,11 @@ class AcademyCurriculumEngine:
         # Progression gate: students must pass SOLO L3 explanation before
         # the next module unlocks. Status reflects current sandbox readiness.
         self.modules = {
-            "1": {"title": "Secure Remote Access: SSH Hardening & Key Auth",  "status": "READY"},
-            "2": {"title": "Local AI Infrastructure: ollama & Llama 3.2",      "status": "MOCK_MODE"},
-            "3": {"title": "IoT Automation: Headless Raspberry Pi Bash",        "status": "LOCKED"},
-            "4": {"title": "Digital Forensics: Sherlock OSINT Pipelines",       "status": "LOCKED"},
-            "5": {"title": "DDoS Defense: iptables Packet Filtering",           "status": "LOCKED"},
+            "1": {"title": "Access & Identity: The SSH Lifecycle",          "status": "READY"},
+            "2": {"title": "Local AI: DeepSeek-R1-Distill-Llama-8B (ollama)", "status": "READY"},
+            "3": {"title": "IoT Automation: Headless Raspberry Pi Bash",        "status": "READY"},
+            "4": {"title": "Digital Forensics: Sherlock OSINT Pipelines",       "status": "READY"},
+            "5": {"title": "DDoS Defense: iptables Packet Filtering",           "status": "READY"},
         }
         self.active_module = None
         self.module_state  = 0
@@ -96,10 +96,11 @@ class AcademyCurriculumEngine:
         """
         status_badge = {
             "READY":     "[READY]",
-            "MOCK_MODE": "[MOCK] ",
+            "IN_PROGRESS":"[ACTIVE]",
+            "COMPLETED": "[DONE] ",
             "LOCKED":    "[LOCK] ",
         }
-        lines = ["ank: ACADEMY SYLLABUS — 5-MODULE HACKER TRACK\n"]
+        lines = ["ank: ACADEMY SYLLABUS — 5-MODULE HACKER TRACK (BETA: ALL UNLOCKED)\n"]
         for k, v in self.modules.items():
             badge = status_badge.get(v['status'], "[???] ")
             lines.append(f"  {k}. {badge} {v['title']}")
@@ -866,8 +867,10 @@ curriculum_text = (
 pricing_text = (
     "ank: Nodes require server energy:\n"
     "• Sandbox Dev Tier: $0.00 (Local Python engine)\n"
-    "• Cluster DevOps Tier: $15.00/mo (GKE Sandboxes, automated SOLO evaluation)\n"
-    "Our cost is $0.33/user. Why do we charge more?"
+    "• Cluster DevOps Tier: $15.00/mo (GKE Sandboxes, automated SOLO evaluation)\n\n"
+    "*** BETA ACCESS GRANTED ***\n"
+    "You have been automatically upgraded to the Cluster DevOps Tier.\n"
+    "No token required. All modules are unlocked."
 )
 
 docs_text = (
