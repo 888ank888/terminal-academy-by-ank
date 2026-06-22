@@ -24,8 +24,8 @@
 
 body.theme-light {
     --bg-base: #f8fafc;
-    --bg-raised: rgba(255, 255, 255, 0.9);
-    --bg-elevated: rgba(241, 245, 249, 0.9);
+    --bg-raised: rgba(226, 232, 240, 0.6);
+    --bg-elevated: rgba(203, 213, 225, 0.8);
     --text-main: #0f172a;
     --text-muted: #475569;
     --border-color: rgba(0, 0, 0, 0.08);
