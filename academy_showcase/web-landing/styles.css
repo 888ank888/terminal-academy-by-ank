@@ -13,6 +13,16 @@
     --font-mono: 'Fira Code', monospace;
 }
 
+body.theme-light {
+    --bg-base: #f8fafc;
+    --bg-raised: rgba(255, 255, 255, 0.9);
+    --bg-elevated: rgba(241, 245, 249, 0.9);
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --border-color: rgba(0, 0, 0, 0.08);
+    --border-highlight: rgba(0, 0, 0, 0.15);
+}
+
 html, body {
     overflow-x: hidden;
     width: 100%;
@@ -577,6 +587,20 @@ body {
         padding-bottom: 60px;
         gap: 48px;
         min-height: auto;
+    }
+    
+    #installation-lesson, .marquee-container.lesson-marquee {
+        display: none !important;
+    }
+    
+    @keyframes mobile-float {
+        0% { transform: perspective(1000px) rotateX(2deg) rotateY(0deg) translateY(0px); }
+        50% { transform: perspective(1000px) rotateX(-2deg) rotateY(3deg) translateY(-8px); }
+        100% { transform: perspective(1000px) rotateX(2deg) rotateY(0deg) translateY(0px); }
+    }
+    
+    .terminal-mockup {
+        animation: mobile-float 6s ease-in-out infinite;
     }
 }
 
