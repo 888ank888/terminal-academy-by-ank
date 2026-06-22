@@ -9,6 +9,11 @@
     --border-color: rgba(255, 255, 255, 0.08);
     --border-highlight: rgba(255, 255, 255, 0.15);
     
+    --glow-core-1: rgba(255, 85, 0, 0.12);
+    --glow-core-2: rgba(245, 158, 11, 0.12);
+    --glow-edge: rgba(5, 5, 6, 0);
+    --nav-bg: rgba(5, 5, 6, 0.7);
+    
     --font-sans: 'Space Grotesk', system-ui, sans-serif;
     --font-mono: 'Fira Code', monospace;
 }
@@ -21,6 +26,11 @@ body.theme-light {
     --text-muted: #475569;
     --border-color: rgba(0, 0, 0, 0.08);
     --border-highlight: rgba(0, 0, 0, 0.15);
+    
+    --glow-core-1: rgba(255, 85, 0, 0.15);
+    --glow-core-2: rgba(245, 158, 11, 0.15);
+    --glow-edge: rgba(248, 250, 252, 0);
+    --nav-bg: rgba(255, 255, 255, 0.7);
 }
 
 /* Theme Transition Wave Effect */
@@ -34,12 +44,6 @@ body.theme-light {
 }
 ::view-transition-new(root) {
   z-index: 9999;
-}
-.theme-light::view-transition-old(root) {
-  z-index: 9999;
-}
-.theme-light::view-transition-new(root) {
-  z-index: 1;
 }
 html, body {
     overflow-x: hidden;
@@ -65,7 +69,7 @@ body {
     position: absolute;
     width: 1200px;
     height: 1200px;
-    background: radial-gradient(circle, rgba(255, 85, 0, 0.12) 0%, rgba(5, 5, 6, 0) 65%);
+    background: radial-gradient(circle, var(--glow-core-1) 0%, var(--glow-edge) 65%);
     top: -300px;
     left: -300px;
     z-index: -1;
@@ -75,7 +79,7 @@ body {
 .glow-bg-2 {
     width: 1000px;
     height: 1000px;
-    background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, rgba(5, 5, 6, 0) 65%);
+    background: radial-gradient(circle, var(--glow-core-2) 0%, var(--glow-edge) 65%);
     top: 20%;
     right: -300px;
     left: auto;
@@ -95,7 +99,7 @@ body {
     position: fixed;
     width: 1200px;
     height: 1200px;
-    background: radial-gradient(circle, rgba(255, 85, 0, 0.12) 0%, rgba(5, 5, 6, 0) 65%);
+    background: radial-gradient(circle, var(--glow-core-1) 0%, var(--glow-edge) 65%);
     top: -300px;
     left: -300px;
     z-index: -1;
@@ -116,7 +120,7 @@ body {
     left: 0;
     right: 0;
     height: 72px;
-    background: rgba(5, 5, 6, 0.7);
+    background: var(--nav-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border-color);

@@ -513,24 +513,17 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             transition.ready.then(() => {
-                const endRadius = Math.hypot(
-                    Math.max(x, innerWidth - x),
-                    Math.max(y, innerHeight - y)
-                );
-                const isLight = document.body.classList.contains('theme-light');
-
                 document.documentElement.animate(
                     {
                         clipPath: [
-                            `circle(0px at ${x}px ${y}px)`,
-                            `circle(${endRadius}px at ${x}px ${y}px)`
+                            'polygon(0 0, 100% 0, 100% 0, 0 0)',
+                            'polygon(0 0, 100% 0, 100% 100%, 0 100%)'
                         ]
                     },
                     {
-                        duration: 700,
+                        duration: 800,
                         easing: 'ease-in-out',
-                        pseudoElement: isLight ? '::view-transition-new(root)' : '::view-transition-old(root)',
-                        direction: isLight ? 'normal' : 'reverse'
+                        pseudoElement: '::view-transition-new(root)'
                     }
                 );
             });
