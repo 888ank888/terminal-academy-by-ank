@@ -134,6 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const terminalMockup = document.querySelector('.terminal-mockup');
     if (terminalMockup) {
         terminalMockup.addEventListener('mousemove', (e) => {
+            if (window.innerWidth < 1024) return; // Disable on touch/mobile
             const rect = terminalMockup.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
@@ -452,6 +453,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const lessonTerminalMockup = document.querySelector('.terminal-lesson');
     if (lessonTerminalMockup) {
         lessonTerminalMockup.addEventListener('mousemove', (e) => {
+            if (window.innerWidth < 1024) return; // Disable on touch/mobile
             const rect = lessonTerminalMockup.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
