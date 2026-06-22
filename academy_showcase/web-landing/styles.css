@@ -23,6 +23,24 @@ body.theme-light {
     --border-highlight: rgba(0, 0, 0, 0.15);
 }
 
+/* Theme Transition Wave Effect */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 9999;
+}
+.theme-light::view-transition-old(root) {
+  z-index: 9999;
+}
+.theme-light::view-transition-new(root) {
+  z-index: 1;
+}
 html, body {
     overflow-x: hidden;
     width: 100%;

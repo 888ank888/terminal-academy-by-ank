@@ -68,39 +68,17 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             const spanClass = lineData.type === 'ank' ? 'term-ank' : 'term-out';
             lineDiv.innerHTML = `<span class="${spanClass}">${lineData.text}</span><span class="term-cursor"></span>`;
-        body.theme-light {
-    --bg-base: #f8fafc;
-    --bg-raised: rgba(255, 255, 255, 0.9);
-    --bg-elevated: rgba(241, 245, 249, 0.9);
-    --text-main: #0f172a;
-    --text-muted: #475569;
-    --border-color: rgba(0, 0, 0, 0.08);
-    --border-highlight: rgba(0, 0, 0, 0.15);
-}
+            container.scrollTop = container.scrollHeight;
+            lineIndex++;
+            setTimeout(typeLine, lineData.type === 'ank' ? 1500 : 300);
+        }
+    }
 
-/* Theme Transition Wave Effect */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
-}
-::view-transition-old(root) {
-  z-index: 1;
-}
-::view-transition-new(root) {
-  z-index: 9999;
-}
-.theme-light::view-transition-old(root) {
-  z-index: 9999;
-}
-.theme-light::view-transition-new(root) {
-  z-index: 1;
-}
+    setTimeout(typeLine, 1000);
 
-html, body {
-    overflow-x: hidden;
-    width: 100%;
-}   rootMargin: '0px',
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
         threshold: 0.1
     };
 
