@@ -68,17 +68,39 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             const spanClass = lineData.type === 'ank' ? 'term-ank' : 'term-out';
             lineDiv.innerHTML = `<span class="${spanClass}">${lineData.text}</span><span class="term-cursor"></span>`;
-            container.scrollTop = container.scrollHeight;
-            lineIndex++;
-            setTimeout(typeLine, lineData.type === 'ank' ? 1500 : 300);
-        }
-    }
+        body.theme-light {
+    --bg-base: #f8fafc;
+    --bg-raised: rgba(255, 255, 255, 0.9);
+    --bg-elevated: rgba(241, 245, 249, 0.9);
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --border-color: rgba(0, 0, 0, 0.08);
+    --border-highlight: rgba(0, 0, 0, 0.15);
+}
 
-    setTimeout(typeLine, 1000);
+/* Theme Transition Wave Effect */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 9999;
+}
+.theme-light::view-transition-old(root) {
+  z-index: 9999;
+}
+.theme-light::view-transition-new(root) {
+  z-index: 1;
+}
 
-    const observerOptions = {
-        root: null,
-        rootMargin: '0px',
+html, body {
+    overflow-x: hidden;
+    width: 100%;
+}   rootMargin: '0px',
         threshold: 0.1
     };
 
@@ -485,18 +507,55 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', () => {
-            document.body.classList.toggle('theme-light');
-            const isLight = document.body.classList.contains('theme-light');
-            localStorage.setItem('academy_theme', isLight ? 'light' : 'dark');
+        themeToggleBtn.addEventListener('click', (e) => {
             
-            if (isLight) {
-                // Switch to Moon icon
-                themeIcon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
-            } else {
-                // Switch to Sun icon
-                themeIcon.innerHTML = `<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>`;
+            const toggleLogic = () => {
+                document.body.classList.toggle('theme-light');
+                const isLight = document.body.classList.contains('theme-light');
+                localStorage.setItem('academy_theme', isLight ? 'light' : 'dark');
+                
+                if (isLight) {
+                    themeIcon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
+                } else {
+                    themeIcon.innerHTML = `<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>`;
+                }
+            };
+
+            // Wave Transition API
+            if (!document.startViewTransition) {
+                toggleLogic();
+                return;
             }
+
+            const x = e.clientX;
+            const y = e.clientY;
+            
+            const transition = document.startViewTransition(() => {
+                toggleLogic();
+            });
+
+            transition.ready.then(() => {
+                const endRadius = Math.hypot(
+                    Math.max(x, innerWidth - x),
+                    Math.max(y, innerHeight - y)
+                );
+                const isLight = document.body.classList.contains('theme-light');
+
+                document.documentElement.animate(
+                    {
+                        clipPath: [
+                            `circle(0px at ${x}px ${y}px)`,
+                            `circle(${endRadius}px at ${x}px ${y}px)`
+                        ]
+                    },
+                    {
+                        duration: 700,
+                        easing: 'ease-in-out',
+                        pseudoElement: isLight ? '::view-transition-new(root)' : '::view-transition-old(root)',
+                        direction: isLight ? 'normal' : 'reverse'
+                    }
+                );
+            });
         });
     }
 
