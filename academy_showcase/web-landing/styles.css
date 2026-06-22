@@ -24,8 +24,8 @@
 
 body.theme-light {
     --bg-base: #f8fafc;
-    --bg-raised: rgba(226, 232, 240, 0.6);
-    --bg-elevated: rgba(203, 213, 225, 0.8);
+    --bg-raised: rgba(254, 243, 237, 0.8);
+    --bg-elevated: rgba(253, 232, 222, 0.9);
     --text-main: #0f172a;
     --text-muted: #475569;
     --border-color: rgba(0, 0, 0, 0.08);
@@ -619,7 +619,7 @@ body {
         min-height: auto;
     }
     
-    #installation-lesson, .marquee-container.lesson-marquee {
+    #installation-lesson, #lesson-marquee {
         display: none !important;
     }
     
