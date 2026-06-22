@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Academy</title>
+    <meta name="description" content="A terminal-based EdTech platform for systems thinking and Linux.">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="glow-bg"></div>
+    <div class="glow-bg glow-bg-2"></div>
+    <canvas id="network-canvas"></canvas>
+    
+    <nav class="navbar reveal-down">
+        <div class="container nav-content">
+            <div class="logo">
+                <div class="logo-icon"></div>
+                Terminal Academy
+            </div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#demo">Curriculum</a>
+                <a href="https://github.com/888ank888/terminal-academy-by-ank" target="_blank" class="btn btn-secondary">View Repo</a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero container">
+            <div class="hero-content reveal-up">
+                <div class="badge">v2.0.0-beta incoming 🚀</div>
+                <h1 class="hero-title">
+                    Don't play with blocks.<br>
+                    <span class="gradient-text">Build real systems.</span>
+                </h1>
+                <p class="hero-subtitle">
+                    A zero-dependency, pure-terminal learning platform for teens. Master Linux, DevOps, and systems thinking with an AI mentor that forces you to figure it out.
+                </p>
+                <div class="hero-actions">
+                    <a href="https://github.com/888ank888/terminal-academy-by-ank" target="_blank" class="btn btn-primary">Start Hacking</a>
+                    <a href="#demo" class="btn btn-secondary">See how it works</a>
+                </div>
+                
+                <div class="stats-row reveal-up" style="--delay: 200ms;">
+                    <div class="stat-item">
+                        <div class="stat-value"><span class="count-up" data-val="100">0</span>%</div>
+                        <div class="stat-label">Terminal Native</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value"><span class="count-up" data-val="5">0</span></div>
+                        <div class="stat-label">Socratic Modules</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value"><span class="count-up" data-val="0">1</span></div>
+                        <div class="stat-label">External Dependencies</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-visual reveal-up" style="--delay: 400ms;" id="demo">
+                <div class="terminal-mockup">
+                    <div class="terminal-header">
+                        <div class="terminal-dots">
+                            <span class="dot close"></span>
+                            <span class="dot min"></span>
+                            <span class="dot max"></span>
+                        </div>
+                        <div class="terminal-title">ank@socratic-mentor ~</div>
+                    </div>
+                    <div class="terminal-body" id="typewriter-container">
+                        <!-- JS infinite scrolling log injected here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Infinite Marquee -->
+        <div class="marquee-container">
+            <div class="marquee-content">
+                <!-- Double content for seamless looping -->
+                <span class="marquee-item">* LINUX</span>
+                <span class="marquee-item">* DEVOPS</span>
+                <span class="marquee-item">* SECURITY</span>
+                <span class="marquee-item">* DOCKER</span>
+                <span class="marquee-item">* FIREWALLS</span>
+                <span class="marquee-item">* BASH</span>
+                <span class="marquee-item">* LINUX</span>
+                <span class="marquee-item">* DEVOPS</span>
+                <span class="marquee-item">* SECURITY</span>
+                <span class="marquee-item">* DOCKER</span>
+                <span class="marquee-item">* FIREWALLS</span>
+                <span class="marquee-item">* BASH</span>
+            </div>
+        </div>
+
+        <section id="features" class="features container">
+            <h2 class="section-title reveal-up">Why Terminal Academy?</h2>
+            <div class="features-grid">
+                <div class="feature-card reveal-up" style="--delay: 0.1s">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
+                    <h3>Sandboxed Environments</h3>
+                    <p>Every session runs in isolated Alpine Linux containers built directly into the core engine. You have complete freedom to explore network configurations, manage system processes, and deliberately break the OS without risking your host machine. True engineering requires a safe place to fail.</p>
+                </div>
+                <div class="feature-card reveal-up" style="--delay: 0.2s">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+                    <h3>Socratic Mentor</h3>
+                    <p>Ank doesn't give you the answers. He operates on a tiered pedagogical hint system, asking the right questions to guide you towards solving complex problems yourself. Expect sarcastic remarks when you make obvious mistakes, and deep architectural discussions when you succeed.</p>
+                </div>
+                <div class="feature-card reveal-up" style="--delay: 0.3s">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></div>
+                    <h3>Zero Dependencies</h3>
+                    <p>Built with pure Python curses and standard libraries. There are no bloated web frameworks or Electron shells involved in the client architecture. You get raw, blistering fast terminal performance that respects system resources and operates entirely offline when needed.</p>
+                </div>
+                <div class="feature-card reveal-up" style="--delay: 0.4s">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg></div>
+                    <h3>Network Operations</h3>
+                    <p>Master the Linux networking stack. You'll learn how to configure iptables firewalls, manage routing tables, and bind ports just like a real sysadmin. No simulated internet—real sockets, real protocols.</p>
+                </div>
+                <div class="feature-card reveal-up" style="--delay: 0.5s">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg></div>
+                    <h3>File Systems & VFS</h3>
+                    <p>Go deeper than "folders and files." Understand inodes, hard links, mount points, and permissions. Learn exactly what happens at the kernel level when you execute an rm command.</p>
+                </div>
+                <div class="feature-card reveal-up" style="--delay: 0.6s">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg></div>
+                    <h3>Process Management</h3>
+                    <p>Control the CPU. Learn to use tools like top, ps, and kill. Understand process trees, signals, daemonization, and how to background and foreground jobs like a true power user.</p>
+                </div>
+                <div class="feature-card reveal-up" style="--delay: 0.7s">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
+                    <h3>Shell Scripting</h3>
+                    <p>Stop doing manual work. Write bash scripts that automate server setup, parse logs, and deploy applications. Learn loops, conditions, and stream manipulation with awk and sed.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Secondary Marquee (Reversed) -->
+        <div class="marquee-container" style="background: rgba(255,85,0,0.05); border-color: rgba(255,85,0,0.2);">
+            <div class="marquee-content" style="animation-direction: reverse; animation-duration: 25s;">
+                <span class="marquee-item" style="color: var(--accent-primary);">LESSON 0 // INITIALIZE</span>
+                <span class="marquee-item" style="color: var(--accent-primary);">LESSON 0 // INITIALIZE</span>
+                <span class="marquee-item" style="color: var(--accent-primary);">LESSON 0 // INITIALIZE</span>
+                <span class="marquee-item" style="color: var(--accent-primary);">LESSON 0 // INITIALIZE</span>
+                <span class="marquee-item" style="color: var(--accent-primary);">LESSON 0 // INITIALIZE</span>
+                <span class="marquee-item" style="color: var(--accent-primary);">LESSON 0 // INITIALIZE</span>
+                <span class="marquee-item" style="color: var(--accent-primary);">LESSON 0 // INITIALIZE</span>
+                <span class="marquee-item" style="color: var(--accent-primary);">LESSON 0 // INITIALIZE</span>
+            </div>
+        </div>
+
+        <!-- Installation Lesson 0 -->
+        <section id="installation-lesson" class="lesson-section container">
+            <h2 class="section-title reveal-up">Lesson 0: System Boot</h2>
+            
+            <div class="lesson-grid">
+                <!-- Left: Terminal -->
+                <div class="lesson-visual reveal-up" style="--delay: 0.1s;">
+                    <div class="terminal-mockup terminal-lesson" id="lesson-terminal-container">
+                        <div class="terminal-header">
+                            <div class="terminal-dots">
+                                <span class="dot close"></span>
+                                <span class="dot min"></span>
+                                <span class="dot max"></span>
+                            </div>
+                            <div class="terminal-title">install@terminal-academy ~</div>
+                        </div>
+                        <div class="terminal-body" id="lesson-typewriter">
+                            <div class="line"><span class="term-out">Waiting for OS detection...</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Steps -->
+                <div class="lesson-content reveal-up" style="--delay: 0.3s;">
+                    <div class="os-selector-wrap">
+                        <p class="os-label">Is this your OS?</p>
+                        <select id="os-selector" class="os-selector">
+                            <option value="mac">macOS</option>
+                            <option value="linux">Linux / Server</option>
+                            <option value="win">Windows</option>
+                        </select>
+                    </div>
+
+                    <div class="steps-container" id="steps-container">
+                        <!-- JS injects steps here based on OS -->
+                    </div>
+
+                    <div class="security-badge reveal-up" style="--delay: 0.4s;">
+                        <svg class="shield-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <div class="security-text">
+                            <strong>100% Safe & Open Source</strong>
+                            <span>All core logic is auditable on GitHub. No background daemons, no tracking, no telemetry. Runs entirely locally.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer container">
+        <div class="footer-content">
+            <p>© 2026 Terminal Academy. Building real engineers.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
