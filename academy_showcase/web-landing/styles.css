@@ -208,8 +208,8 @@ body {
 .nav-links .btn {
     padding: 10px 24px;
 }
-.theme-toggle-btn {
-    padding: 8px 12px;
+.nav-links .theme-toggle-btn {
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -676,7 +676,7 @@ body {
     .brand-logo {
         height: 28px;
     }
-    .theme-toggle-btn {
+    .nav-links .theme-toggle-btn {
         width: 36px;
         height: 36px;
         padding: 0;
