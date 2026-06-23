@@ -148,13 +148,10 @@ body {
     gap: 12px;
     letter-spacing: -0.02em;
 }
-.logo-icon {
-    width: 24px;
+.brand-logo {
     height: 24px;
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    border-radius: 6px;
-    box-shadow: 0 0 15px rgba(255, 85, 0, 0.4);
-    transition: background 0.3s, box-shadow 0.3s;
+    width: auto;
+    filter: drop-shadow(0 0 10px rgba(255, 85, 0, 0.4));
 }
 .nav-links {
     display: flex;
