@@ -151,6 +151,9 @@ body {
 .brand-logo {
     height: 24px;
     width: auto;
+    max-width: 100px;
+    display: block;
+    object-fit: contain;
     filter: drop-shadow(0 0 10px rgba(255, 85, 0, 0.4));
 }
 .nav-links {
