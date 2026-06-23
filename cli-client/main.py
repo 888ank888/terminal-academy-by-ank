@@ -15,7 +15,9 @@ COLOR_CYAN      = 3
 COLOR_WARNING   = 4
 COLOR_ALERT     = 5
 COLOR_HIGHLIGHT = 6
-COLOR_DEFAULT   = 7   # FIX: was 1 — collided with curses reserved pair
+COLOR_DEFAULT   = 7
+COLOR_BRAND     = 8
+COLOR_BORDER    = 9
 
 # ---------------------------------------------------------------------------
 # Dynamic UI State
@@ -977,6 +979,20 @@ def wrap_text(text: str, width: int) -> list[str]:
 # ---------------------------------------------------------------------------
 def init_colors():
     curses.use_default_colors()
+    
+    if curses.can_change_color():
+        try:
+            curses.init_color(10, 1000, 333, 0)
+            curses.init_color(11, 400, 400, 400)
+            curses.init_pair(COLOR_BRAND, 10, -1)
+            curses.init_pair(COLOR_BORDER, 11, -1)
+        except curses.error:
+            curses.init_pair(COLOR_BRAND, curses.COLOR_RED, -1)
+            curses.init_pair(COLOR_BORDER, curses.COLOR_WHITE, -1)
+    else:
+        curses.init_pair(COLOR_BRAND, curses.COLOR_RED, -1)
+        curses.init_pair(COLOR_BORDER, curses.COLOR_WHITE, -1)
+
     curses.init_pair(COLOR_GREEN,     curses.COLOR_GREEN,  -1)
     curses.init_pair(COLOR_CYAN,      curses.COLOR_CYAN,   -1)
     curses.init_pair(COLOR_WARNING,   curses.COLOR_YELLOW, -1)
@@ -1387,6 +1403,71 @@ def run_login_gate(stdscr):
             if len(token_buffer) < 100:
                 token_buffer.append(chr(ch))
 
+def show_splash_screen(stdscr):
+    stdscr.clear()
+    h, w = stdscr.getmaxyx()
+    
+    logo = [
+        "  _    //   //    __ _ ",
+        " | |_ //   //    / _` |",
+        " | __//   //    | (_| |",
+        "  \\__//   //     \\__,_|"
+    ]
+    
+    text = "Welcome to Terminal Academy"
+    
+    total_h = len(logo) + 2
+    start_y = max(0, (h - total_h) // 2)
+    
+    for i, line in enumerate(logo):
+        start_x = max(0, (w - len(line)) // 2)
+        try:
+            stdscr.addstr(start_y + i, start_x, line, curses.color_pair(COLOR_BRAND) | curses.A_BOLD)
+        except curses.error:
+            pass
+            
+    text_x = max(0, (w - len(text)) // 2)
+    try:
+        stdscr.addstr(start_y + len(logo) + 2, text_x, text, curses.color_pair(COLOR_DEFAULT) | curses.A_BOLD)
+    except curses.error:
+        pass
+        
+    stdscr.refresh()
+    time.sleep(2.0)
+    stdscr.clear()
+
+def draw_glass_box(win, color_pair, title):
+    h, w = win.getmaxyx()
+    win.attron(curses.color_pair(color_pair))
+    for x in range(1, w-1):
+        try:
+            win.addstr(0, x, "─")
+            win.addstr(h-1, x, "─")
+        except curses.error:
+            pass
+    for y in range(1, h-1):
+        try:
+            win.addstr(y, 0, "│")
+            win.addstr(y, w-1, "│")
+        except curses.error:
+            pass
+    try:
+        win.addstr(0, 0, "╭")
+        win.addstr(0, w-1, "╮")
+        win.addstr(h-1, 0, "╰")
+        win.addstr(h-1, w-1, "╯")
+    except curses.error:
+        pass
+    win.attroff(curses.color_pair(color_pair))
+    
+    win.attron(curses.color_pair(color_pair) | curses.A_BOLD)
+    title_str = f" {title} "
+    try:
+        win.addstr(0, 2, title_str[:w-4])
+    except curses.error:
+        pass
+    win.attroff(curses.color_pair(color_pair) | curses.A_BOLD)
+
 # ---------------------------------------------------------------------------
 # Main curses Entry Point
 # ---------------------------------------------------------------------------
@@ -1394,6 +1475,7 @@ def main(stdscr):
     global focus_mode, selected_menu_idx, warning_state, user_tier
 
     init_colors()
+    show_splash_screen(stdscr)
     
     # Beta bypass: completely skip the login screen
     # session = run_login_gate(stdscr)
@@ -1481,13 +1563,7 @@ def main(stdscr):
         # Render: Left Pane — Work Terminal
         # -----------------------------------------------------------------------
         win_work.erase()
-        win_work.attron(curses.color_pair(COLOR_GREEN))
-        win_work.box()
-        win_work.attroff(curses.color_pair(COLOR_GREEN))
-
-        win_work.attron(curses.color_pair(COLOR_GREEN) | curses.A_BOLD)
-        win_work.addstr(0, 2, "[ WORK TERMINAL ]")
-        win_work.attroff(curses.color_pair(COLOR_GREEN) | curses.A_BOLD)
+        draw_glass_box(win_work, COLOR_BORDER, "WORK TERMINAL")
 
         max_term_lines   = h_panes - 4
         visible_term_logs = (
@@ -1515,13 +1591,8 @@ def main(stdscr):
         # Render: Right-Top Pane — Socratic Mentor
         # -----------------------------------------------------------------------
         win_mentor.erase()
-        win_mentor.attron(curses.color_pair(ank_border_color))
-        win_mentor.box()
-        win_mentor.attroff(curses.color_pair(ank_border_color))
-
-        win_mentor.attron(curses.color_pair(ank_border_color) | curses.A_BOLD)
-        win_mentor.addstr(0, 2, "[ SOCRATIC MENTOR ]")
-        win_mentor.attroff(curses.color_pair(ank_border_color) | curses.A_BOLD)
+        ank_border_color = COLOR_BRAND if not warning_state else COLOR_ALERT
+        draw_glass_box(win_mentor, ank_border_color, "SOCRATIC MENTOR")
 
         y_cursor = 2
         visible_lines = mentor_renderer.visible_lines
@@ -1544,13 +1615,7 @@ def main(stdscr):
         # Render: Right-Bottom Pane — Telemetry HUD
         # -----------------------------------------------------------------------
         win_telemetry.erase()
-        win_telemetry.attron(curses.color_pair(COLOR_CYAN))
-        win_telemetry.box()
-        win_telemetry.attroff(curses.color_pair(COLOR_CYAN))
-
-        win_telemetry.attron(curses.color_pair(COLOR_CYAN) | curses.A_BOLD)
-        win_telemetry.addstr(0, 2, "[ TELEMETRY HUD ]")
-        win_telemetry.attroff(curses.color_pair(COLOR_CYAN) | curses.A_BOLD)
+        draw_glass_box(win_telemetry, COLOR_BORDER, "TELEMETRY HUD")
 
         options_count   = len(menu_options)
         options_start_y = h_telem - options_count - 2
