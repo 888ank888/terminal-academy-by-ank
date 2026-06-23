@@ -659,7 +659,11 @@ body {
         display: none;
     }
     .logo {
-        font-size: 1.1rem;
+        font-size: 0.9rem;
+        gap: 6px;
+    }
+    .brand-logo {
+        height: 28px;
     }
     .terminal-body {
         height: 300px;
