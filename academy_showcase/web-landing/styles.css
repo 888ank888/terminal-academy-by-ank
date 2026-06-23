@@ -149,7 +149,7 @@ body {
     letter-spacing: -0.02em;
 }
 .brand-logo {
-    height: 36px;
+    height: 44px;
     width: auto;
     max-width: 100px;
     display: block;
@@ -338,7 +338,7 @@ body {
 
 /* Typography elements for terminal */
 .term-prompt { color: var(--accent-primary); }
-.term-cmd { color: #f3f4f6; }
+.term-cmd { color: var(--term-text); }
 .term-out { color: var(--text-muted); }
 .term-ank { color: var(--accent-secondary); font-weight: 500; }
 .term-cursor {
