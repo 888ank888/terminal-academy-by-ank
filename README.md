@@ -9,18 +9,22 @@ An international, systems-first educational platform teaching real Linux adminis
 ### Option 1: Lightweight Local Demo (No Docker Required)
 The core client is built using Python's standard `curses` library and runs natively in your terminal. It is extremely lightweight (~70KB) and doesn't require any complex setup.
 
-**Requirements:** macOS or Linux (Windows users must run inside WSL2), Python 3.10+.
+**Requirements:** macOS, Linux, or Windows. Python 3.10+.
 
 1. Clone the repository:
    ```bash
    git clone https://github.com/888ank888/terminal-academy-by-ank.git
    cd terminal-academy-by-ank/cli-client
    ```
-2. Launch the terminal client:
+2. *(Windows Only)* Install the curses library port:
+   ```cmd
+   pip install windows-curses
+   ```
+3. Launch the terminal client:
    ```bash
    python3 main.py
    ```
-3. Use `Tab` to switch focus between the **Work Terminal** shell prompt and the **ANK Monitor** system utilities menu.
+4. Use `Tab` to switch focus between the **Work Terminal** shell prompt and the **ANK Monitor** system utilities menu.
 
 ---
 
