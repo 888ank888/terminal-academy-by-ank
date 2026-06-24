@@ -238,18 +238,18 @@ document.addEventListener("DOMContentLoaded", () => {
         mac: [
             { title: "1. Clone Repository", desc: "Download the Terminal Academy engine.", cmd: "git clone https://github.com/888ank888/terminal-academy-by-ank.git", out: "Cloning into 'terminal-academy-by-ank'...\nResolving deltas: 100% (142/142), done." },
             { title: "2. Enter Workspace", desc: "Navigate to the project directory.", cmd: "cd terminal-academy-by-ank", out: "" },
-            { title: "3. Launch Mentor", desc: "Start the Python curses interface.", cmd: "python3 cli-client/main.py", out: "[SYSTEM] Initializing Socratic Core...\n[SYSTEM] Connecting to gVisor sandbox...\nWelcome to Terminal Academy." }
+            { title: "3. Launch Mentor", desc: "Start the Python curses interface.", cmd: "python3 cli-client/main.py", out: "[SYSTEM] Initializing Ank Core...\n[SYSTEM] Connecting to gVisor sandbox...\nWelcome to Terminal Academy." }
         ],
         linux: [
             { title: "1. Clone Repository", desc: "Download the Terminal Academy engine.", cmd: "git clone https://github.com/888ank888/terminal-academy-by-ank.git", out: "Cloning into 'terminal-academy-by-ank'...\nResolving deltas: 100% (142/142), done." },
             { title: "2. Enter Workspace", desc: "Navigate to the project directory.", cmd: "cd terminal-academy-by-ank", out: "" },
-            { title: "3. Launch Mentor", desc: "Start the Python curses interface.", cmd: "python3 cli-client/main.py", out: "[SYSTEM] Initializing Socratic Core...\n[SYSTEM] Connecting to gVisor sandbox...\nWelcome to Terminal Academy." }
+            { title: "3. Launch Mentor", desc: "Start the Python curses interface.", cmd: "python3 cli-client/main.py", out: "[SYSTEM] Initializing Ank Core...\n[SYSTEM] Connecting to gVisor sandbox...\nWelcome to Terminal Academy." }
         ],
         win: [
             { title: "1. Clone Repository", desc: "Download the Terminal Academy engine.", cmd: "git clone https://github.com/888ank888/terminal-academy-by-ank.git", out: "Cloning into 'terminal-academy-by-ank'...\nResolving deltas: 100% (142/142), done." },
             { title: "2. Enter Workspace", desc: "Navigate to the project directory.", cmd: "cd terminal-academy-by-ank", out: "" },
             { title: "3. Install Dependencies", desc: "Windows requires the curses port.", cmd: "pip install windows-curses", out: "Collecting windows-curses...\nDownloading windows_curses-2.3.3-cp310-win_amd64.whl\nSuccessfully installed windows-curses-2.3.3" },
-            { title: "4. Launch Mentor", desc: "Start the Python curses interface.", cmd: "python cli-client/main.py", out: "[SYSTEM] Initializing Socratic Core...\n[SYSTEM] Warning: Running without gVisor on Windows.\nWelcome to Terminal Academy." }
+            { title: "4. Launch Mentor", desc: "Start the Python curses interface.", cmd: "python cli-client/main.py", out: "[SYSTEM] Initializing Ank Core...\n[SYSTEM] Warning: Running without gVisor on Windows.\nWelcome to Terminal Academy." }
         ]
     };
 
