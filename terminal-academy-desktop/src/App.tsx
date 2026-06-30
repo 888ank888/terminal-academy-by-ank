@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useMotionValue, animate } from 'framer-motion';
 import { useDrag } from '@use-gesture/react';
-import { Terminal as TerminalIcon, MessageSquare, BookOpen, Activity, BrainCircuit, Settings, CheckSquare, Send } from 'lucide-react';
+import { CheckSquare } from 'lucide-react';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import 'xterm/css/xterm.css';
@@ -12,7 +12,7 @@ import './App.css';
 // --- Localization dictionary for EN/RU toggle --- //
 const t: { [key: string]: { [key: string]: string } } = {
   en: {
-    hudTitle: "TERMINAL ACADEMY // OPERATIONAL HUD",
+    hudTitle: "TERMINAL / ACADEMIA PERSONAL HEAD",
     hudBranch: "ACTIVE BRANCH:",
     hudViewDetailed: "VIEW: DETAILED",
     hudViewOverview: "VIEW: OVERVIEW",
@@ -53,49 +53,10 @@ const t: { [key: string]: { [key: string]: string } } = {
     taskExamine: "Examine environment diagnostics",
     taskVerify: "Verify resolution using Ank's hints"
   },
-  ru: {
-    hudTitle: "ТЕРМИНАЛ АКАДЕМИЯ // ОПЕРАЦИОННЫЙ HUD",
-    hudBranch: "АКТИВНАЯ ВЕТВЬ:",
-    hudViewDetailed: "ВИД: ДЕТАЛЬНЫЙ",
-    hudViewOverview: "ВИД: ОБЗОР",
-    hudShow: "ПОКАЗАТЬ HUD (CTRL+H)",
-    hudHide: "СКРЫТЬ HUD",
-    screen: "ЭКРАН",
-    guideTitle: "Руководство по Программе",
-    guideText: "Выберите вкладку учебного плана, нажмите на любой учебный модуль ниже, чтобы раскрыть доступные инциденты, и консультируйтесь с ИИ-наставником Ank в чате для решения задач в терминале песочницы.",
-    modulesTitle: "Путь Обучения",
-    incidentsTitle: "Инциденты",
-    bossIncident: "БОСС-ИНЦИДЕНТ",
-    askAnk: "Спросите Ank...",
-    askButton: "Отправить",
-    apiSettings: "Настройки API ключа",
-    saveKey: "Сохранить Ключ",
-    terminalTitle: "Песочница Терминала (ank@sandbox)",
-    grimoireTitle: "Гримуар Команд",
-    grimoireDesc: "Рекомендуемые Диагностические Команды:",
-    monitorTitle: "Мониторинг Системы",
-    monitorSandbox: "КОНТЕЙНЕР ПЕСОЧНИЦЫ:",
-    monitorCpu: "Загрузка CPU (Всего):",
-    monitorRam: "Выделенная Память:",
-    monitorSwap: "Выделение Swap:",
-    monitorDisk: "Задержка Disk I/O:",
-    monitorNet: "Сетевой Трафик:",
-    monitorLoad: "Средняя Загрузка:",
-    monitorProc: "Активные Процессы:",
-    monitorUptime: "Время Работы Системы:",
-    monitorLatency: "Задержка Бэкенда:",
-    plannerTitle: "ИИ Планировщик Задач",
-    plannerChecklist: "Чек-лист Инцидента",
-    mentorName: "SYSTEM // MENTOR ANK",
-    studentName: "STUDENT // ACTIVE",
-    chatWelcome: "Приветствую, Инициат. Я наставник Ank. Выберите инцидент на панели уроков и сообщите мне, когда будете готовы начать. Помните, я не даю готовых ответов, а лишь помогаю вам прийти к ним самостоятельно.",
-    chatThinking: "Ank размышляет...",
-    taskSelect: "Выберите инцидент из учебной программы",
-    taskReview: "Изучить цель инцидента:",
-    taskExamine: "Проверить диагностику окружения",
-    taskVerify: "Подтвердить решение с помощью подсказок Ank"
-  }
+  ru: {}
 };
+
+t.ru = { ...t.en };
 
 // --- Syllabus Parsing Helper --- //
 interface Incident {
@@ -226,11 +187,22 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus }: any) =
       terminalRef.current.addEventListener('paste', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        term?.write('\r\n\x1b[31m[CLIPBOARD LOCK] Pasting is disabled. Please type commands manually.\x1b[0m\r\n');
       }, true);
 
       term.attachCustomKeyEventHandler((arg: KeyboardEvent) => {
-        // Intercept and drop Ctrl+V and Cmd+V key sequences
+        // Intercept and drop Ctrl+V and Cmd+V key sequences, printing feedback
         if ((arg.ctrlKey || arg.metaKey) && arg.key.toLowerCase() === 'v') {
+          if (arg.type === 'keydown') {
+            term?.write('\r\n\x1b[31m[CLIPBOARD LOCK] Pasting is disabled. Please type commands manually.\x1b[0m\r\n');
+          }
+          return false;
+        }
+        // Intercept Ctrl+H and bubble it up to main window toggles instead of backspace
+        if (arg.ctrlKey && arg.key.toLowerCase() === 'h') {
+          if (arg.type === 'keydown') {
+            window.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'h' }));
+          }
           return false;
         }
         return true;
@@ -295,7 +267,6 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus }: any) =
     <div className="widget-content">
       <div className="widget-header" {...(bindDrag ? bindDrag() : {})}>
         <div className="title" style={{ touchAction: 'none' }}>
-          <TerminalIcon size={14} style={{ marginRight: '6px', color: '#ff5500' }} />
           {t[lang].terminalTitle}
         </div>
       </div>
@@ -317,8 +288,8 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus }: any) =
             letterSpacing: '0.03em'
           }}>
             {lang === 'ru' 
-              ? '⚠️ ВНИМАНИЕ: ПЕСОЧНИЦА ОФФЛАЙН (АКТИВНА ХОСТ-СИСТЕМА!)' 
-              : '⚠️ WARNING: SANDBOX OFFLINE (HOST SYSTEM ACTIVE!)'}
+              ? 'ВНИМАНИЕ: ПЕСОЧНИЦА ОФФЛАЙН (АКТИВНА ХОСТ-СИСТЕМА!)' 
+              : 'WARNING: SANDBOX OFFLINE (HOST SYSTEM ACTIVE!)'}
           </div>
         )}
         <div ref={terminalRef} style={{ width: '100%', flex: 1, overflow: 'hidden' }} />
@@ -327,13 +298,21 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus }: any) =
   );
 };
 
-const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, terminalBuffer, systemStats }: any) => {
+const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, terminalBuffer, systemStats, explainCommand, setExplainCommand }: any) => {
   const [messages, setMessages] = useState<Array<{ role: string; text: string }>>([]);
   const [input, setInput] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (explainCommand) {
+      const cmdToExplain = explainCommand;
+      if (setExplainCommand) setExplainCommand(null);
+      triggerCommandExplanation(cmdToExplain);
+    }
+  }, [explainCommand]);
 
   useEffect(() => {
     setMessages(prev => {
@@ -354,6 +333,68 @@ const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, 
   const saveKey = () => {
     localStorage.setItem('gemini_api_key', apiKey);
     setShowSettings(false);
+  };
+
+  const triggerCommandExplanation = async (cmd: string) => {
+    const userMsg = lang === 'ru' ? `Объясни команду: ${cmd}` : `Explain the command: ${cmd}`;
+    const newMsgs = [...messages, { role: 'user', text: userMsg }];
+    setMessages(newMsgs);
+    
+    if (!apiKey) {
+      setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? 'Ошибка: Пожалуйста, задайте ваш Gemini API ключ в настройках.' : 'Error: Please set your Gemini API key in settings to consult with me.' }]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const history = newMsgs.map(m => ({
+        role: m.role === 'ank' ? 'model' : 'user',
+        parts: [{ text: m.text }]
+      }));
+
+      const systemInstruction = `You are AI Mentor Ank, the Socratic tutor for the Terminal Academy.
+The student clicked the command "${cmd}" in the Command Grimoire.
+Your task is to explain this command inside the chat before they run it in the terminal.
+Provide:
+1. Context: When and where this command is typically used.
+2. Purpose: What the command aims to achieve.
+3. Effects: What changes or outputs this command produces.
+Keep it Socratic and informative. Do not use emojis or icons in your output.
+
+Real-time System Stats & Status:
+- CPU Usage: ${systemStats?.cpu || 0}%
+- Memory: ${systemStats?.ram || 0} GB / 8 GB
+- Network Latency: ${systemStats?.ping || 0} ms
+- Container sandbox active: ${systemStats?.dockerStatus || 'OFFLINE'}
+
+Current Real-time Terminal output buffer (Last 2000 chars):
+"""
+${terminalBuffer || 'No terminal activity recorded yet.'}
+"""
+
+Context:
+- Current course: ${activeCourse?.name || 'None'}
+- Selected node: ${activeNode?.title || 'None'}
+- Active incident: ${activeIncident?.title || 'None'}
+- Incident instructions: ${activeIncident?.desc || 'None'}`;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: history,
+          systemInstruction: { parts: [{ text: systemInstruction }] }
+        })
+      });
+
+      const json = await response.json();
+      const answer = json?.candidates?.[0]?.content?.parts?.[0]?.text || 'I am sorry, I had trouble processing that request. Please try again.';
+      setMessages(prev => [...prev, { role: 'ank', text: answer }]);
+    } catch (err: any) {
+      setMessages(prev => [...prev, { role: 'ank', text: `Error: ${err.message}` }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSend = async () => {
@@ -426,9 +467,9 @@ Context:
   return (
     <div className="widget-content">
       <div className="widget-header chat-header" {...(bindDrag ? bindDrag() : {})}>
-        <div className="title" style={{ touchAction: 'none' }}><MessageSquare size={14} style={{ color: 'var(--accent-primary)', marginRight: '6px' }} /> AI Mentor Ank</div>
-        <button className="settings-btn" onClick={() => setShowSettings(!showSettings)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a6accd', padding: '0 8px' }}>
-          <Settings size={14} />
+        <div className="title" style={{ touchAction: 'none' }}>AI Mentor Ank</div>
+        <button className="settings-btn" onClick={() => setShowSettings(!showSettings)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a6accd', padding: '0 8px', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Settings
         </button>
       </div>
 
@@ -509,23 +550,26 @@ Context:
               onKeyDown={e => e.key === 'Enter' && handleSend()}
               style={{ flex: 1, background: 'transparent', border: 'none', color: '#fff', fontSize: '0.95rem', outline: 'none', padding: '6px 0' }}
             />
-            <button 
+             <button 
               onClick={handleSend} 
               style={{ 
                 background: 'var(--accent-primary)', 
                 border: 'none', 
                 color: '#fff', 
-                width: '32px', 
-                height: '32px', 
-                borderRadius: '50%', 
+                padding: '6px 14px', 
+                borderRadius: '16px', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
                 cursor: 'pointer',
+                fontSize: '0.75rem',
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
                 transition: 'var(--transition-smooth)'
               }}
             >
-              <Send size={14} />
+              Send
             </button>
           </div>
         </div>
@@ -534,7 +578,7 @@ Context:
   );
 };
 
-const LibraryWidget = ({ bindDrag, activeIncident, lang }: any) => {
+const LibraryWidget = ({ bindDrag, activeIncident, lang, onExplainCommand }: any) => {
   const [commands, setCommands] = useState<string[]>(['docker-compose up -d', 'tail -f logs/latest.log', 'chmod +x start.sh']);
 
   useEffect(() => {
@@ -551,20 +595,24 @@ const LibraryWidget = ({ bindDrag, activeIncident, lang }: any) => {
 
   return (
     <div className="widget-content">
-      <div className="widget-header lib-header" {...(bindDrag ? bindDrag() : {})}>
-        <div className="title" style={{ touchAction: 'none' }}><BookOpen size={14} style={{ color: '#c3e88d', marginRight: '6px' }} /> {t[lang].grimoireTitle}</div>
+      <div className="widget-header" {...(bindDrag ? bindDrag() : {})}>
+        <div className="title" style={{ touchAction: 'none' }}>{t[lang].grimoireTitle}</div>
       </div>
       <div className="widget-body library-body" style={{ padding: '12px', height: 'calc(100% - 38px)', overflowY: 'auto' }}>
         <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t[lang].grimoireDesc}</p>
         <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'var(--accent-primary)', fontStyle: 'italic', fontWeight: 500 }}>
-          {lang === 'ru' ? '✍️ Вводите команды вручную для развития мышечной памяти' : '✍️ Type commands manually to build muscle memory'}
+          {lang === 'ru' ? 'Вводите команды вручную для развития мышечной памяти' : 'Type commands manually to build muscle memory'}
         </p>
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {commands.map((cmd, idx) => (
-            <li key={idx}>
-              <code 
+            <motion.li 
+              key={idx}
+              whileHover={{ scale: 1.02, x: 2 }}
+              onClick={() => onExplainCommand && onExplainCommand(cmd)}
+              style={{ cursor: 'pointer' }}
+            >
+              <div 
                 style={{ 
-                  display: 'block', 
                   padding: '10px 14px', 
                   background: 'rgba(255, 255, 255, 0.01)', 
                   color: 'var(--accent-primary)', 
@@ -573,13 +621,19 @@ const LibraryWidget = ({ bindDrag, activeIncident, lang }: any) => {
                   fontFamily: 'var(--font-mono)',
                   border: '1px solid rgba(255, 85, 0, 0.15)',
                   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-                  transition: 'var(--transition-smooth)'
+                  transition: 'var(--transition-smooth)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
                 }}
                 className="grimoire-cmd"
               >
-                {cmd}
-              </code>
-            </li>
+                <span>{cmd}</span>
+                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {lang === 'ru' ? 'Объяснить' : 'Explain'}
+                </span>
+              </div>
+            </motion.li>
           ))}
         </ul>
       </div>
@@ -593,7 +647,7 @@ const MonitoringWidget = ({ bindDrag, lang, stats }: any) => {
   return (
     <div className="widget-content">
       <div className="widget-header" {...(bindDrag ? bindDrag() : {})}>
-        <div className="title" style={{ touchAction: 'none' }}><Activity size={14} color="var(--accent-primary)" style={{ marginRight: '6px' }} /> {t[lang].monitorTitle}</div>
+        <div className="title" style={{ touchAction: 'none' }}>{t[lang].monitorTitle}</div>
       </div>
       <div className="widget-body" style={{ padding: '16px', height: 'calc(100% - 38px)', overflowY: 'auto' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.85rem' }}>
@@ -688,7 +742,6 @@ const LessonWidget = ({
     <div className="widget-content">
       <div className="widget-header lib-header" {...(bindDrag ? bindDrag() : {})}>
         <div className="title" style={{ touchAction: 'none' }}>
-          <BookOpen size={14} style={{ color: 'var(--accent-secondary)', marginRight: '6px' }} /> 
           {lang === 'ru' ? 'Учебный План' : 'Syllabus & Lessons'}
         </div>
       </div>
@@ -874,7 +927,7 @@ const PlannerWidget = ({ bindDrag, activeIncident, lang }: any) => {
   return (
     <div className="widget-content">
       <div className="widget-header" {...(bindDrag ? bindDrag() : {})}>
-        <div className="title" style={{ touchAction: 'none' }}><BrainCircuit size={14} color="#c792ea" style={{ marginRight: '6px' }} /> {t[lang].plannerTitle}</div>
+        <div className="title" style={{ touchAction: 'none' }}>{t[lang].plannerTitle}</div>
       </div>
       <div className="widget-body library-body" style={{ padding: '10px', height: 'calc(100% - 38px)', overflowY: 'auto' }}>
         <h4 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', color: '#888', textTransform: 'uppercase' }}>{t[lang].plannerChecklist}</h4>
@@ -1083,6 +1136,7 @@ export default function App() {
   });
 
   const terminalBufferRef = useRef<string>('');
+  const panTimeoutRef = useRef<any>(null);
 
   useEffect(() => {
     let seconds = 0;
@@ -1145,7 +1199,7 @@ export default function App() {
     h: window.innerHeight
   });
 
-  const panTimeoutRef = useRef<any>(null);
+  const [explainCommand, setExplainCommand] = useState<string | null>(null);
 
   // Widget to Slot mapping
   const [widgetSlots, setWidgetSlots] = useState<{ [id: string]: number }>({
@@ -1189,6 +1243,21 @@ export default function App() {
 
   useEffect(() => {
     setIsReady(true);
+    
+    // Load Russian translation dynamically if present (excluded from remote git index)
+    fetch('/translation_ru.json')
+      .then(res => {
+        if (!res.ok) throw new Error('Not found');
+        return res.json();
+      })
+      .then(data => {
+        t.ru = data;
+      })
+      .catch(() => {
+        // Fallback to English
+        t.ru = { ...t.en };
+      });
+
     const handleResize = () => {
       setDimensions({ w: window.innerWidth, h: window.innerHeight });
     };
@@ -1528,6 +1597,8 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
                   lang={lang}
                   terminalBuffer={terminalBufferRef.current}
                   systemStats={stats}
+                  explainCommand={explainCommand}
+                  setExplainCommand={setExplainCommand}
                 />
               </FluidWindow>
               
@@ -1549,6 +1620,7 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
                 <LibraryWidget 
                   activeIncident={activeIncident}
                   lang={lang}
+                  onExplainCommand={setExplainCommand}
                 />
               </FluidWindow>
               

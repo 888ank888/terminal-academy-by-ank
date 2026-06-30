@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Exclude Russian-translated assets from GitHub builds
+public/translation_ru.json

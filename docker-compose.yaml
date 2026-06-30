@@ -11,6 +11,8 @@ services:
     runtime: runsc  # Enforces gVisor userspace virtualization shim
     init: true      # Handles signals properly and prevents zombie processes
     read_only: true # Enforces a read-only root filesystem for extra security
+    tty: true
+    stdin_open: true
     volumes:
       - ./infra/gvisor_events.sock:/var/run/gvisor_events.sock:rw # Mount gVisor seccheck socket
     tmpfs:

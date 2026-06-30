@@ -32,21 +32,25 @@ fn spawn_pty(
     })
     .map_err(|e| e.to_string())?;
 
-  // Check if docker is installed and container "academy-sandbox" is running
-  let has_docker = std::process::Command::new("docker")
-    .arg("inspect")
-    .arg("academy-sandbox")
+  // Check if remote docker container "academy-sandbox" is running via SSH
+  let has_docker = std::process::Command::new("ssh")
+    .arg("-i")
+    .arg("/Users/ank/.ssh/id_ed25519")
+    .arg("-o")
+    .arg("ConnectTimeout=3")
+    .arg("root@89.22.239.107")
+    .arg("docker inspect academy-sandbox")
     .output()
     .map(|out| out.status.success())
     .unwrap_or(false);
 
   let mut cmd = if has_docker {
-    let mut c = CommandBuilder::new("docker");
-    c.arg("exec");
-    c.arg("-it");
-    c.arg("academy-sandbox");
-    // Try bash, if it doesn't exist, we fall back to sh
-    c.arg("/bin/bash");
+    let mut c = CommandBuilder::new("ssh");
+    c.arg("-t");
+    c.arg("-i");
+    c.arg("/Users/ank/.ssh/id_ed25519");
+    c.arg("root@89.22.239.107");
+    c.arg("docker exec -it academy-sandbox /bin/bash");
     c
   } else {
     let shell = if std::path::Path::new("/bin/zsh").exists() {
@@ -127,9 +131,13 @@ fn resize_pty(
 
 #[tauri::command]
 fn get_docker_status() -> bool {
-  std::process::Command::new("docker")
-    .arg("inspect")
-    .arg("academy-sandbox")
+  std::process::Command::new("ssh")
+    .arg("-i")
+    .arg("/Users/ank/.ssh/id_ed25519")
+    .arg("-o")
+    .arg("ConnectTimeout=3")
+    .arg("root@89.22.239.107")
+    .arg("docker inspect academy-sandbox")
     .output()
     .map(|out| out.status.success())
     .unwrap_or(false)
