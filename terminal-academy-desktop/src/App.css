@@ -1,0 +1,370 @@
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-base);
+  color: var(--text-main);
+  overflow: hidden;
+  font-family: var(--font-sans), sans-serif;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* The fixed window frame */
+.viewport {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Detached Floating HUD Header (Glassmorphic) - Relocated to Bottom */
+.hud-header {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 800px;
+  height: 52px;
+  z-index: 1000;
+  background: var(--bg-raised);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  transition: var(--transition-smooth);
+}
+
+.hud-header:hover {
+  border-color: var(--border-highlight);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+.hud-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hud-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: 0.05em;
+}
+
+.ping-indicator {
+  width: 8px;
+  height: 8px;
+  background-color: var(--accent-primary);
+  border-radius: 50%;
+  position: relative;
+  box-shadow: var(--glow-amber);
+}
+
+.ping-indicator::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(255, 85, 0, 0.5);
+  border-radius: 50%;
+  animation: ping 2.5s infinite ease-out;
+}
+
+@keyframes ping {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(3); opacity: 0; }
+}
+
+.hud-status {
+  display: flex;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.hud-label {
+  color: var(--text-muted);
+}
+
+.hud-value {
+  color: var(--accent-secondary);
+  font-weight: bold;
+}
+
+.hud-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hud-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.hud-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-primary);
+  box-shadow: var(--glow-amber);
+}
+
+.hud-btn.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #fff;
+  box-shadow: var(--glow-amber);
+}
+
+.screen-selectors {
+  display: flex;
+  gap: 4px;
+}
+
+/* The entire 4-screen universe */
+.world {
+  width: 200%;
+  height: 200%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.background-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.global-widget-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+}
+
+/* Individual screens with retro borders and grid overlays */
+.screen {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border-right: 1px solid rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Glassmorphic floating window style */
+.widget-container {
+  background: var(--bg-raised) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  transition: var(--transition-smooth);
+}
+
+.widget-container:hover {
+  border-color: rgba(255, 85, 0, 0.4);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+}
+
+/* Header bar matching Navbar styling of landing page */
+.widget-header {
+  background: rgba(255, 255, 255, 0.02);
+  padding: 10px 16px;
+  cursor: grab;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  user-select: none;
+}
+
+.widget-header:active {
+  cursor: grabbing;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-main);
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.widget-body {
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+  background: rgba(5, 5, 6, 0.2);
+}
+
+/* Inner panel items styling */
+.widget-body select, .widget-body button, .widget-body input {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+}
+
+/* Custom styles for selects and buttons to match the retro theme */
+.widget-body select {
+  background: var(--bg-base) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+  outline: none;
+}
+.widget-body select:focus {
+  border-color: var(--accent-primary) !important;
+}
+
+.widget-body button {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  transition: var(--transition-smooth);
+}
+.widget-body button:hover {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #fff;
+  box-shadow: var(--glow-amber);
+}
+
+/* xterm.js theme overrides */
+.terminal-body {
+  background: #050506 !important;
+  user-select: text;
+}
+
+/* Socratic Chat Custom Message style */
+.message-wrapper {
+  margin-bottom: 12px;
+}
+
+.message {
+  border: 1px solid var(--border-color);
+}
+
+.message.incoming {
+  background: rgba(255, 85, 0, 0.04) !important;
+  border-left: 3px solid var(--accent-primary) !important;
+  color: var(--text-main) !important;
+}
+
+.message.outgoing {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-left: 3px solid var(--text-muted) !important;
+  color: var(--text-main) !important;
+}
+
+/* Typing Indicator Animation */
+.dot-typing {
+  animation: dance 1.4s infinite ease-in-out both;
+}
+
+.dot-typing:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.dot-typing:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes dance {
+  0%, 80%, 100% { 
+    transform: scale(0.3);
+  } 40% { 
+    transform: scale(1.0);
+  }
+}
+
+/* Bulletproof text selection kill switch during drag */
+body.global-dragging * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+body.global-dragging .widget-body {
+  pointer-events: none !important;
+}
+
+/* Animated breathing glow border for pill chat input */
+@keyframes gradient-glow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.chat-input-pill-wrapper {
+  transition: var(--transition-smooth);
+}
+
+.chat-input-pill-wrapper:focus-within {
+  box-shadow: 0 0 15px rgba(255, 85, 0, 0.4);
+}
+
+/* Modern chat bubbles styling (no harsh retro lines) */
+.message {
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: var(--transition-smooth);
+}
+
+.message:hover {
+  border-color: rgba(255, 85, 0, 0.15);
+}
+
+/* Modern non-system Lesson card design */
+.node-card {
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.01);
+  transition: var(--transition-smooth);
+}
+
+.node-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.incidents-grid div {
+  transition: var(--transition-smooth);
+}
+
+.incidents-grid div:hover {
+  transform: translateX(2px);
+}

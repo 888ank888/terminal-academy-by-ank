@@ -1,0 +1,1414 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, useMotionValue, animate } from 'framer-motion';
+import { useDrag } from '@use-gesture/react';
+import { Terminal as TerminalIcon, MessageSquare, BookOpen, Activity, BrainCircuit, Settings, CheckSquare, Send } from 'lucide-react';
+import { Terminal as XTerm } from 'xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import 'xterm/css/xterm.css';
+import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
+import './App.css';
+
+// --- Localization dictionary for EN/RU toggle --- //
+const t: { [key: string]: { [key: string]: string } } = {
+  en: {
+    hudTitle: "TERMINAL ACADEMY // OPERATIONAL HUD",
+    hudBranch: "ACTIVE BRANCH:",
+    hudViewDetailed: "VIEW: DETAILED",
+    hudViewOverview: "VIEW: OVERVIEW",
+    hudShow: "SHOW HUD (CTRL+H)",
+    hudHide: "HIDE HUD",
+    screen: "SCREEN",
+    guideTitle: "Syllabus Guide",
+    guideText: "Choose a branch curriculum tab, click on any of the module nodes below to expand the available incidents, and consult AI Mentor Ank in the Chat box to solve tasks inside the sandbox terminal.",
+    modulesTitle: "Learning Path",
+    incidentsTitle: "Incidents",
+    bossIncident: "BOSS INCIDENT",
+    askAnk: "Ask Ank...",
+    askButton: "Send",
+    apiSettings: "API Key Settings",
+    saveKey: "Save Key",
+    terminalTitle: "Sandbox Terminal (ank@sandbox)",
+    grimoireTitle: "Command Grimoire",
+    grimoireDesc: "Suggested Diagnostic Commands:",
+    monitorTitle: "System Monitoring",
+    monitorSandbox: "SANDBOX CONTAINER:",
+    monitorCpu: "CPU Usage (Total):",
+    monitorRam: "Memory Allocated:",
+    monitorSwap: "Swap Allocation:",
+    monitorDisk: "Disk I/O Latency:",
+    monitorNet: "Network Traffic:",
+    monitorLoad: "Load Average:",
+    monitorProc: "Active Processes:",
+    monitorUptime: "System Uptime:",
+    monitorLatency: "Backend Latency:",
+    plannerTitle: "AI Task Planner",
+    plannerChecklist: "Incident Checklist",
+    mentorName: "SYSTEM // MENTOR ANK",
+    studentName: "STUDENT // ACTIVE",
+    chatWelcome: "Welcome, Initiate. I am Mentor Ank. Choose an incident from the Lesson board, and tell me when you are ready to begin. Remember, I will not give you copy-pasteable answers; I am here to guide your discovery.",
+    chatThinking: "Ank is contemplating...",
+    taskSelect: "Select an incident from Syllabus",
+    taskReview: "Review incident objective:",
+    taskExamine: "Examine environment diagnostics",
+    taskVerify: "Verify resolution using Ank's hints"
+  },
+  ru: {
+    hudTitle: "ТЕРМИНАЛ АКАДЕМИЯ // ОПЕРАЦИОННЫЙ HUD",
+    hudBranch: "АКТИВНАЯ ВЕТВЬ:",
+    hudViewDetailed: "ВИД: ДЕТАЛЬНЫЙ",
+    hudViewOverview: "ВИД: ОБЗОР",
+    hudShow: "ПОКАЗАТЬ HUD (CTRL+H)",
+    hudHide: "СКРЫТЬ HUD",
+    screen: "ЭКРАН",
+    guideTitle: "Руководство по Программе",
+    guideText: "Выберите вкладку учебного плана, нажмите на любой учебный модуль ниже, чтобы раскрыть доступные инциденты, и консультируйтесь с ИИ-наставником Ank в чате для решения задач в терминале песочницы.",
+    modulesTitle: "Путь Обучения",
+    incidentsTitle: "Инциденты",
+    bossIncident: "БОСС-ИНЦИДЕНТ",
+    askAnk: "Спросите Ank...",
+    askButton: "Отправить",
+    apiSettings: "Настройки API ключа",
+    saveKey: "Сохранить Ключ",
+    terminalTitle: "Песочница Терминала (ank@sandbox)",
+    grimoireTitle: "Гримуар Команд",
+    grimoireDesc: "Рекомендуемые Диагностические Команды:",
+    monitorTitle: "Мониторинг Системы",
+    monitorSandbox: "КОНТЕЙНЕР ПЕСОЧНИЦЫ:",
+    monitorCpu: "Загрузка CPU (Всего):",
+    monitorRam: "Выделенная Память:",
+    monitorSwap: "Выделение Swap:",
+    monitorDisk: "Задержка Disk I/O:",
+    monitorNet: "Сетевой Трафик:",
+    monitorLoad: "Средняя Загрузка:",
+    monitorProc: "Активные Процессы:",
+    monitorUptime: "Время Работы Системы:",
+    monitorLatency: "Задержка Бэкенда:",
+    plannerTitle: "ИИ Планировщик Задач",
+    plannerChecklist: "Чек-лист Инцидента",
+    mentorName: "SYSTEM // MENTOR ANK",
+    studentName: "STUDENT // ACTIVE",
+    chatWelcome: "Приветствую, Инициат. Я наставник Ank. Выберите инцидент на панели уроков и сообщите мне, когда будете готовы начать. Помните, я не даю готовых ответов, а лишь помогаю вам прийти к ним самостоятельно.",
+    chatThinking: "Ank размышляет...",
+    taskSelect: "Выберите инцидент из учебной программы",
+    taskReview: "Изучить цель инцидента:",
+    taskExamine: "Проверить диагностику окружения",
+    taskVerify: "Подтвердить решение с помощью подсказок Ank"
+  }
+};
+
+// --- Syllabus Parsing Helper --- //
+interface Incident {
+  id: number;
+  title: string;
+  desc: string;
+  isBoss: boolean;
+}
+
+interface SyllabusNode {
+  id: number;
+  title: string;
+  description: string;
+  incidents: Incident[];
+}
+
+function parseSyllabus(md: string): SyllabusNode[] {
+  const nodes: SyllabusNode[] = [];
+  const sections = md.split(/## Node\s+/);
+  
+  for (let i = 1; i < sections.length; i++) {
+    const section = sections[i];
+    const lines = section.split('\n');
+    
+    const headingLine = lines[0].trim();
+    const headingMatch = headingLine.match(/^(\d+):\s*(.+)$/);
+    if (!headingMatch) continue;
+    
+    const nodeId = parseInt(headingMatch[1]);
+    const nodeTitle = headingMatch[2];
+    
+    let description = '';
+    const incidents: Incident[] = [];
+    
+    for (let j = 1; j < lines.length; j++) {
+      const line = lines[j].trim();
+      if (line.startsWith('**Description:**')) {
+        description = line.replace('**Description:**', '').trim();
+      } else {
+        const incidentMatch = line.match(/^(\d+)\.\s+(.+)$/);
+        if (incidentMatch) {
+          const incId = parseInt(incidentMatch[1]);
+          const content = incidentMatch[2].trim();
+          
+          let title = '';
+          let desc = '';
+          let isBoss = false;
+          
+          if (content.includes('**Boss Fight:')) {
+            isBoss = true;
+            const bossMatch = content.match(/\*\*Boss Fight:\s*([^*]+)\*\*\s*-\s*(.+)$/);
+            if (bossMatch) {
+              title = 'Boss Fight: ' + bossMatch[1].trim();
+              desc = bossMatch[2].trim();
+            } else {
+              title = 'Boss Fight';
+              desc = content;
+            }
+          } else {
+            const splitIdx = content.indexOf(':');
+            if (splitIdx !== -1) {
+              title = content.substring(0, splitIdx).trim();
+              desc = content.substring(splitIdx + 1).trim();
+            } else {
+              title = `Incident ${incId}`;
+              desc = content;
+            }
+          }
+          
+          incidents.push({ id: incId, title, desc, isBoss });
+        }
+      }
+    }
+    
+    nodes.push({
+      id: nodeId,
+      title: nodeTitle,
+      description,
+      incidents
+    });
+  }
+  
+  return nodes;
+}
+
+// --- UI Widgets --- //
+const TerminalWidget = ({ bindDrag, lang }: any) => {
+  const terminalRef = useRef<HTMLDivElement>(null);
+  const termInstanceRef = useRef<XTerm | null>(null);
+  const fitAddonRef = useRef<FitAddon | null>(null);
+
+  useEffect(() => {
+    let term: XTerm | null = null;
+    let fitAddon: FitAddon | null = null;
+    let resizeObserver: ResizeObserver | null = null;
+    let onDataDisposable: any = null;
+    let unlisten: any = null;
+
+    const initTerminal = () => {
+      if (!terminalRef.current) return;
+
+      term = new XTerm({
+        cursorBlink: true,
+        theme: {
+          background: '#050506',
+          foreground: '#fdfd96',
+          cursor: '#ff5500',
+          selectionBackground: 'rgba(255, 85, 0, 0.3)',
+          black: '#050506',
+          red: '#ff3333',
+          green: '#39ff14',
+          yellow: '#ffcb6b',
+          blue: '#0055ff',
+          magenta: '#c792ea',
+          cyan: '#00ffff',
+          white: '#ffffff',
+        },
+        fontFamily: '"Fira Code", "Jersey 10", Menlo, Monaco, Consolas, "Courier New", monospace',
+        fontSize: 14,
+        allowProposedApi: true,
+      });
+
+      fitAddon = new FitAddon();
+      term.loadAddon(fitAddon);
+      term.open(terminalRef.current);
+      
+      const tryFit = () => {
+        try {
+          if (terminalRef.current && terminalRef.current.clientWidth > 0 && terminalRef.current.clientHeight > 0 && fitAddon && term) {
+            fitAddon.fit();
+            invoke('resize_pty', { rows: term.rows, cols: term.cols }).catch(err => console.error(err));
+          }
+        } catch (e) {
+          console.error('Fit error:', e);
+        }
+      };
+
+      setTimeout(tryFit, 150);
+
+      termInstanceRef.current = term;
+      fitAddonRef.current = fitAddon;
+
+      invoke('spawn_pty').catch(err => {
+        term?.write(`\r\n\x1b[31mError spawning PTY: ${err}\x1b[0m\r\n`);
+      });
+
+      onDataDisposable = term.onData(data => {
+        invoke('write_pty', { data }).catch(err => console.error(err));
+      });
+
+      listen('pty-data', (event: any) => {
+        term?.write(event.payload);
+      }).then(fn => {
+        unlisten = fn;
+      });
+
+      resizeObserver = new ResizeObserver(() => {
+        tryFit();
+      });
+      resizeObserver.observe(terminalRef.current);
+    };
+
+    const checkVisibility = setInterval(() => {
+      if (terminalRef.current && terminalRef.current.clientWidth > 0 && terminalRef.current.clientHeight > 0) {
+        clearInterval(checkVisibility);
+        initTerminal();
+      }
+    }, 50);
+
+    return () => {
+      clearInterval(checkVisibility);
+      if (onDataDisposable) onDataDisposable.dispose();
+      if (term) term.dispose();
+      if (resizeObserver) resizeObserver.disconnect();
+      if (unlisten) unlisten();
+    };
+  }, []);
+
+  return (
+    <div className="widget-content">
+      <div className="widget-header" {...(bindDrag ? bindDrag() : {})}>
+        <div className="title" style={{ touchAction: 'none' }}>
+          <TerminalIcon size={14} style={{ marginRight: '6px', color: '#ff5500' }} />
+          {t[lang].terminalTitle}
+        </div>
+      </div>
+      <div 
+        ref={terminalRef} 
+        className="widget-body terminal-body" 
+        style={{ padding: '8px', overflow: 'hidden', flex: 1, background: '#050506' }}
+      />
+    </div>
+  );
+};
+
+const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang }: any) => {
+  const [messages, setMessages] = useState<Array<{ role: string; text: string }>>([]);
+  const [input, setInput] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+  const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMessages(prev => {
+      if (prev.length === 0) {
+        return [{ role: 'ank', text: t[lang].chatWelcome }];
+      }
+      if (prev.length === 1 && (prev[0].text === t.en.chatWelcome || prev[0].text === t.ru.chatWelcome)) {
+        return [{ role: 'ank', text: t[lang].chatWelcome }];
+      }
+      return prev;
+    });
+  }, [lang]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const saveKey = () => {
+    localStorage.setItem('gemini_api_key', apiKey);
+    setShowSettings(false);
+  };
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    const userMsg = input.trim();
+    setInput('');
+    
+    const newMsgs = [...messages, { role: 'user', text: userMsg }];
+    setMessages(newMsgs);
+    
+    if (!apiKey) {
+      setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? 'Ошибка: Пожалуйста, задайте ваш Gemini API ключ в настройках.' : 'Error: Please set your Gemini API key in settings to consult with me.' }]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const history = newMsgs.map(m => ({
+        role: m.role === 'ank' ? 'model' : 'user',
+        parts: [{ text: m.text }]
+      }));
+
+      const systemInstruction = `You are AI Mentor Ank, the Socratic tutor for the Terminal Academy.
+Your role is to guide the student through practical terminal challenges (system administration, networking, devops, app hosting).
+CRITICAL RULES:
+1. DO NOT give direct answers or write out copy-pasteable bash commands.
+2. Ask leading questions and guide the student to discover the answer themselves.
+3. Suggest diagnostic commands to help them examine the system (e.g. "What happens when you run 'ls -la' in that directory?").
+4. Maintain a supportive, encouraging, and Socratic tone.
+5. If they are stuck on a specific error, explain what the error means conceptually.
+
+Context:
+- Current course: ${activeCourse?.name || 'None'}
+- Selected node: ${activeNode?.title || 'None'}
+- Active incident: ${activeIncident?.title || 'None'}
+- Incident instructions: ${activeIncident?.desc || 'None'}`;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: history,
+          systemInstruction: { parts: [{ text: systemInstruction }] }
+        })
+      });
+
+      const json = await response.json();
+      const answer = json?.candidates?.[0]?.content?.parts?.[0]?.text || 'I am sorry, I had trouble processing that request. Please try again.';
+      setMessages(prev => [...prev, { role: 'ank', text: answer }]);
+    } catch (err: any) {
+      setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? `Ошибка консультации: ${err.message}` : `Error consulting Ank: ${err.message}` }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="widget-content">
+      <div className="widget-header chat-header" {...(bindDrag ? bindDrag() : {})}>
+        <div className="title" style={{ touchAction: 'none' }}><MessageSquare size={14} style={{ color: 'var(--accent-primary)', marginRight: '6px' }} /> AI Mentor Ank</div>
+        <button className="settings-btn" onClick={() => setShowSettings(!showSettings)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a6accd', padding: '0 8px' }}>
+          <Settings size={14} />
+        </button>
+      </div>
+
+      <div className="widget-body chat-body" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100% - 38px)', padding: '12px' }}>
+        {showSettings && (
+          <div className="settings-panel" style={{ background: '#1c1c28', padding: '12px', borderRadius: '8px', marginBottom: '12px', border: '1px solid var(--accent-primary)' }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95rem', color: 'var(--accent-primary)' }}>{t[lang].apiSettings}</h4>
+            <input 
+              type="password" 
+              placeholder="Paste Gemini API Key" 
+              value={apiKey} 
+              onChange={e => setApiKey(e.target.value)} 
+              style={{ width: '100%', padding: '6px', background: '#050506', border: '1px solid rgba(255, 85, 0, 0.3)', color: '#fff', fontSize: '0.9rem', borderRadius: '4px', marginBottom: '8px', outline: 'none' }}
+            />
+            <button onClick={saveKey} style={{ background: 'var(--accent-primary)', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.9rem', transition: 'var(--transition-smooth)' }}>{t[lang].saveKey}</button>
+          </div>
+        )}
+
+        <div className="chat-messages" style={{ flex: 1, overflowY: 'auto', marginBottom: '12px', paddingRight: '4px' }}>
+          {messages.map((m, idx) => (
+            <motion.div 
+              key={idx} 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className={`message-wrapper ${m.role === 'ank' ? 'incoming-wrapper' : 'outgoing-wrapper'}`}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: m.role === 'ank' ? 'flex-start' : 'flex-end', marginBottom: '10px' }}
+            >
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '2px', display: 'block', letterSpacing: '0.05em' }}>
+                {m.role === 'ank' ? t[lang].mentorName : t[lang].studentName}
+              </span>
+              <div 
+                className={`message ${m.role === 'ank' ? 'incoming' : 'outgoing'}`} 
+                style={{ 
+                  padding: '10px 12px', 
+                  borderRadius: '12px', 
+                  background: m.role === 'ank' ? 'rgba(255, 85, 0, 0.04)' : 'rgba(255, 255, 255, 0.02)', 
+                  borderLeft: m.role === 'ank' ? '3px solid var(--accent-primary)' : '3px solid var(--text-muted)',
+                  color: 'var(--text-main)', 
+                  fontSize: '0.95rem', 
+                  maxWidth: '90%' 
+                }}
+              >
+                <p style={{ margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{m.text}</p>
+              </div>
+            </motion.div>
+          ))}
+          {loading && (
+            <div className="typing-indicator" style={{ display: 'flex', gap: '4px', padding: '8px', alignItems: 'center' }}>
+              <span className="dot-typing" style={{ width: '6px', height: '6px', background: 'var(--accent-primary)', borderRadius: '50%', display: 'inline-block' }}></span>
+              <span className="dot-typing" style={{ width: '6px', height: '6px', background: 'var(--accent-primary)', borderRadius: '50%', display: 'inline-block' }}></span>
+              <span className="dot-typing" style={{ width: '6px', height: '6px', background: 'var(--accent-primary)', borderRadius: '50%', display: 'inline-block' }}></span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--accent-primary)', marginLeft: '6px', fontStyle: 'italic' }}>{t[lang].chatThinking}</span>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        <div className="chat-input-pill-wrapper" style={{ padding: '1px', borderRadius: '24px', background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), #0055ff, var(--accent-primary))', backgroundSize: '300% 300%', animation: 'gradient-glow 6s ease infinite' }}>
+          <div style={{ display: 'flex', alignItems: 'center', background: '#050506', borderRadius: '23px', padding: '4px 8px 4px 14px' }}>
+            <input 
+              type="text" 
+              placeholder={t[lang].askAnk} 
+              value={input} 
+              onChange={e => setInput(e.target.value)} 
+              onKeyDown={e => e.key === 'Enter' && handleSend()}
+              style={{ flex: 1, background: 'transparent', border: 'none', color: '#fff', fontSize: '0.95rem', outline: 'none', padding: '6px 0' }}
+            />
+            <button 
+              onClick={handleSend} 
+              style={{ 
+                background: 'var(--accent-primary)', 
+                border: 'none', 
+                color: '#fff', 
+                width: '32px', 
+                height: '32px', 
+                borderRadius: '50%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                cursor: 'pointer',
+                transition: 'var(--transition-smooth)'
+              }}
+            >
+              <Send size={14} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const LibraryWidget = ({ bindDrag, activeIncident, lang }: any) => {
+  const [commands, setCommands] = useState<string[]>(['docker-compose up -d', 'tail -f logs/latest.log', 'chmod +x start.sh']);
+
+  useEffect(() => {
+    if (!activeIncident) return;
+    
+    if (activeIncident.title.toLowerCase().includes('space') || activeIncident.title.toLowerCase().includes('find')) {
+      setCommands(['find . -name "*config*"', 'cd ../', 'pwd', 'ls -la']);
+    } else if (activeIncident.title.toLowerCase().includes('permission') || activeIncident.title.toLowerCase().includes('sticky')) {
+      setCommands(['chmod 600 id_rsa', 'ls -la /tmp', 'stat -c "%a %G" /etc']);
+    } else {
+      setCommands(['ip a', 'ping -c 3 8.8.8.8', 'cat /etc/hosts', 'netstat -tulpn']);
+    }
+  }, [activeIncident]);
+
+  return (
+    <div className="widget-content">
+      <div className="widget-header lib-header" {...(bindDrag ? bindDrag() : {})}>
+        <div className="title" style={{ touchAction: 'none' }}><BookOpen size={14} style={{ color: '#c3e88d', marginRight: '6px' }} /> {t[lang].grimoireTitle}</div>
+      </div>
+      <div className="widget-body library-body" style={{ padding: '8px' }}>
+        <p style={{ margin: '0 0 6px 0', fontSize: '1.1rem', color: '#888' }}>{t[lang].grimoireDesc}</p>
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          {commands.map((cmd, idx) => (
+            <li key={idx}>
+              <code style={{ display: 'block', padding: '6px', background: '#0d0e15', color: '#c3e88d', borderRadius: '4px', fontSize: '1.1rem', border: '1px solid #1c1c28' }}>{cmd}</code>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+const MonitoringWidget = ({ bindDrag }: any) => {
+  const [stats, setStats] = useState({
+    cpu: 12,
+    ram: 4.2,
+    ping: 15,
+    core0: 10,
+    core1: 15,
+    core2: 8,
+    core3: 14,
+    diskRead: 0.2,
+    diskWrite: 0.1,
+    netRx: 45,
+    netTx: 12,
+    activeProc: 84,
+    swap: 256,
+    uptime: '00:00:00',
+    loadAvg: '0.12, 0.08, 0.05',
+    dockerStatus: 'ACTIVE'
+  });
+
+  useEffect(() => {
+    let seconds = 0;
+    const timer = setInterval(() => {
+      seconds += 2;
+      const hStr = Math.floor(seconds / 3600).toString().padStart(2, '0');
+      const mStr = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+      const sStr = (seconds % 60).toString().padStart(2, '0');
+
+      setStats(() => ({
+        cpu: Math.floor(Math.random() * 20) + 8,
+        ram: parseFloat((4.1 + Math.random() * 0.4).toFixed(1)),
+        ping: Math.floor(Math.random() * 8) + 12,
+        core0: Math.floor(Math.random() * 25) + 5,
+        core1: Math.floor(Math.random() * 30) + 5,
+        core2: Math.floor(Math.random() * 20) + 5,
+        core3: Math.floor(Math.random() * 25) + 5,
+        diskRead: parseFloat((Math.random() * 1.5).toFixed(2)),
+        diskWrite: parseFloat((Math.random() * 0.8).toFixed(2)),
+        netRx: Math.floor(Math.random() * 200) + 50,
+        netTx: Math.floor(Math.random() * 50) + 10,
+        activeProc: Math.floor(Math.random() * 10) + 80,
+        swap: Math.floor(Math.random() * 16) + 240,
+        uptime: `${hStr}:${mStr}:${sStr}`,
+        loadAvg: `${(0.1 + Math.random() * 0.15).toFixed(2)}, ${(0.05 + Math.random() * 0.08).toFixed(2)}, ${(0.03 + Math.random() * 0.05).toFixed(2)}`,
+        dockerStatus: 'ACTIVE'
+      }));
+    }, 2000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="widget-content">
+      <div className="widget-header" {...(bindDrag ? bindDrag() : {})}>
+        <div className="title" style={{ touchAction: 'none' }}><Activity size={14} color="var(--accent-primary)" style={{ marginRight: '6px' }} /> System Monitoring</div>
+      </div>
+      <div className="widget-body" style={{ padding: '12px', height: 'calc(100% - 38px)', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.9rem' }}>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
+            <span style={{ color: 'var(--text-muted)' }}>SANDBOX CONTAINER:</span>
+            <span style={{ color: 'var(--accent-secondary)', fontWeight: 'bold' }}>{stats.dockerStatus}</span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>CPU Usage (Total):</span>
+            <span style={{ color: stats.cpu > 20 ? 'var(--accent-secondary)' : 'var(--text-main)', fontWeight: 'bold' }}>{stats.cpu}%</span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', paddingLeft: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            <div>Core 0: <span style={{ color: '#fff' }}>{stats.core0}%</span></div>
+            <div>Core 1: <span style={{ color: '#fff' }}>{stats.core1}%</span></div>
+            <div>Core 2: <span style={{ color: '#fff' }}>{stats.core2}%</span></div>
+            <div>Core 3: <span style={{ color: '#fff' }}>{stats.core3}%</span></div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Memory Allocated:</span>
+            <span style={{ color: '#82aaff', fontWeight: 'bold' }}>{stats.ram} GB / 8 GB</span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Swap Allocation:</span>
+            <span style={{ color: 'var(--text-muted)' }}>{stats.swap} MB</span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Disk I/O Latency:</span>
+            <span style={{ color: '#fff' }}>R: {stats.diskRead} MB/s | W: {stats.diskWrite} MB/s</span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Network Traffic:</span>
+            <span style={{ color: '#fff' }}>Rx: {stats.netRx} KB/s | Tx: {stats.netTx} KB/s</span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Load Average:</span>
+            <span style={{ color: '#fff', fontSize: '0.8rem' }}>{stats.loadAvg}</span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Active Processes:</span>
+            <span style={{ color: '#fff' }}>{stats.activeProc}</span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>System Uptime:</span>
+            <span style={{ color: '#fff', fontFamily: 'var(--font-mono)' }}>{stats.uptime}</span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Backend Latency:</span>
+            <span style={{ color: '#c792ea', fontWeight: 'bold' }}>{stats.ping} ms</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const LessonWidget = ({ 
+  bindDrag, 
+  courses, 
+  activeCourse, 
+  setActiveCourse, 
+  nodes, 
+  activeNode, 
+  setActiveNode, 
+  activeIncident, 
+  setActiveIncident 
+}: any) => {
+  const [expandedNodeId, setExpandedNodeId] = useState<number | null>(1);
+
+  return (
+    <div className="widget-content">
+      <div className="widget-header lib-header" {...(bindDrag ? bindDrag() : {})}>
+        <div className="title" style={{ touchAction: 'none' }}><BookOpen size={14} style={{ color: 'var(--accent-secondary)', marginRight: '6px' }} /> Syllabus & Lessons</div>
+      </div>
+      <div className="widget-body" style={{ padding: '12px', height: 'calc(100% - 38px)', overflowY: 'auto' }}>
+        
+        {/* Onboarding / Guide Section */}
+        <div className="guide-box" style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px dashed var(--border-color)', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
+          <h4 style={{ margin: '0 0 6px 0', fontSize: '0.95rem', color: 'var(--accent-primary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Syllabus Guide</h4>
+          <p style={{ margin: '0', fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+            Choose a branch curriculum tab, click on any of the module nodes below to expand the available incidents, and consult AI Mentor Ank in the Chat box to solve tasks inside the sandbox terminal.
+          </p>
+        </div>
+
+        {/* Course / Syllabus Tabs */}
+        <div className="course-tabs" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
+          {courses.map((c: any) => {
+            const isActive = activeCourse?.id === c.id;
+            return (
+              <button
+                key={c.id}
+                onClick={() => setActiveCourse(c)}
+                style={{
+                  flex: '1 1 calc(50% - 6px)',
+                  padding: '8px 4px',
+                  background: isActive ? 'var(--accent-primary)' : 'rgba(255, 255, 255, 0.03)',
+                  border: isActive ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                  color: isActive ? '#fff' : 'var(--text-main)',
+                  fontSize: '0.85rem',
+                  fontWeight: 500,
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  boxShadow: isActive ? 'var(--glow-amber)' : 'none',
+                  transition: 'var(--transition-smooth)'
+                }}
+              >
+                {c.name.toUpperCase()}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Custom Collapsible Nodes List */}
+        <div className="nodes-accordion" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Modules & Incidents</h4>
+          {nodes.map((n: any) => {
+            const isExpanded = expandedNodeId === n.id;
+            return (
+              <div 
+                key={n.id} 
+                className="node-card" 
+                style={{ 
+                  border: '1px solid var(--border-color)', 
+                  borderRadius: '8px', 
+                  background: isExpanded ? 'rgba(255, 255, 255, 0.02)' : 'transparent',
+                  overflow: 'hidden',
+                  transition: 'var(--transition-smooth)'
+                }}
+              >
+                <div 
+                  className="node-card-header" 
+                  onClick={() => setExpandedNodeId(isExpanded ? null : n.id)}
+                  style={{ 
+                    padding: '10px 12px', 
+                    background: 'rgba(255, 255, 255, 0.01)', 
+                    cursor: 'pointer', 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    fontSize: '0.9rem',
+                    fontWeight: 500,
+                    borderBottom: isExpanded ? '1px solid var(--border-color)' : 'none'
+                  }}
+                >
+                  <span>Node {n.id}: {n.title.toUpperCase()}</span>
+                  <span style={{ color: 'var(--accent-primary)', fontSize: '0.8rem' }}>{isExpanded ? '▼' : '▶'}</span>
+                </div>
+
+                {isExpanded && (
+                  <div className="node-card-body" style={{ padding: '10px 12px' }}>
+                    <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                      {n.description}
+                    </p>
+                    <div className="incidents-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {n.incidents.map((inc: any) => {
+                        const isActive = activeIncident?.id === inc.id && activeNode?.id === n.id;
+                        return (
+                          <div
+                            key={inc.id}
+                            onClick={() => {
+                              setActiveNode(n);
+                              setActiveIncident(inc);
+                            }}
+                            style={{
+                              padding: '8px 10px',
+                              background: isActive ? 'rgba(255, 85, 0, 0.08)' : 'rgba(255, 255, 255, 0.01)',
+                              border: isActive ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              boxShadow: isActive ? 'var(--glow-amber)' : 'none',
+                              transition: 'var(--transition-smooth)'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: isActive ? 'var(--accent-primary)' : 'var(--text-main)' }}>
+                                {inc.id}. {inc.title.toUpperCase()}
+                              </span>
+                              {inc.isBoss && (
+                                <span style={{ background: 'var(--accent-primary)', color: '#fff', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                                  BOSS INCIDENT
+                                </span>
+                              )}
+                            </div>
+                            {isActive && (
+                              <p style={{ margin: '6px 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                                {inc.desc}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PlannerWidget = ({ bindDrag, activeIncident, lang }: any) => {
+  const [tasks, setTasks] = useState<Array<{ id: number; text: string; done: boolean }>>([]);
+
+  useEffect(() => {
+    if (!activeIncident) {
+      setTasks([
+        { id: 1, text: t[lang].taskSelect, done: false }
+      ]);
+      return;
+    }
+
+    setTasks([
+      { id: 1, text: `${t[lang].taskReview} "${activeIncident.title}"`, done: true },
+      { id: 2, text: t[lang].taskExamine, done: false },
+      { id: 3, text: t[lang].taskVerify, done: false }
+    ]);
+  }, [activeIncident, lang]);
+
+  const toggleTask = (id: number) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  };
+
+  return (
+    <div className="widget-content">
+      <div className="widget-header" {...(bindDrag ? bindDrag() : {})}>
+        <div className="title" style={{ touchAction: 'none' }}><BrainCircuit size={14} color="#c792ea" style={{ marginRight: '6px' }} /> {t[lang].plannerTitle}</div>
+      </div>
+      <div className="widget-body library-body" style={{ padding: '10px', height: 'calc(100% - 38px)', overflowY: 'auto' }}>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', color: '#888', textTransform: 'uppercase' }}>{t[lang].plannerChecklist}</h4>
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {tasks.map(t => (
+            <li 
+              key={t.id} 
+              onClick={() => toggleTask(t.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '1.2rem',
+                color: t.done ? '#888' : '#e2e8f0',
+                textDecoration: t.done ? 'line-through' : 'none',
+                cursor: 'pointer',
+                padding: '6px',
+                background: '#1c1c28',
+                borderRadius: '4px',
+                border: '1px solid #333'
+              }}
+            >
+              <CheckSquare size={14} color={t.done ? '#c792ea' : '#555'} />
+              <span>{t.text}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+};
+
+// --- Slots Engine --- //
+// 4 Screens (2x2 grid), each screen has a standard 12x8 layout template.
+// This matches the user's correct sizes: chat (3x8), sys (5x2), term (5x4), aux (5x2), lesson (4x8).
+const generateSlots = () => {
+  const list = [];
+  for (let sy = 0; sy < 2; sy++) {
+    for (let sx = 0; sx < 2; sx++) {
+      const colOffset = sx * 12;
+      const rowOffset = sy * 8;
+      
+      list.push({ col: colOffset + 0, row: rowOffset + 0, w: 3, h: 8 }); // Left Column (chat)
+      list.push({ col: colOffset + 3, row: rowOffset + 0, w: 5, h: 2 }); // Center Top (sys)
+      list.push({ col: colOffset + 3, row: rowOffset + 2, w: 5, h: 4 }); // Center Mid (term)
+      list.push({ col: colOffset + 3, row: rowOffset + 6, w: 5, h: 2 }); // Center Bot (aux)
+      list.push({ col: colOffset + 8, row: rowOffset + 0, w: 4, h: 8 }); // Right Column (lesson/planner)
+    }
+  }
+  return list;
+};
+const slots = generateSlots();
+
+// --- Fluid Window Drag Wrapper --- //
+const FluidWindow = ({ id, slotIdx, zoomedOut, onDragEnd, cellW, cellH, children }: any) => {
+  const slot = slots[slotIdx];
+  const safeCellW = cellW || (window.innerWidth / 12);
+  const safeCellH = cellH || (window.innerHeight / 8);
+
+  const gap = 8;
+  const targetX = slot.col * safeCellW + gap / 2;
+  const targetY = slot.row * safeCellH + gap / 2;
+  const w = slot.w * safeCellW - gap;
+  const h = slot.h * safeCellH - gap;
+
+  const x = useMotionValue(targetX);
+  const y = useMotionValue(targetY);
+  
+  const [zIndex, setZIndex] = useState(10);
+  const widgetRef = useRef<HTMLDivElement>(null);
+  const springConfig = { type: 'spring', stiffness: 300, damping: 30 };
+
+  // Animate to position when slot changes (e.g. from swapping) or resize happens
+  useEffect(() => {
+    // @ts-ignore
+    animate(x, targetX, springConfig);
+    // @ts-ignore
+    animate(y, targetY, springConfig);
+  }, [targetX, targetY]);
+
+  // Delta-based drag prevents jumps from gesture offset out-of-sync
+  const bindDrag = useDrag(({ delta: [dx, dy], first, last }) => {
+    if (first) {
+      window.getSelection()?.removeAllRanges();
+      setZIndex(100);
+      
+      if (widgetRef.current) {
+        const bodyEl = widgetRef.current.querySelector('.widget-body') as HTMLElement;
+        if (bodyEl) bodyEl.style.pointerEvents = 'none';
+      }
+    }
+    
+    const scale = zoomedOut ? 0.5 : 1;
+    x.set(x.get() + dx / scale);
+    y.set(y.get() + dy / scale);
+
+    if (last) {
+      document.body.classList.remove('global-dragging');
+      setZIndex(10);
+      
+      if (widgetRef.current) {
+        const bodyEl = widgetRef.current.querySelector('.widget-body') as HTMLElement;
+        if (bodyEl) bodyEl.style.pointerEvents = 'auto';
+      }
+
+      const dropX = x.get();
+      const dropY = y.get();
+
+      // Find closest slot locally to check for change
+      let closestSlotIdx = 0;
+      let minDistance = Infinity;
+      slots.forEach((s, idx) => {
+        const slotLeft = s.col * safeCellW;
+        const slotTop = s.row * safeCellH;
+        const dist = Math.hypot(dropX - slotLeft, dropY - slotTop);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestSlotIdx = idx;
+        }
+      });
+
+      onDragEnd(id, dropX, dropY);
+
+      if (closestSlotIdx === slotIdx) {
+        // If slot didn't change, force snap back to current slot coordinates to prevent getting stuck
+        // @ts-ignore
+        animate(x, targetX, springConfig);
+        // @ts-ignore
+        animate(y, targetY, springConfig);
+      }
+    }
+  });
+
+  // Listen to camera-pan events to compensate coordinates when camera shifts screens during drag
+  useEffect(() => {
+    const handleCameraPan = (e: Event) => {
+      if (zIndex !== 100) return; // Only apply to the actively dragged window
+      
+      const { prevScreen, nextScreen } = (e as CustomEvent).detail;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+
+      const prevCol = (prevScreen - 1) % 2;
+      const prevRow = Math.floor((prevScreen - 1) / 2);
+      const nextCol = (nextScreen - 1) % 2;
+      const nextRow = Math.floor((nextScreen - 1) / 2);
+
+      const shiftX = (nextCol - prevCol) * w;
+      const shiftY = (nextRow - prevRow) * h;
+
+      x.set(x.get() + shiftX);
+      y.set(y.get() + shiftY);
+    };
+
+    window.addEventListener('camera-pan', handleCameraPan);
+    return () => window.removeEventListener('camera-pan', handleCameraPan);
+  }, [zIndex, x, y]);
+
+  // Intercept pointer down to instantly disable edge panning before drag moves
+  const bindDragWrapped = () => {
+    const attrs = bindDrag();
+    const originalPointerDown = attrs.onPointerDown;
+    attrs.onPointerDown = (e: any) => {
+      document.body.classList.add('global-dragging');
+      if (originalPointerDown) originalPointerDown(e);
+    };
+    return attrs;
+  };
+
+  return (
+    <motion.div 
+      ref={widgetRef}
+      className="widget-container"
+      style={{ x, y, width: w, height: h, position: 'absolute', zIndex }}
+    >
+      {React.cloneElement(children, { bindDrag: bindDragWrapped })}
+    </motion.div>
+  );
+};
+
+// --- Main App --- //
+export default function App() {
+  const [zoomedOut, setZoomedOut] = useState(false);
+  const [activeScreen, setActiveScreen] = useState(1);
+  const [isReady, setIsReady] = useState(false);
+  const [showHud, setShowHud] = useState(false);
+  const [lang, setLang] = useState<'en' | 'ru'>('en');
+  
+  // Track window dimensions dynamically for resizing
+  const [dimensions, setDimensions] = useState({
+    w: window.innerWidth,
+    h: window.innerHeight
+  });
+
+  const panTimeoutRef = useRef<any>(null);
+
+  // Widget to Slot mapping
+  const [widgetSlots, setWidgetSlots] = useState<{ [id: string]: number }>({
+    chat: 0,
+    sys: 1,
+    term: 2,
+    aux: 3,
+    lesson: 4,
+    planner: 5 // First slot of Screen 2
+  });
+
+  // Syllabus / Curriculum loader state
+  const courses = [
+    { id: 'linux', name: 'Linux Core & SysAdmin', file: '/curriculum_linux.md' },
+    { id: 'network', name: 'Networking & Security', file: '/curriculum_network.md' },
+    { id: 'devops', name: 'DevOps & Containers', file: '/curriculum_devops.md' },
+    { id: 'hosting', name: 'App Hosting', file: '/curriculum_hosting.md' }
+  ];
+  const [activeCourse, setActiveCourse] = useState(courses[0]);
+  const [nodes, setNodes] = useState<any[]>([]);
+  const [activeNode, setActiveNode] = useState<any>(null);
+  const [activeIncident, setActiveIncident] = useState<any>(null);
+
+  // Load and parse course syllabus whenever activeCourse changes
+  useEffect(() => {
+    fetch(activeCourse.file)
+      .then(res => res.text())
+      .then(text => {
+        const parsed = parseSyllabus(text);
+        setNodes(parsed);
+        if (parsed.length > 0) {
+          setActiveNode(parsed[0]);
+          setActiveIncident(parsed[0].incidents[0] || null);
+        } else {
+          setActiveNode(null);
+          setActiveIncident(null);
+        }
+      })
+      .catch(err => console.error('Error loading syllabus:', err));
+  }, [activeCourse]);
+
+  useEffect(() => {
+    setIsReady(true);
+    const handleResize = () => {
+      setDimensions({ w: window.innerWidth, h: window.innerHeight });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Global key listener for Overview Mode (Alt)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Alt') setZoomedOut(true);
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Alt') setZoomedOut(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  // Global key listener for HUD toggling (Ctrl+H)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key.toLowerCase() === 'h') {
+        e.preventDefault();
+        setShowHud(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Wheel zoom listener (mouse-centered zoom-in/out)
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement;
+      // Prevent zooming if scrolling inside xterm or widget bodies
+      if (target.closest('.widget-body')) return;
+
+      if (e.deltaY > 30) {
+        setZoomedOut(true);
+      } else if (e.deltaY < -30) {
+        setZoomedOut(false);
+      }
+    };
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, []);
+
+  // Mouse hover per-screen navigation (cursor-driven edge scrolling with hover delay)
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const w = dimensions.w;
+      const h = dimensions.h;
+      const mx = e.clientX;
+      const my = e.clientY;
+
+      if (zoomedOut) {
+        if (document.body.classList.contains('global-dragging')) return;
+        
+        // In Overview mode, hover determines which screen we will zoom into
+        const colIdx = mx < w / 2 ? 0 : 1;
+        const rowIdx = my < h / 2 ? 0 : 1;
+        const targetScreen = rowIdx * 2 + colIdx + 1;
+        setActiveScreen(targetScreen);
+      } else {
+        // Edge-detection panning in Zoomed In mode
+        const edgeX = 40;
+        const edgeY = 60;
+        
+        let targetScreenPan: number | null = null;
+        if (activeScreen === 1) {
+          if (mx > w - edgeX) targetScreenPan = 2;
+          else if (my > h - edgeY) targetScreenPan = 3;
+        } else if (activeScreen === 2) {
+          if (mx < edgeX) targetScreenPan = 1;
+          else if (my > h - edgeY) targetScreenPan = 4;
+        } else if (activeScreen === 3) {
+          if (mx > w - edgeX) targetScreenPan = 4;
+          else if (my < edgeY) targetScreenPan = 1;
+        } else if (activeScreen === 4) {
+          if (mx < edgeX) targetScreenPan = 3;
+          else if (my < edgeY) targetScreenPan = 2;
+        }
+
+        if (targetScreenPan !== null) {
+          // If already waiting to pan to this screen, do nothing
+          if (panTimeoutRef.current) return;
+
+          // Start a 400ms delay before panning (controlled focus teleport)
+          panTimeoutRef.current = setTimeout(() => {
+            setActiveScreen(prev => {
+              if (targetScreenPan !== null) {
+                window.dispatchEvent(new CustomEvent('camera-pan', {
+                  detail: { prevScreen: prev, nextScreen: targetScreenPan }
+                }));
+                return targetScreenPan;
+              }
+              return prev;
+            });
+            panTimeoutRef.current = null;
+          }, 400);
+        } else {
+          // Mouse left the edge, cancel the transition timer
+          if (panTimeoutRef.current) {
+            clearTimeout(panTimeoutRef.current);
+            panTimeoutRef.current = null;
+          }
+        }
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (panTimeoutRef.current) clearTimeout(panTimeoutRef.current);
+    };
+  }, [zoomedOut, activeScreen, dimensions]);
+
+  const handleDragEnd = (id: string, dropX: number, dropY: number) => {
+    const cellW = dimensions.w / 12;
+    const cellH = dimensions.h / 8;
+
+    // Find closest slot based on top-left coordinates (matches cursor/drag origin)
+    let closestSlotIdx = 0;
+    let minDistance = Infinity;
+
+    slots.forEach((slot, idx) => {
+      const slotLeft = slot.col * cellW;
+      const slotTop = slot.row * cellH;
+      const dist = Math.hypot(dropX - slotLeft, dropY - slotTop);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestSlotIdx = idx;
+      }
+    });
+
+    setWidgetSlots(prev => {
+      const next = { ...prev };
+      const oldSlot = next[id];
+
+      // Swap logic if target slot occupied
+      let occupantId: string | null = null;
+      for (const wId in next) {
+        if (wId === id) continue;
+        if (next[wId] === closestSlotIdx) {
+          occupantId = wId;
+          break;
+        }
+      }
+
+      if (occupantId) {
+        next[occupantId] = oldSlot;
+        next[id] = closestSlotIdx;
+      } else {
+        next[id] = closestSlotIdx;
+      }
+
+      // Automatically focus target screen
+      const targetSlot = slots[closestSlotIdx];
+      const screenX = Math.floor(targetSlot.col / 12);
+      const screenY = Math.floor(targetSlot.row / 8);
+      const newActiveScreen = screenY * 2 + screenX + 1;
+      setActiveScreen(newActiveScreen);
+
+      return next;
+    });
+  };
+
+// --- Detached Floating HUD Header --- //
+const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, activeCourse, lang, setLang }: any) => {
+  return (
+    <div className="hud-header">
+      <div className="hud-brand">
+        <span className="ping-indicator"></span>
+        <span className="hud-title">{t[lang].hudTitle}</span>
+      </div>
+      <div className="hud-status">
+        <span className="hud-label">{t[lang].hudBranch}</span>
+        <span className="hud-value">{activeCourse?.name.toUpperCase() || 'NONE'}</span>
+      </div>
+      <div className="hud-controls">
+        <button 
+          className="hud-btn lang-toggle-btn"
+          onClick={() => setLang((prev: string) => prev === 'en' ? 'ru' : 'en')}
+          style={{ fontWeight: 'bold', minWidth: '40px' }}
+        >
+          {lang.toUpperCase()}
+        </button>
+        <button 
+          className={`hud-btn ${zoomedOut ? 'active' : ''}`}
+          onClick={() => setZoomedOut(!zoomedOut)}
+        >
+          {zoomedOut ? t[lang].hudViewDetailed : t[lang].hudViewOverview}
+        </button>
+        <div className="screen-selectors">
+          {[1, 2, 3, 4].map(sNum => (
+            <button 
+              key={sNum}
+              className={`hud-btn screen-btn ${activeScreen === sNum && !zoomedOut ? 'active' : ''}`}
+              onClick={() => {
+                setActiveScreen(sNum);
+                setZoomedOut(false);
+              }}
+            >
+              {t[lang].screen} {sNum}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+  const getTransform = () => {
+    if (zoomedOut) {
+      return `scale(0.5) translate(0%, 0%)`; // Static 4-screen centered overview
+    }
+    const S = 1;
+    const colIdx = (activeScreen - 1) % 2;
+    const rowIdx = Math.floor((activeScreen - 1) / 2);
+    
+    const cx = (colIdx + 0.5) * 100;
+    const cy = (rowIdx + 0.5) * 100;
+    
+    const tx = 100 / (2 * S) - cx;
+    const ty = 100 / (2 * S) - cy;
+    
+    const txPct = (tx / 200) * 100;
+    const tyPct = (ty / 200) * 100;
+    
+    return `scale(${S}) translate(${txPct}%, ${tyPct}%)`;
+  };
+
+  return (
+    <div className="viewport">
+      {!showHud ? (
+        <button 
+          className="hud-toggle-btn"
+          onClick={() => setShowHud(true)}
+          style={{
+            position: 'absolute',
+            bottom: '12px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1001,
+            background: 'var(--bg-raised)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid var(--border-color)',
+            color: 'var(--text-muted)',
+            padding: '6px 12px',
+            borderRadius: '12px',
+            fontSize: '0.8rem',
+            fontWeight: 'bold',
+            letterSpacing: '0.05em',
+            cursor: 'pointer',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+            transition: 'var(--transition-smooth)'
+          }}
+        >
+          {t[lang].hudShow}
+        </button>
+      ) : (
+        <div style={{ position: 'relative' }}>
+          <HudHeader 
+            zoomedOut={zoomedOut}
+            setZoomedOut={setZoomedOut}
+            activeScreen={activeScreen}
+            setActiveScreen={setActiveScreen}
+            activeCourse={activeCourse}
+            lang={lang}
+            setLang={setLang}
+          />
+          <button 
+            className="hud-close-btn"
+            onClick={() => setShowHud(false)}
+            style={{
+              position: 'absolute',
+              bottom: '84px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 1001,
+              background: 'var(--bg-raised)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--accent-primary)',
+              padding: '4px 10px',
+              borderRadius: '8px',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.4)',
+              transition: 'var(--transition-smooth)'
+            }}
+          >
+            {t[lang].hudHide}
+          </button>
+        </div>
+      )}
+      
+      <div 
+        className="world"
+        style={{
+          transform: getTransform()
+        }}
+      >
+        <div className="background-grid" style={{ pointerEvents: zoomedOut ? 'auto' : 'none' }}>
+          <div className="screen" onClick={() => zoomedOut && (setActiveScreen(1), setZoomedOut(false))} style={{ backgroundSize: '8.333% 12.5%' }}>
+          </div>
+          <div className="screen" onClick={() => zoomedOut && (setActiveScreen(2), setZoomedOut(false))} style={{ backgroundSize: '8.333% 12.5%' }}>
+          </div>
+          <div className="screen" onClick={() => zoomedOut && (setActiveScreen(3), setZoomedOut(false))} style={{ backgroundSize: '8.333% 12.5%' }}>
+          </div>
+          <div className="screen" onClick={() => zoomedOut && (setActiveScreen(4), setZoomedOut(false))} style={{ backgroundSize: '8.333% 12.5%' }}>
+          </div>
+        </div>
+        
+        <div className="global-widget-layer">
+          {isReady && (
+            <>
+              <FluidWindow id="chat" slotIdx={widgetSlots.chat} zoomedOut={zoomedOut} onDragEnd={handleDragEnd} cellW={dimensions.w / 12} cellH={dimensions.h / 8}>
+                <ChatWidget 
+                  activeCourse={activeCourse}
+                  activeNode={activeNode}
+                  activeIncident={activeIncident}
+                  lang={lang}
+                />
+              </FluidWindow>
+              
+              <FluidWindow id="sys" slotIdx={widgetSlots.sys} zoomedOut={zoomedOut} onDragEnd={handleDragEnd} cellW={dimensions.w / 12} cellH={dimensions.h / 8}>
+                <MonitoringWidget />
+              </FluidWindow>
+              
+              <FluidWindow id="term" slotIdx={widgetSlots.term} zoomedOut={zoomedOut} onDragEnd={handleDragEnd} cellW={dimensions.w / 12} cellH={dimensions.h / 8}>
+                <TerminalWidget lang={lang} />
+              </FluidWindow>
+              
+              <FluidWindow id="aux" slotIdx={widgetSlots.aux} zoomedOut={zoomedOut} onDragEnd={handleDragEnd} cellW={dimensions.w / 12} cellH={dimensions.h / 8}>
+                <LibraryWidget 
+                  activeIncident={activeIncident}
+                  lang={lang}
+                />
+              </FluidWindow>
+              
+              <FluidWindow id="lesson" slotIdx={widgetSlots.lesson} zoomedOut={zoomedOut} onDragEnd={handleDragEnd} cellW={dimensions.w / 12} cellH={dimensions.h / 8}>
+                <LessonWidget 
+                  courses={courses}
+                  activeCourse={activeCourse}
+                  setActiveCourse={setActiveCourse}
+                  nodes={nodes}
+                  activeNode={activeNode}
+                  setActiveNode={setActiveNode}
+                  activeIncident={activeIncident}
+                  setActiveIncident={setActiveIncident}
+                  lang={lang}
+                />
+              </FluidWindow>
+ 
+              <FluidWindow id="planner" slotIdx={widgetSlots.planner} zoomedOut={zoomedOut} onDragEnd={handleDragEnd} cellW={dimensions.w / 12} cellH={dimensions.h / 8}>
+                <PlannerWidget 
+                  activeIncident={activeIncident}
+                  lang={lang}
+                />
+              </FluidWindow>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
