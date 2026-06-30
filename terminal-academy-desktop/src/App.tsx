@@ -221,6 +221,20 @@ const TerminalWidget = ({ bindDrag, lang }: any) => {
       fitAddon = new FitAddon();
       term.loadAddon(fitAddon);
       term.open(terminalRef.current);
+
+      // Completely disable paste actions on the PTY element
+      terminalRef.current.addEventListener('paste', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }, true);
+
+      term.attachCustomKeyEventHandler((arg: KeyboardEvent) => {
+        // Intercept and drop Ctrl+V and Cmd+V key sequences
+        if ((arg.ctrlKey || arg.metaKey) && arg.key.toLowerCase() === 'v') {
+          return false;
+        }
+        return true;
+      });
       
       const tryFit = () => {
         try {
@@ -1057,7 +1071,7 @@ const FluidWindow = ({ id, slotIdx, zoomedOut, onDragEnd, cellW, cellH, children
 export default function App() {
   const [zoomedOut, setZoomedOut] = useState(false);
   const [activeScreen, setActiveScreen] = useState(1);
-  const [isReady, setIsReady] = useState(false);
+  const [isReady, setIsReady] = useState(true);
   const [showHud, setShowHud] = useState(false);
   const [lang, setLang] = useState<'en' | 'ru'>('en');
   
@@ -1236,11 +1250,17 @@ export default function App() {
     const cellW = dimensions.w / 12;
     const cellH = dimensions.h / 8;
 
-    // Find closest slot based on top-left coordinates (matches cursor/drag origin)
-    let closestSlotIdx = 0;
+    const oldSlotIdx = widgetSlots[id];
+    const originalScreenIdx = Math.floor(oldSlotIdx / 5);
+
+    // Find closest slot on the same screen
+    let closestSlotIdx = oldSlotIdx;
     let minDistance = Infinity;
 
     slots.forEach((slot, idx) => {
+      const slotScreenIdx = Math.floor(idx / 5);
+      if (slotScreenIdx !== originalScreenIdx) return;
+
       const slotLeft = slot.col * cellW;
       const slotTop = slot.row * cellH;
       const dist = Math.hypot(dropX - slotLeft, dropY - slotTop);
@@ -1376,7 +1396,7 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
           {t[lang].hudShow}
         </button>
       ) : (
-        <div style={{ position: 'relative' }}>
+        <>
           <HudHeader 
             zoomedOut={zoomedOut}
             setZoomedOut={setZoomedOut}
@@ -1410,7 +1430,7 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
           >
             {t[lang].hudHide}
           </button>
-        </div>
+        </>
       )}
       
       <div 
@@ -1430,7 +1450,10 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
           </div>
         </div>
         
-        <div className="global-widget-layer">
+        <div 
+          className="global-widget-layer"
+          style={{ pointerEvents: zoomedOut ? 'none' : 'auto' }}
+        >
           {isReady && (
             <>
               <FluidWindow id="chat" slotIdx={widgetSlots.chat} zoomedOut={zoomedOut} onDragEnd={handleDragEnd} cellW={dimensions.w / 12} cellH={dimensions.h / 8}>
