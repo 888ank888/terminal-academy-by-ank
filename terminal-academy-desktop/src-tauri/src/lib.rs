@@ -125,11 +125,21 @@ fn resize_pty(
   Ok(())
 }
 
+#[tauri::command]
+fn get_docker_status() -> bool {
+  std::process::Command::new("docker")
+    .arg("inspect")
+    .arg("academy-sandbox")
+    .output()
+    .map(|out| out.status.success())
+    .unwrap_or(false)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
     .manage(PtyState::default())
-    .invoke_handler(tauri::generate_handler![spawn_pty, write_pty, resize_pty])
+    .invoke_handler(tauri::generate_handler![spawn_pty, write_pty, resize_pty, get_docker_status])
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(

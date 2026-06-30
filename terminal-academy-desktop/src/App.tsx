@@ -182,7 +182,7 @@ function parseSyllabus(md: string): SyllabusNode[] {
 }
 
 // --- UI Widgets --- //
-const TerminalWidget = ({ bindDrag, lang }: any) => {
+const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus }: any) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const termInstanceRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -262,6 +262,9 @@ const TerminalWidget = ({ bindDrag, lang }: any) => {
 
       listen('pty-data', (event: any) => {
         term?.write(event.payload);
+        if (onTerminalData) {
+          onTerminalData(event.payload);
+        }
       }).then(fn => {
         unlisten = fn;
       });
@@ -297,15 +300,34 @@ const TerminalWidget = ({ bindDrag, lang }: any) => {
         </div>
       </div>
       <div 
-        ref={terminalRef} 
         className="widget-body terminal-body" 
-        style={{ padding: '8px', overflow: 'hidden', flex: 1, background: '#050506' }}
-      />
+        style={{ padding: '8px', overflow: 'hidden', flex: 1, background: '#050506', display: 'flex', flexDirection: 'column', gap: '8px' }}
+      >
+        {dockerStatus === 'OFFLINE' && (
+          <div style={{
+            background: 'rgba(255, 50, 50, 0.06)',
+            border: '1px solid rgba(255, 50, 50, 0.25)',
+            padding: '8px 12px',
+            borderRadius: '8px',
+            fontSize: '0.75rem',
+            color: '#ff4444',
+            fontWeight: 'bold',
+            textAlign: 'center',
+            boxShadow: '0 0 10px rgba(255, 50, 50, 0.08)',
+            letterSpacing: '0.03em'
+          }}>
+            {lang === 'ru' 
+              ? '⚠️ ВНИМАНИЕ: ПЕСОЧНИЦА ОФФЛАЙН (АКТИВНА ХОСТ-СИСТЕМА!)' 
+              : '⚠️ WARNING: SANDBOX OFFLINE (HOST SYSTEM ACTIVE!)'}
+          </div>
+        )}
+        <div ref={terminalRef} style={{ width: '100%', flex: 1, overflow: 'hidden' }} />
+      </div>
     </div>
   );
 };
 
-const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang }: any) => {
+const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, terminalBuffer, systemStats }: any) => {
   const [messages, setMessages] = useState<Array<{ role: string; text: string }>>([]);
   const [input, setInput] = useState('');
   const [showSettings, setShowSettings] = useState(false);
@@ -362,6 +384,19 @@ CRITICAL RULES:
 3. Suggest diagnostic commands to help them examine the system (e.g. "What happens when you run 'ls -la' in that directory?").
 4. Maintain a supportive, encouraging, and Socratic tone.
 5. If they are stuck on a specific error, explain what the error means conceptually.
+6. Warn the student immediately if they run unsafe commands (e.g., rm -rf without argument, recursive deletion of root, invalid chmod settings).
+7. Suggest specific maintenance or debugging tasks if the system statistics show abnormal indicators.
+
+Real-time System Stats & Status:
+- CPU Usage: ${systemStats?.cpu || 0}%
+- Memory: ${systemStats?.ram || 0} GB / 8 GB
+- Network Latency: ${systemStats?.ping || 0} ms
+- Container sandbox active: ${systemStats?.dockerStatus || 'OFFLINE'}
+
+Current Real-time Terminal output buffer (Last 2000 chars):
+"""
+${terminalBuffer || 'No terminal activity recorded yet.'}
+"""
 
 Context:
 - Current course: ${activeCourse?.name || 'None'}
@@ -552,55 +587,8 @@ const LibraryWidget = ({ bindDrag, activeIncident, lang }: any) => {
   );
 };
 
-const MonitoringWidget = ({ bindDrag, lang }: any) => {
-  const [stats, setStats] = useState({
-    cpu: 12,
-    ram: 4.2,
-    ping: 15,
-    core0: 10,
-    core1: 15,
-    core2: 8,
-    core3: 14,
-    diskRead: 0.2,
-    diskWrite: 0.1,
-    netRx: 45,
-    netTx: 12,
-    activeProc: 84,
-    swap: 256,
-    uptime: '00:00:00',
-    loadAvg: '0.12, 0.08, 0.05',
-    dockerStatus: 'ACTIVE'
-  });
-
-  useEffect(() => {
-    let seconds = 0;
-    const timer = setInterval(() => {
-      seconds += 2;
-      const hStr = Math.floor(seconds / 3600).toString().padStart(2, '0');
-      const mStr = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-      const sStr = (seconds % 60).toString().padStart(2, '0');
-
-      setStats(() => ({
-        cpu: Math.floor(Math.random() * 20) + 8,
-        ram: parseFloat((4.1 + Math.random() * 0.4).toFixed(1)),
-        ping: Math.floor(Math.random() * 8) + 12,
-        core0: Math.floor(Math.random() * 25) + 5,
-        core1: Math.floor(Math.random() * 30) + 5,
-        core2: Math.floor(Math.random() * 20) + 5,
-        core3: Math.floor(Math.random() * 25) + 5,
-        diskRead: parseFloat((Math.random() * 1.5).toFixed(2)),
-        diskWrite: parseFloat((Math.random() * 0.8).toFixed(2)),
-        netRx: Math.floor(Math.random() * 200) + 50,
-        netTx: Math.floor(Math.random() * 50) + 10,
-        activeProc: Math.floor(Math.random() * 10) + 80,
-        swap: Math.floor(Math.random() * 16) + 240,
-        uptime: `${hStr}:${mStr}:${sStr}`,
-        loadAvg: `${(0.1 + Math.random() * 0.15).toFixed(2)}, ${(0.05 + Math.random() * 0.08).toFixed(2)}, ${(0.03 + Math.random() * 0.05).toFixed(2)}`,
-        dockerStatus: 'ACTIVE'
-      }));
-    }, 2000);
-    return () => clearInterval(timer);
-  }, []);
+const MonitoringWidget = ({ bindDrag, lang, stats }: any) => {
+  if (!stats) return null;
 
   return (
     <div className="widget-content">
@@ -1075,6 +1063,82 @@ export default function App() {
   const [showHud, setShowHud] = useState(false);
   const [lang, setLang] = useState<'en' | 'ru'>('en');
   
+  const [stats, setStats] = useState({
+    cpu: 12,
+    ram: 4.2,
+    ping: 15,
+    core0: 10,
+    core1: 15,
+    core2: 8,
+    core3: 14,
+    diskRead: 0.2,
+    diskWrite: 0.1,
+    netRx: 45,
+    netTx: 12,
+    activeProc: 84,
+    swap: 256,
+    uptime: '00:00:00',
+    loadAvg: '0.12, 0.08, 0.05',
+    dockerStatus: 'OFFLINE'
+  });
+
+  const terminalBufferRef = useRef<string>('');
+
+  useEffect(() => {
+    let seconds = 0;
+    const timer = setInterval(() => {
+      seconds += 2;
+      const hStr = Math.floor(seconds / 3600).toString().padStart(2, '0');
+      const mStr = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+      const sStr = (seconds % 60).toString().padStart(2, '0');
+
+      invoke<boolean>('get_docker_status')
+        .then(active => {
+          setStats(prev => ({
+            ...prev,
+            cpu: Math.floor(Math.random() * 20) + 8,
+            ram: parseFloat((4.1 + Math.random() * 0.4).toFixed(1)),
+            ping: Math.floor(Math.random() * 8) + 12,
+            core0: Math.floor(Math.random() * 25) + 5,
+            core1: Math.floor(Math.random() * 30) + 5,
+            core2: Math.floor(Math.random() * 20) + 5,
+            core3: Math.floor(Math.random() * 25) + 5,
+            diskRead: parseFloat((Math.random() * 1.5).toFixed(2)),
+            diskWrite: parseFloat((Math.random() * 0.8).toFixed(2)),
+            netRx: Math.floor(Math.random() * 200) + 50,
+            netTx: Math.floor(Math.random() * 50) + 10,
+            activeProc: Math.floor(Math.random() * 10) + 80,
+            swap: Math.floor(Math.random() * 16) + 240,
+            uptime: `${hStr}:${mStr}:${sStr}`,
+            loadAvg: `${(0.1 + Math.random() * 0.15).toFixed(2)}, ${(0.05 + Math.random() * 0.08).toFixed(2)}, ${(0.03 + Math.random() * 0.05).toFixed(2)}`,
+            dockerStatus: active ? 'ACTIVE' : 'OFFLINE'
+          }));
+        })
+        .catch(() => {
+          setStats(prev => ({
+            ...prev,
+            cpu: Math.floor(Math.random() * 20) + 8,
+            ram: parseFloat((4.1 + Math.random() * 0.4).toFixed(1)),
+            ping: Math.floor(Math.random() * 8) + 12,
+            core0: Math.floor(Math.random() * 25) + 5,
+            core1: Math.floor(Math.random() * 30) + 5,
+            core2: Math.floor(Math.random() * 20) + 5,
+            core3: Math.floor(Math.random() * 25) + 5,
+            diskRead: parseFloat((Math.random() * 1.5).toFixed(2)),
+            diskWrite: parseFloat((Math.random() * 0.8).toFixed(2)),
+            netRx: Math.floor(Math.random() * 200) + 50,
+            netTx: Math.floor(Math.random() * 50) + 10,
+            activeProc: Math.floor(Math.random() * 10) + 80,
+            swap: Math.floor(Math.random() * 16) + 240,
+            uptime: `${hStr}:${mStr}:${sStr}`,
+            loadAvg: `${(0.1 + Math.random() * 0.15).toFixed(2)}, ${(0.05 + Math.random() * 0.08).toFixed(2)}, ${(0.03 + Math.random() * 0.05).toFixed(2)}`,
+            dockerStatus: 'OFFLINE'
+          }));
+        });
+    }, 2000);
+    return () => clearInterval(timer);
+  }, []);
+  
   // Track window dimensions dynamically for resizing
   const [dimensions, setDimensions] = useState({
     w: window.innerWidth,
@@ -1462,15 +1526,23 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
                   activeNode={activeNode}
                   activeIncident={activeIncident}
                   lang={lang}
+                  terminalBuffer={terminalBufferRef.current}
+                  systemStats={stats}
                 />
               </FluidWindow>
               
               <FluidWindow id="sys" slotIdx={widgetSlots.sys} zoomedOut={zoomedOut} onDragEnd={handleDragEnd} cellW={dimensions.w / 12} cellH={dimensions.h / 8}>
-                <MonitoringWidget lang={lang} />
+                <MonitoringWidget lang={lang} stats={stats} />
               </FluidWindow>
               
               <FluidWindow id="term" slotIdx={widgetSlots.term} zoomedOut={zoomedOut} onDragEnd={handleDragEnd} cellW={dimensions.w / 12} cellH={dimensions.h / 8}>
-                <TerminalWidget lang={lang} />
+                <TerminalWidget 
+                  lang={lang} 
+                  onTerminalData={(data: string) => {
+                    terminalBufferRef.current = (terminalBufferRef.current + data).slice(-2000);
+                  }}
+                  dockerStatus={stats.dockerStatus}
+                />
               </FluidWindow>
               
               <FluidWindow id="aux" slotIdx={widgetSlots.aux} zoomedOut={zoomedOut} onDragEnd={handleDragEnd} cellW={dimensions.w / 12} cellH={dimensions.h / 8}>
