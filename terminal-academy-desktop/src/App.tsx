@@ -402,11 +402,11 @@ Context:
           {messages.map((m, idx) => (
             <motion.div 
               key={idx} 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: 'spring', damping: 15, stiffness: 120 }}
               className={`message-wrapper ${m.role === 'ank' ? 'incoming-wrapper' : 'outgoing-wrapper'}`}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: m.role === 'ank' ? 'flex-start' : 'flex-end', marginBottom: '10px' }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: m.role === 'ank' ? 'flex-start' : 'flex-end', marginBottom: '12px' }}
             >
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '2px', display: 'block', letterSpacing: '0.05em' }}>
                 {m.role === 'ank' ? t[lang].mentorName : t[lang].studentName}
@@ -414,13 +414,16 @@ Context:
               <div 
                 className={`message ${m.role === 'ank' ? 'incoming' : 'outgoing'}`} 
                 style={{ 
-                  padding: '10px 12px', 
-                  borderRadius: '12px', 
+                  padding: '10px 14px', 
+                  borderRadius: '16px', 
+                  borderBottomLeftRadius: m.role === 'ank' ? '2px' : '16px',
+                  borderBottomRightRadius: m.role === 'ank' ? '16px' : '2px',
                   background: m.role === 'ank' ? 'rgba(255, 85, 0, 0.04)' : 'rgba(255, 255, 255, 0.02)', 
                   borderLeft: m.role === 'ank' ? '3px solid var(--accent-primary)' : '3px solid var(--text-muted)',
                   color: 'var(--text-main)', 
-                  fontSize: '0.95rem', 
-                  maxWidth: '90%' 
+                  fontSize: '0.92rem', 
+                  maxWidth: '90%',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
                 }}
               >
                 <p style={{ margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{m.text}</p>
@@ -438,7 +441,16 @@ Context:
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="chat-input-pill-wrapper" style={{ padding: '1px', borderRadius: '24px', background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), #0055ff, var(--accent-primary))', backgroundSize: '300% 300%', animation: 'gradient-glow 6s ease infinite' }}>
+        <div 
+          className="chat-input-wrapper" 
+          style={{ 
+            padding: '2px', 
+            borderRadius: '24px', 
+            border: '1px solid var(--border-color)',
+            background: 'rgba(255, 255, 255, 0.01)',
+            transition: 'var(--transition-smooth)'
+          }}
+        >
           <div style={{ display: 'flex', alignItems: 'center', background: '#050506', borderRadius: '23px', padding: '4px 8px 4px 14px' }}>
             <input 
               type="text" 
@@ -493,12 +505,31 @@ const LibraryWidget = ({ bindDrag, activeIncident, lang }: any) => {
       <div className="widget-header lib-header" {...(bindDrag ? bindDrag() : {})}>
         <div className="title" style={{ touchAction: 'none' }}><BookOpen size={14} style={{ color: '#c3e88d', marginRight: '6px' }} /> {t[lang].grimoireTitle}</div>
       </div>
-      <div className="widget-body library-body" style={{ padding: '8px' }}>
-        <p style={{ margin: '0 0 6px 0', fontSize: '1.1rem', color: '#888' }}>{t[lang].grimoireDesc}</p>
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+      <div className="widget-body library-body" style={{ padding: '12px', height: 'calc(100% - 38px)', overflowY: 'auto' }}>
+        <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t[lang].grimoireDesc}</p>
+        <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'var(--accent-primary)', fontStyle: 'italic', fontWeight: 500 }}>
+          {lang === 'ru' ? '✍️ Вводите команды вручную для развития мышечной памяти' : '✍️ Type commands manually to build muscle memory'}
+        </p>
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {commands.map((cmd, idx) => (
             <li key={idx}>
-              <code style={{ display: 'block', padding: '6px', background: '#0d0e15', color: '#c3e88d', borderRadius: '4px', fontSize: '1.1rem', border: '1px solid #1c1c28' }}>{cmd}</code>
+              <code 
+                style={{ 
+                  display: 'block', 
+                  padding: '10px 14px', 
+                  background: 'rgba(255, 255, 255, 0.01)', 
+                  color: 'var(--accent-primary)', 
+                  borderRadius: '12px', 
+                  fontSize: '0.85rem', 
+                  fontFamily: 'var(--font-mono)',
+                  border: '1px solid rgba(255, 85, 0, 0.15)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                  transition: 'var(--transition-smooth)'
+                }}
+                className="grimoire-cmd"
+              >
+                {cmd}
+              </code>
             </li>
           ))}
         </ul>
@@ -507,7 +538,7 @@ const LibraryWidget = ({ bindDrag, activeIncident, lang }: any) => {
   );
 };
 
-const MonitoringWidget = ({ bindDrag }: any) => {
+const MonitoringWidget = ({ bindDrag, lang }: any) => {
   const [stats, setStats] = useState({
     cpu: 12,
     ram: 4.2,
@@ -560,65 +591,75 @@ const MonitoringWidget = ({ bindDrag }: any) => {
   return (
     <div className="widget-content">
       <div className="widget-header" {...(bindDrag ? bindDrag() : {})}>
-        <div className="title" style={{ touchAction: 'none' }}><Activity size={14} color="var(--accent-primary)" style={{ marginRight: '6px' }} /> System Monitoring</div>
+        <div className="title" style={{ touchAction: 'none' }}><Activity size={14} color="var(--accent-primary)" style={{ marginRight: '6px' }} /> {t[lang].monitorTitle}</div>
       </div>
-      <div className="widget-body" style={{ padding: '12px', height: 'calc(100% - 38px)', overflowY: 'auto' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.9rem' }}>
+      <div className="widget-body" style={{ padding: '16px', height: 'calc(100% - 38px)', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.85rem' }}>
           
-          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
-            <span style={{ color: 'var(--text-muted)' }}>SANDBOX CONTAINER:</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+            <span style={{ color: 'var(--text-muted)' }}>{t[lang].monitorSandbox}</span>
             <span style={{ color: 'var(--accent-secondary)', fontWeight: 'bold' }}>{stats.dockerStatus}</span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>CPU Usage (Total):</span>
-            <span style={{ color: stats.cpu > 20 ? 'var(--accent-secondary)' : 'var(--text-main)', fontWeight: 'bold' }}>{stats.cpu}%</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>{t[lang].monitorCpu}</span>
+              <span style={{ color: stats.cpu > 20 ? 'var(--accent-secondary)' : 'var(--text-main)', fontWeight: 'bold' }}>{stats.cpu}%</span>
+            </div>
+            <div style={{ height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ width: `${stats.cpu}%`, height: '100%', background: 'linear-gradient(90deg, #f59e0b, #ff5500)', borderRadius: '2px', transition: 'width 1s ease' }} />
+            </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', paddingLeft: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', paddingLeft: '8px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             <div>Core 0: <span style={{ color: '#fff' }}>{stats.core0}%</span></div>
             <div>Core 1: <span style={{ color: '#fff' }}>{stats.core1}%</span></div>
             <div>Core 2: <span style={{ color: '#fff' }}>{stats.core2}%</span></div>
             <div>Core 3: <span style={{ color: '#fff' }}>{stats.core3}%</span></div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Memory Allocated:</span>
-            <span style={{ color: '#82aaff', fontWeight: 'bold' }}>{stats.ram} GB / 8 GB</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>{t[lang].monitorRam}</span>
+              <span style={{ color: '#82aaff', fontWeight: 'bold' }}>{stats.ram} GB / 8 GB</span>
+            </div>
+            <div style={{ height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ width: `${(stats.ram / 8) * 100}%`, height: '100%', background: '#82aaff', borderRadius: '2px', transition: 'width 1s ease' }} />
+            </div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Swap Allocation:</span>
+            <span>{t[lang].monitorSwap}</span>
             <span style={{ color: 'var(--text-muted)' }}>{stats.swap} MB</span>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Disk I/O Latency:</span>
+            <span>{t[lang].monitorDisk}</span>
             <span style={{ color: '#fff' }}>R: {stats.diskRead} MB/s | W: {stats.diskWrite} MB/s</span>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Network Traffic:</span>
+            <span>{t[lang].monitorNet}</span>
             <span style={{ color: '#fff' }}>Rx: {stats.netRx} KB/s | Tx: {stats.netTx} KB/s</span>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Load Average:</span>
-            <span style={{ color: '#fff', fontSize: '0.8rem' }}>{stats.loadAvg}</span>
+            <span>{t[lang].monitorLoad}</span>
+            <span style={{ color: '#fff' }}>{stats.loadAvg}</span>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Active Processes:</span>
+            <span>{t[lang].monitorProc}</span>
             <span style={{ color: '#fff' }}>{stats.activeProc}</span>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>System Uptime:</span>
+            <span>{t[lang].monitorUptime}</span>
             <span style={{ color: '#fff', fontFamily: 'var(--font-mono)' }}>{stats.uptime}</span>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Backend Latency:</span>
+            <span>{t[lang].monitorLatency}</span>
             <span style={{ color: '#c792ea', fontWeight: 'bold' }}>{stats.ping} ms</span>
           </div>
         </div>
@@ -636,27 +677,40 @@ const LessonWidget = ({
   activeNode, 
   setActiveNode, 
   activeIncident, 
-  setActiveIncident 
+  setActiveIncident,
+  lang
 }: any) => {
   const [expandedNodeId, setExpandedNodeId] = useState<number | null>(1);
 
   return (
     <div className="widget-content">
       <div className="widget-header lib-header" {...(bindDrag ? bindDrag() : {})}>
-        <div className="title" style={{ touchAction: 'none' }}><BookOpen size={14} style={{ color: 'var(--accent-secondary)', marginRight: '6px' }} /> Syllabus & Lessons</div>
+        <div className="title" style={{ touchAction: 'none' }}>
+          <BookOpen size={14} style={{ color: 'var(--accent-secondary)', marginRight: '6px' }} /> 
+          {lang === 'ru' ? 'Учебный План' : 'Syllabus & Lessons'}
+        </div>
       </div>
-      <div className="widget-body" style={{ padding: '12px', height: 'calc(100% - 38px)', overflowY: 'auto' }}>
+      <div className="widget-body" style={{ padding: '16px', height: 'calc(100% - 38px)', overflowY: 'auto' }}>
         
         {/* Onboarding / Guide Section */}
-        <div className="guide-box" style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px dashed var(--border-color)', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
-          <h4 style={{ margin: '0 0 6px 0', fontSize: '0.95rem', color: 'var(--accent-primary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Syllabus Guide</h4>
-          <p style={{ margin: '0', fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-            Choose a branch curriculum tab, click on any of the module nodes below to expand the available incidents, and consult AI Mentor Ank in the Chat box to solve tasks inside the sandbox terminal.
+        <div className="guide-box" style={{ 
+          background: 'rgba(255, 85, 0, 0.02)', 
+          border: '1px solid rgba(255, 85, 0, 0.15)', 
+          padding: '12px', 
+          borderRadius: '12px', 
+          marginBottom: '16px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+        }}>
+          <h4 style={{ margin: '0 0 6px 0', fontSize: '0.85rem', color: 'var(--accent-primary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            {t[lang].guideTitle}
+          </h4>
+          <p style={{ margin: '0', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+            {t[lang].guideText}
           </p>
         </div>
 
         {/* Course / Syllabus Tabs */}
-        <div className="course-tabs" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '16px' }}>
+        <div className="course-tabs" style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
           {courses.map((c: any) => {
             const isActive = activeCourse?.id === c.id;
             return (
@@ -664,17 +718,16 @@ const LessonWidget = ({
                 key={c.id}
                 onClick={() => setActiveCourse(c)}
                 style={{
-                  flex: '1 1 calc(50% - 6px)',
-                  padding: '8px 4px',
-                  background: isActive ? 'var(--accent-primary)' : 'rgba(255, 255, 255, 0.03)',
+                  flex: 1,
+                  padding: '8px 12px',
+                  background: isActive ? 'rgba(255, 85, 0, 0.08)' : 'rgba(255, 255, 255, 0.01)',
                   border: isActive ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
-                  color: isActive ? '#fff' : 'var(--text-main)',
+                  color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)',
                   fontSize: '0.85rem',
-                  fontWeight: 500,
-                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  borderRadius: '24px',
                   cursor: 'pointer',
-                  textAlign: 'center',
-                  boxShadow: isActive ? 'var(--glow-amber)' : 'none',
+                  boxShadow: isActive ? '0 0 12px rgba(255, 85, 0, 0.25)' : 'none',
                   transition: 'var(--transition-smooth)'
                 }}
               >
@@ -684,89 +737,108 @@ const LessonWidget = ({
           })}
         </div>
 
-        {/* Custom Collapsible Nodes List */}
-        <div className="nodes-accordion" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Modules & Incidents</h4>
+        {/* Collapsible Nodes Timeline */}
+        <div className="nodes-timeline" style={{ display: 'flex', flexDirection: 'column', gap: '12px', position: 'relative', paddingLeft: '16px', borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
           {nodes.map((n: any) => {
             const isExpanded = expandedNodeId === n.id;
             return (
-              <div 
+              <motion.div 
                 key={n.id} 
                 className="node-card" 
+                whileHover={{ scale: 1.015, boxShadow: '0 4px 25px rgba(255, 85, 0, 0.08)', borderColor: 'rgba(255, 85, 0, 0.25)' }}
+                transition={{ type: 'spring', stiffness: 350, damping: 20 }}
                 style={{ 
-                  border: '1px solid var(--border-color)', 
-                  borderRadius: '8px', 
-                  background: isExpanded ? 'rgba(255, 255, 255, 0.02)' : 'transparent',
-                  overflow: 'hidden',
+                  position: 'relative',
+                  border: isExpanded ? '1px solid rgba(255, 85, 0, 0.2)' : '1px solid var(--border-color)', 
+                  borderRadius: '16px', 
+                  background: isExpanded ? 'rgba(5, 5, 6, 0.4)' : 'rgba(255, 255, 255, 0.01)',
+                  boxShadow: isExpanded ? '0 4px 20px rgba(0,0,0,0.3)' : 'none',
                   transition: 'var(--transition-smooth)'
                 }}
               >
+                {/* Timeline circular node marker */}
+                <span style={{
+                  position: 'absolute',
+                  left: '-22px',
+                  top: '12px',
+                  width: '11px',
+                  height: '11px',
+                  borderRadius: '50%',
+                  background: isExpanded ? 'var(--accent-primary)' : 'rgba(255,255,255,0.2)',
+                  boxShadow: isExpanded ? '0 0 8px var(--accent-primary)' : 'none',
+                  border: '2px solid #050506',
+                  zIndex: 2,
+                  transition: 'var(--transition-smooth)'
+                }} />
+
                 <div 
                   className="node-card-header" 
                   onClick={() => setExpandedNodeId(isExpanded ? null : n.id)}
                   style={{ 
-                    padding: '10px 12px', 
-                    background: 'rgba(255, 255, 255, 0.01)', 
+                    padding: '12px 16px', 
                     cursor: 'pointer', 
                     display: 'flex', 
                     justifyContent: 'space-between', 
                     alignItems: 'center',
                     fontSize: '0.9rem',
-                    fontWeight: 500,
-                    borderBottom: isExpanded ? '1px solid var(--border-color)' : 'none'
+                    fontWeight: 600
                   }}
                 >
-                  <span>Node {n.id}: {n.title.toUpperCase()}</span>
-                  <span style={{ color: 'var(--accent-primary)', fontSize: '0.8rem' }}>{isExpanded ? '▼' : '▶'}</span>
+                  <span style={{ color: isExpanded ? 'var(--accent-primary)' : 'var(--text-main)', letterSpacing: '0.02em' }}>
+                    {t[lang].modulesTitle} {n.id}: {n.title.toUpperCase()}
+                  </span>
+                  <span style={{ color: 'var(--accent-primary)', fontSize: '0.75rem' }}>{isExpanded ? '▼' : '▶'}</span>
                 </div>
 
                 {isExpanded && (
-                  <div className="node-card-body" style={{ padding: '10px 12px' }}>
-                    <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  <div className="node-card-body" style={{ padding: '0 16px 16px 16px' }}>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
                       {n.description}
                     </p>
-                    <div className="incidents-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div className="incidents-grid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {n.incidents.map((inc: any) => {
                         const isActive = activeIncident?.id === inc.id && activeNode?.id === n.id;
                         return (
-                          <div
+                          <motion.div
                             key={inc.id}
+                            whileHover={{ scale: 1.01, x: 2, background: 'rgba(255, 85, 0, 0.04)', borderColor: 'rgba(255, 85, 0, 0.3)' }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                             onClick={() => {
                               setActiveNode(n);
                               setActiveIncident(inc);
                             }}
                             style={{
-                              padding: '8px 10px',
-                              background: isActive ? 'rgba(255, 85, 0, 0.08)' : 'rgba(255, 255, 255, 0.01)',
+                              padding: '10px 12px',
+                              background: isActive ? 'rgba(255, 85, 0, 0.04)' : 'rgba(255, 255, 255, 0.01)',
                               border: isActive ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
-                              borderRadius: '6px',
+                              borderRadius: '12px',
                               cursor: 'pointer',
-                              boxShadow: isActive ? 'var(--glow-amber)' : 'none',
+                              boxShadow: isActive ? '0 0 10px rgba(255, 85, 0, 0.15)' : 'none',
                               transition: 'var(--transition-smooth)'
                             }}
                           >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: '0.85rem', fontWeight: 600, color: isActive ? 'var(--accent-primary)' : 'var(--text-main)' }}>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: isActive ? 'var(--accent-primary)' : 'var(--text-main)' }}>
                                 {inc.id}. {inc.title.toUpperCase()}
                               </span>
                               {inc.isBoss && (
-                                <span style={{ background: 'var(--accent-primary)', color: '#fff', fontSize: '0.7rem', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
-                                  BOSS INCIDENT
+                                <span style={{ background: 'var(--accent-primary)', color: '#fff', fontSize: '0.65rem', padding: '2px 6px', borderRadius: '24px', fontWeight: 'bold', letterSpacing: '0.05em' }}>
+                                  {t[lang].bossIncident}
                                 </span>
                               )}
                             </div>
                             {isActive && (
-                              <p style={{ margin: '6px 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                              <p style={{ margin: '6px 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
                                 {inc.desc}
                               </p>
                             )}
-                          </div>
+                          </motion.div>
                         );
                       })}
                     </div>
                   </div>
                 )}
-              </div>
+              </motion.div>
             );
           })}
         </div>
@@ -860,7 +932,7 @@ const FluidWindow = ({ id, slotIdx, zoomedOut, onDragEnd, cellW, cellH, children
   const safeCellW = cellW || (window.innerWidth / 12);
   const safeCellH = cellH || (window.innerHeight / 8);
 
-  const gap = 8;
+  const gap = 12;
   const targetX = slot.col * safeCellW + gap / 2;
   const targetY = slot.row * safeCellH + gap / 2;
   const w = slot.w * safeCellW - gap;
@@ -1371,7 +1443,7 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
               </FluidWindow>
               
               <FluidWindow id="sys" slotIdx={widgetSlots.sys} zoomedOut={zoomedOut} onDragEnd={handleDragEnd} cellW={dimensions.w / 12} cellH={dimensions.h / 8}>
-                <MonitoringWidget />
+                <MonitoringWidget lang={lang} />
               </FluidWindow>
               
               <FluidWindow id="term" slotIdx={widgetSlots.term} zoomedOut={zoomedOut} onDragEnd={handleDragEnd} cellW={dimensions.w / 12} cellH={dimensions.h / 8}>

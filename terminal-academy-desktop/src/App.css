@@ -189,7 +189,7 @@ html, body, #root {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 20px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -200,6 +200,14 @@ html, body, #root {
 .widget-container:hover {
   border-color: rgba(255, 85, 0, 0.4);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+}
+
+.widget-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 /* Header bar matching Navbar styling of landing page */
@@ -323,19 +331,14 @@ body.global-dragging .widget-body {
   pointer-events: none !important;
 }
 
-/* Animated breathing glow border for pill chat input */
-@keyframes gradient-glow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.chat-input-pill-wrapper {
+.chat-input-wrapper {
+  border: 1px solid var(--border-color);
   transition: var(--transition-smooth);
 }
 
-.chat-input-pill-wrapper:focus-within {
-  box-shadow: 0 0 15px rgba(255, 85, 0, 0.4);
+.chat-input-wrapper:focus-within {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 15px rgba(255, 85, 0, 0.35);
 }
 
 /* Modern chat bubbles styling (no harsh retro lines) */
