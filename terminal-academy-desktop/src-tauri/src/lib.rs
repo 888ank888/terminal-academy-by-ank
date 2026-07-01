@@ -1,11 +1,12 @@
 use std::sync::Mutex;
 use std::io::{Write, Read};
 use portable_pty::{native_pty_system, CommandBuilder, PtySize, MasterPty};
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, State, Manager};
 
 struct PtyState {
   master: Mutex<Option<Box<dyn MasterPty + Send>>>,
   writer: Mutex<Option<Box<dyn Write + Send>>>,
+  session_id: Mutex<Option<String>>,
 }
 
 impl Default for PtyState {
@@ -13,6 +14,7 @@ impl Default for PtyState {
     Self {
       master: Mutex::new(None),
       writer: Mutex::new(None),
+      session_id: Mutex::new(None),
     }
   }
 }
@@ -21,6 +23,7 @@ impl Default for PtyState {
 fn spawn_pty(
   app: AppHandle,
   state: State<'_, PtyState>,
+  session_id: String,
 ) -> Result<(), String> {
   let pty_system = native_pty_system();
   let pair = pty_system
@@ -32,14 +35,35 @@ fn spawn_pty(
     })
     .map_err(|e| e.to_string())?;
 
-  // Check if remote docker container "academy-sandbox" is running via SSH
+  // Save the session ID in state
+  {
+    let mut state_session = state.session_id.lock().unwrap();
+    *state_session = Some(session_id.clone());
+  }
+
+  let container_name = format!("academy-sandbox-{}", session_id);
+
+  // Pre-create/run the container remotely if not exists, limit resource and map network, using standard --rm for auto-cleanup
+  let _ = std::process::Command::new("ssh")
+    .arg("-i")
+    .arg("/Users/ank/.ssh/id_ed25519")
+    .arg("-o")
+    .arg("ConnectTimeout=5")
+    .arg("root@89.22.239.107")
+    .arg(format!(
+      "docker run -d --name {} --network terminal-academy-by-ank_sandbox-network --memory 512m --cpus 0.25 --rm terminal-academy/sandbox:latest sleep infinity",
+      container_name
+    ))
+    .output();
+
+  // Check if remote container is successfully active
   let has_docker = std::process::Command::new("ssh")
     .arg("-i")
     .arg("/Users/ank/.ssh/id_ed25519")
     .arg("-o")
     .arg("ConnectTimeout=3")
     .arg("root@89.22.239.107")
-    .arg("docker inspect academy-sandbox")
+    .arg(format!("docker inspect {}", container_name))
     .output()
     .map(|out| out.status.success())
     .unwrap_or(false);
@@ -50,7 +74,7 @@ fn spawn_pty(
     c.arg("-i");
     c.arg("/Users/ank/.ssh/id_ed25519");
     c.arg("root@89.22.239.107");
-    c.arg("docker exec -it academy-sandbox /bin/bash");
+    c.arg(format!("docker exec -it {} /bin/bash", container_name));
     c
   } else {
     let shell = if std::path::Path::new("/bin/zsh").exists() {
@@ -130,24 +154,62 @@ fn resize_pty(
 }
 
 #[tauri::command]
-fn get_docker_status() -> bool {
+fn get_docker_status(session_id: String) -> bool {
+  let container_name = format!("academy-sandbox-{}", session_id);
   std::process::Command::new("ssh")
     .arg("-i")
     .arg("/Users/ank/.ssh/id_ed25519")
     .arg("-o")
     .arg("ConnectTimeout=3")
     .arg("root@89.22.239.107")
-    .arg("docker inspect academy-sandbox")
+    .arg(format!("docker inspect {}", container_name))
     .output()
     .map(|out| out.status.success())
     .unwrap_or(false)
+}
+
+#[tauri::command]
+fn destroy_sandbox(state: State<'_, PtyState>) -> Result<(), String> {
+  let session_id_opt = state.session_id.lock().unwrap().clone();
+  if let Some(session_id) = session_id_opt {
+    let container_name = format!("academy-sandbox-{}", session_id);
+    let _ = std::process::Command::new("ssh")
+      .arg("-i")
+      .arg("/Users/ank/.ssh/id_ed25519")
+      .arg("-o")
+      .arg("ConnectTimeout=5")
+      .arg("root@89.22.239.107")
+      .arg(format!("docker stop {}", container_name))
+      .output();
+  }
+  Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
     .manage(PtyState::default())
-    .invoke_handler(tauri::generate_handler![spawn_pty, write_pty, resize_pty, get_docker_status])
+    .invoke_handler(tauri::generate_handler![spawn_pty, write_pty, resize_pty, get_docker_status, destroy_sandbox])
+    .on_window_event(|window, event| {
+      if let tauri::WindowEvent::Destroyed = event {
+        let session_id_opt = {
+          let state = window.state::<PtyState>();
+          let x = state.session_id.lock().unwrap().clone();
+          x
+        };
+        if let Some(session_id) = session_id_opt {
+          let container_name = format!("academy-sandbox-{}", session_id);
+          let _ = std::process::Command::new("ssh")
+            .arg("-i")
+            .arg("/Users/ank/.ssh/id_ed25519")
+            .arg("-o")
+            .arg("ConnectTimeout=5")
+            .arg("root@89.22.239.107")
+            .arg(format!("docker stop {}", container_name))
+            .output();
+        }
+      }
+    })
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(

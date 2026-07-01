@@ -143,7 +143,7 @@ function parseSyllabus(md: string): SyllabusNode[] {
 }
 
 // --- UI Widgets --- //
-const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus }: any) => {
+const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, sessionId, onCommandBeforeExec, onCommandAfterExec }: any) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const termInstanceRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -190,6 +190,16 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus }: any) =
         term?.write('\r\n\x1b[31m[CLIPBOARD LOCK] Pasting is disabled. Please type commands manually.\x1b[0m\r\n');
       }, true);
 
+      const getCommandFromBuffer = (tInst: XTerm) => {
+        const lineIndex = tInst.buffer.active.cursorY + tInst.buffer.active.baseY;
+        const lineText = tInst.buffer.active.getLine(lineIndex)?.translateToString(true) || '';
+        const parts = lineText.split(/[$#>]\s*/);
+        return parts.slice(1).join('$').trim();
+      };
+
+      let currentOutputBuffer = '';
+      let lastExecutedCommand = '';
+
       term.attachCustomKeyEventHandler((arg: KeyboardEvent) => {
         // Intercept and drop Ctrl+V and Cmd+V key sequences, printing feedback
         if ((arg.ctrlKey || arg.metaKey) && arg.key.toLowerCase() === 'v') {
@@ -204,6 +214,15 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus }: any) =
             window.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true, key: 'h' }));
           }
           return false;
+        }
+        // Intercept Enter to extract target command before exec
+        if (arg.key === 'Enter' && arg.type === 'keydown' && term) {
+          const cmd = getCommandFromBuffer(term);
+          if (cmd && onCommandBeforeExec) {
+            onCommandBeforeExec(cmd);
+          }
+          lastExecutedCommand = cmd;
+          currentOutputBuffer = '';
         }
         return true;
       });
@@ -224,7 +243,7 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus }: any) =
       termInstanceRef.current = term;
       fitAddonRef.current = fitAddon;
 
-      invoke('spawn_pty').catch(err => {
+      invoke('spawn_pty', { sessionId }).catch(err => {
         term?.write(`\r\n\x1b[31mError spawning PTY: ${err}\x1b[0m\r\n`);
       });
 
@@ -236,6 +255,30 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus }: any) =
         term?.write(event.payload);
         if (onTerminalData) {
           onTerminalData(event.payload);
+        }
+        
+        currentOutputBuffer += event.payload;
+
+        const cleanPayload = event.payload.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '');
+        const cleanBuffer = currentOutputBuffer.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '');
+
+        if (lastExecutedCommand && (cleanPayload.endsWith('$ ') || cleanPayload.endsWith('# ') || cleanPayload.includes('student@sandbox:'))) {
+          const cmd = lastExecutedCommand;
+          lastExecutedCommand = '';
+          
+          let output = cleanBuffer;
+          if (output.startsWith(cmd)) {
+            output = output.substring(cmd.length);
+          }
+          const promptIndex = output.lastIndexOf('student@sandbox:');
+          if (promptIndex !== -1) {
+            output = output.substring(0, promptIndex);
+          }
+          output = output.trim();
+
+          if (onCommandAfterExec) {
+            onCommandAfterExec(cmd, output);
+          }
         }
       }).then(fn => {
         unlisten = fn;
@@ -298,7 +341,7 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus }: any) =
   );
 };
 
-const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, terminalBuffer, systemStats, explainCommand, setExplainCommand }: any) => {
+const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, terminalBuffer, systemStats, explainCommand, setExplainCommand, terminalEvent, setTerminalEvent }: any) => {
   const [messages, setMessages] = useState<Array<{ role: string; text: string }>>([]);
   const [input, setInput] = useState('');
   const [showSettings, setShowSettings] = useState(false);
@@ -313,6 +356,82 @@ const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, 
       triggerCommandExplanation(cmdToExplain);
     }
   }, [explainCommand]);
+
+  useEffect(() => {
+    if (terminalEvent) {
+      const event = terminalEvent;
+      if (setTerminalEvent) setTerminalEvent(null);
+      handleTerminalEvent(event.type, event.cmd, event.output || '');
+    }
+  }, [terminalEvent]);
+
+  const handleTerminalEvent = async (type: 'before' | 'after', cmd: string, output: string) => {
+    if (type === 'before') {
+      const dangerousCommands = ['rm -rf', 'shred', 'mkfs', 'dd if=', ':> ', '> /dev/sda'];
+      const isDangerous = dangerousCommands.some(dc => cmd.includes(dc));
+      if (isDangerous) {
+        setMessages(prev => [...prev, { 
+          role: 'ank', 
+          text: lang === 'ru' 
+            ? `ВНИМАНИЕ: Вы собираетесь выполнить потенциально опасную команду: "${cmd}". Убедитесь, что вы понимаете последствия перед запуском!` 
+            : `WARNING: You are about to run a potentially destructive command: "${cmd}". Ensure you understand the consequences before proceeding!`
+        }]);
+      }
+    } else if (type === 'after') {
+      if (!apiKey) return; // Silent if no API key set yet
+      setLoading(true);
+      try {
+        const eventPrompt = lang === 'ru' 
+          ? `[СОБЫТИЕ: Студент выполнил команду в терминале]
+Команда: ${cmd}
+Вывод команды:
+"""
+${output || '(нет вывода)'}
+"""`
+          : `[EVENT: Student executed terminal command]
+Command: ${cmd}
+Output:
+"""
+${output || '(no output)'}
+"""`;
+
+        const newMsgs = [...messages, { role: 'user', text: eventPrompt }];
+        const history = newMsgs.map(m => ({
+          role: m.role === 'ank' ? 'model' : 'user',
+          parts: [{ text: m.text }]
+        }));
+
+        const systemInstruction = `You are AI Mentor Ank, the Socratic tutor for the Terminal Academy.
+The student has just executed the command "${cmd}" in the sandbox terminal.
+The output of the command was:
+"""
+${output}
+"""
+Your task is to analyze this command execution and output.
+Respond in the chat with:
+1. Short Explanation: Briefly explain what this command did and what the output means.
+2. Warnings or Guidance: If there was an error (e.g. permission denied, command not found), guide them Socratically to the correct command. Do not write copy-pasteable commands.
+Keep your response concise, Socratic, and educational. Do not use emojis.`;
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: history,
+            systemInstruction: { parts: [{ text: systemInstruction }] }
+          })
+        });
+
+        const json = await response.json();
+        const answer = json?.candidates?.[0]?.content?.parts?.[0]?.text || 'No comment on that command.';
+        setMessages(prev => [...prev, { role: 'ank', text: answer }]);
+      } catch (err: any) {
+        console.error('Ank reaction error:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   useEffect(() => {
     setMessages(prev => {
@@ -1137,6 +1256,16 @@ export default function App() {
 
   const terminalBufferRef = useRef<string>('');
   const panTimeoutRef = useRef<any>(null);
+  const sessionId = useRef('session-' + Math.random().toString(36).substring(2, 15));
+  const [terminalEvent, setTerminalEvent] = useState<{ type: 'before' | 'after'; cmd: string; output?: string } | null>(null);
+
+  const handleCommandBeforeExec = (cmd: string) => {
+    setTerminalEvent({ type: 'before', cmd });
+  };
+
+  const handleCommandAfterExec = (cmd: string, output: string) => {
+    setTerminalEvent({ type: 'after', cmd, output });
+  };
 
   useEffect(() => {
     let seconds = 0;
@@ -1146,7 +1275,7 @@ export default function App() {
       const mStr = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
       const sStr = (seconds % 60).toString().padStart(2, '0');
 
-      invoke<boolean>('get_docker_status')
+      invoke<boolean>('get_docker_status', { sessionId: sessionId.current })
         .then(active => {
           setStats(prev => ({
             ...prev,
@@ -1599,6 +1728,8 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
                   systemStats={stats}
                   explainCommand={explainCommand}
                   setExplainCommand={setExplainCommand}
+                  terminalEvent={terminalEvent}
+                  setTerminalEvent={setTerminalEvent}
                 />
               </FluidWindow>
               
@@ -1609,10 +1740,13 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
               <FluidWindow id="term" slotIdx={widgetSlots.term} zoomedOut={zoomedOut} onDragEnd={handleDragEnd} cellW={dimensions.w / 12} cellH={dimensions.h / 8}>
                 <TerminalWidget 
                   lang={lang} 
+                  sessionId={sessionId.current}
                   onTerminalData={(data: string) => {
                     terminalBufferRef.current = (terminalBufferRef.current + data).slice(-2000);
                   }}
                   dockerStatus={stats.dockerStatus}
+                  onCommandBeforeExec={handleCommandBeforeExec}
+                  onCommandAfterExec={handleCommandAfterExec}
                 />
               </FluidWindow>
               
