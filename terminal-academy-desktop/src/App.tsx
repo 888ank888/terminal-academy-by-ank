@@ -191,18 +191,13 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, onComman
       term.loadAddon(fitAddon);
       term.open(terminalRef.current);
 
-      // Intercept paste events: write data to terminal and notify mentor
+      // Completely block paste actions on the PTY element
       terminalRef.current.addEventListener('paste', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const clipboardData = e.clipboardData || (window as any).clipboardData;
-        const pastedText = clipboardData.getData('text') || '';
-        if (pastedText) {
-          term?.write(pastedText);
-          invoke('write_pty', { data: pastedText }).catch(err => console.error(err));
-          if (onCommandBeforeExec) {
-            onCommandBeforeExec(pastedText + " [PASTED]");
-          }
+        term?.write('\r\n\x1b[31m[CLIPBOARD LOCK] Pasting is disabled. Please type commands manually.\x1b[0m\r\n');
+        if (onCommandBeforeExec) {
+          onCommandBeforeExec("[PASTE_ATTEMPT]");
         }
       }, true);
 
@@ -217,6 +212,16 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, onComman
       let lastExecutedCommand = '';
 
       term.attachCustomKeyEventHandler((arg: KeyboardEvent) => {
+        // Intercept and drop Ctrl+V and Cmd+V key sequences, printing feedback
+        if ((arg.ctrlKey || arg.metaKey) && arg.key.toLowerCase() === 'v') {
+          if (arg.type === 'keydown') {
+            term?.write('\r\n\x1b[31m[CLIPBOARD LOCK] Pasting is disabled. Please type commands manually.\x1b[0m\r\n');
+            if (onCommandBeforeExec) {
+              onCommandBeforeExec("[PASTE_ATTEMPT]");
+            }
+          }
+          return false;
+        }
         // Intercept Ctrl+H and bubble it up to main window toggles instead of backspace
         if (arg.ctrlKey && arg.key.toLowerCase() === 'h') {
           if (arg.type === 'keydown') {
@@ -407,14 +412,13 @@ const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, 
     lastQueryTimeRef.current = now;
 
     if (type === 'before') {
-      if (cmd.endsWith(' [PASTED]')) {
-        const rawCmd = cmd.replace(' [PASTED]', '');
+      if (cmd === "[PASTE_ATTEMPT]") {
         if (!activeApiKey) return;
         setLoading(true);
         try {
           const pastePrompt = lang === 'ru'
-            ? `[БЕЗОПАСНОСТЬ: Студент вставил скопированный текст в терминал] Вставленный текст: ${rawCmd}`
-            : `[SECURITY: Student pasted copied text into terminal] Pasted text: ${rawCmd}`;
+            ? `[БЕЗОПАСНОСТЬ: Студент попытался вставить скопированный текст в терминал]`
+            : `[SECURITY: Student attempted to paste copied text into terminal]`;
             
           const newMsgs = [...messages, { role: 'user', text: pastePrompt }];
           const history = newMsgs.map(m => ({
@@ -423,10 +427,10 @@ const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, 
           }));
 
           const systemInstruction = `You are AI Mentor Ank, the sarcastic Socratic tutor for the Terminal Academy.
-The student has just pasted copied text into the active terminal: "${rawCmd}".
-Respond in a highly sarcastic, condescending tone. Scold them for copy-pasting commands instead of typing them manually to learn, tell them they are cheating themselves, and make a sarcastic remark about lazy engineers.
+The student has just attempted to paste copied text into the terminal, but the clipboard lock blocked it completely.
+Respond in a highly sarcastic, condescending tone. Scold them for trying to paste/cheat instead of typing commands manually to build muscle memory, and guide them to type.
 CRITICAL PERSONALITY & FORMATTING RULES:
-1. Be extremely sarcastic and scolding about copy-pasting.
+1. Be extremely sarcastic and scolding about their attempt to paste.
 2. DO NOT use any markdown tags (like **, * or lists). Output ONLY clean, plain-text paragraphs.
 3. Keep it brief.
 4. Respond in Russian if the student's context is Russian, otherwise English.`;
@@ -441,7 +445,7 @@ CRITICAL PERSONALITY & FORMATTING RULES:
           });
 
           const json = await response.json();
-          const answer = json?.candidates?.[0]?.content?.parts?.[0]?.text || 'Typing builds muscle memory. Do not copy paste.';
+          const answer = json?.candidates?.[0]?.content?.parts?.[0]?.text || 'Typing builds muscle memory. Do not paste.';
           setMessages(prev => [...prev, { role: 'ank', text: answer }]);
         } catch (err) {
           console.error(err);
