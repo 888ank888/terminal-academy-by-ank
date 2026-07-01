@@ -147,6 +147,14 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, onComman
   const terminalRef = useRef<HTMLDivElement>(null);
   const termInstanceRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
+  const [blacklist, setBlacklist] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch('/blacklist.json')
+      .then(res => res.json())
+      .then(data => setBlacklist(data))
+      .catch(() => setBlacklist(['rm -rf', 'shred', 'mkfs', 'dd if=', ':>', '> /dev/sda']));
+  }, []);
 
   useEffect(() => {
     let term: XTerm | null = null;
@@ -218,6 +226,17 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, onComman
         // Intercept Enter to extract target command before exec
         if (arg.key === 'Enter' && arg.type === 'keydown' && term) {
           const cmd = getCommandFromBuffer(term);
+          
+          const isBlocked = blacklist.some(item => cmd.includes(item));
+          if (isBlocked) {
+            term.write('\r\n\x1b[31m[SECURITY ALERT] Command execution blocked by security policy.\x1b[0m\r\n');
+            invoke('write_pty', { data: '\x03\r' }).catch(() => {});
+            if (onCommandBeforeExec) {
+              onCommandBeforeExec(cmd + " [BLOCKED]");
+            }
+            return false;
+          }
+
           if (cmd === 'reset-sandbox' || cmd === 'reset') {
             term.write('\r\n\x1b[33m[SYSTEM] Recycling container sandbox instance...\x1b[0m\r\n');
             invoke('reset_sandbox').then(() => {
@@ -379,6 +398,51 @@ const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, 
 
   const handleTerminalEvent = async (type: 'before' | 'after', cmd: string, output: string) => {
     if (type === 'before') {
+      if (cmd.endsWith(' [BLOCKED]')) {
+        const rawCmd = cmd.replace(' [BLOCKED]', '');
+        if (!activeApiKey) return;
+        setLoading(true);
+        try {
+          const blockPrompt = lang === 'ru'
+            ? `[БЕЗОПАСНОСТЬ: Студент пытался выполнить заблокированную команду] Команда: ${rawCmd}`
+            : `[SECURITY: Student tried to execute blocked command] Command: ${rawCmd}`;
+            
+          const newMsgs = [...messages, { role: 'user', text: blockPrompt }];
+          const history = newMsgs.map(m => ({
+            role: m.role === 'ank' ? 'model' : 'user',
+            parts: [{ text: m.text }]
+          }));
+
+          const systemInstruction = `You are AI Mentor Ank, the sarcastic Socratic tutor for the Terminal Academy.
+The student tried to execute the forbidden/destructive command "${rawCmd}" in the terminal.
+This command was blocked and neutralized before execution.
+Respond in a controlled sarcastic, condescending tone. Scold them for attempting such a dangerous/destructive operation, explain briefly why it is dangerous, and guide them back to their syllabus task.
+CRITICAL PERSONALITY & FORMATTING RULES:
+1. Be sarcastic and condescending about their attempt to run "${rawCmd}".
+2. DO NOT use any markdown tags (like **, * or lists). Output ONLY clean, plain-text paragraphs.
+3. Keep it brief. Do not give any copy-pasteable alternatives.
+4. Respond in Russian if the student's context is Russian, otherwise English.`;
+
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: history,
+              systemInstruction: { parts: [{ text: systemInstruction }] }
+            })
+          });
+
+          const json = await response.json();
+          const answer = json?.candidates?.[0]?.content?.parts?.[0]?.text || 'That command is forbidden.';
+          setMessages(prev => [...prev, { role: 'ank', text: answer }]);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+      
       const dangerousCommands = ['rm -rf', 'shred', 'mkfs', 'dd if=', ':> ', '> /dev/sda'];
       const isDangerous = dangerousCommands.some(dc => cmd.includes(dc));
       if (isDangerous) {
@@ -1271,7 +1335,7 @@ const ParticleBackground = () => {
     resizeCanvas();
 
     // Initialize particles
-    const particleCount = 45;
+    const particleCount = 12;
     for (let i = 0; i < particleCount; i++) {
       particles.push({
         x: Math.random() * canvas.width,

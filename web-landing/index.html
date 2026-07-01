@@ -25,7 +25,7 @@
                     <a href="#roles" class="nav-link">ROLES</a>
                     <a href="#testimonials" class="nav-link">TELEMETRY</a>
                     <a href="https://polar.sh/terminal-academy/products/starter" class="nav-link">WAITLIST</a>
-                    <a href="https://github.com/codename-terminal/academy" target="_blank" class="github-header-link" title="Open Source Repository" style="color: var(--text-primary); display: flex; align-items: center;">
+                    <a href="https://github.com/888ank888/terminal-academy-by-ank" target="_blank" class="github-header-link" title="Open Source Repository" style="color: var(--text-primary); display: flex; align-items: center;">
                         <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor" style="transition: var(--transition-smooth);">
                             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
                         </svg>
@@ -39,6 +39,23 @@
         <section class="hero-section" id="hero">
             <h1 class="glitch-title">SCALE YOUR ENGINEERING TEAM</h1>
             <p class="sub-label">A high-fidelity retro-digital training system for future systems engineers.</p>
+            
+            <!-- Dynamic OS Download Button -->
+            <div class="download-container" style="margin: 1.5rem auto 2.5rem auto; display: flex; flex-direction: column; align-items: center; gap: 0.8rem; z-index: 10; max-width: 480px;">
+                <a id="osDownloadBtn" href="https://github.com/888ank888/terminal-academy-by-ank/releases" class="form-submit-btn" style="text-decoration: none; padding: 0.8rem 2rem; font-size: 1.2rem; display: inline-flex; align-items: center; gap: 10px; box-shadow: var(--glow-ember); width: 100%; box-sizing: border-box; justify-content: center;">
+                    <span>DETECTION OF OS ACTIVE...</span>
+                </a>
+                <div class="dropdown-wrapper" style="position: relative; width: 100%;">
+                    <select id="osSelector" class="form-control form-select" style="padding: 0.4rem 1rem; font-size: 0.85rem; background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-secondary); width: 100%; box-sizing: border-box; text-align: center; cursor: pointer;" onchange="handleManualOSSelect()">
+                        <option value="" disabled selected>MANUAL SELECT DOWNLOAD</option>
+                        <option value="macOS Apple Silicon">macOS (Apple Silicon M1/M2/M3/M4)</option>
+                        <option value="macOS Intel">macOS (Intel Core / Older Macs)</option>
+                        <option value="Windows x64">Windows (MSI Setup Installer)</option>
+                        <option value="Linux deb">Linux (Debian/Ubuntu package)</option>
+                        <option value="Linux AppImage">Linux (AppImage portable)</option>
+                    </select>
+                </div>
+            </div>
             
             <!-- Live CSS Mini-Console -->
             <div class="mini-console panel">
@@ -71,8 +88,8 @@
                     <span class="card-id">SYS_MOD_01</span>
                     <span class="card-status active">ONLINE</span>
                 </div>
-                <h3>WEB DEVELOPMENT</h3>
-                <p>Train engineers in HTTP mechanics, reverse proxies, and low-latency cache architectures.</p>
+                <h3>LINUX CORE</h3>
+                <p>Master CLI navigation, text parsing, file permissions, shell environment internals, and chroot escapes.</p>
                 <a href="https://polar.sh/terminal-academy/products/starter" class="form-submit-btn" style="text-align: center; text-decoration: none; margin-top: auto; padding: 0.6rem; font-size: 1.1rem;">
                     <span>ACTIVATE NODE</span>
                 </a>
@@ -82,8 +99,8 @@
                     <span class="card-id">SYS_MOD_02</span>
                     <span class="card-status active">ONLINE</span>
                 </div>
-                <h3>DATA ANALYTICS</h3>
-                <p>Build robust data processing pipelines, structured SQL logging, and log sanitization logic.</p>
+                <h3>NETWORKING & SECURITY</h3>
+                <p>Configure port forwardings, SSH security gates, firewalls with iptables, and trace routing protocols.</p>
                 <a href="https://polar.sh/terminal-academy/products/starter" class="form-submit-btn" style="text-align: center; text-decoration: none; margin-top: auto; padding: 0.6rem; font-size: 1.1rem;">
                     <span>ACTIVATE NODE</span>
                 </a>
@@ -93,8 +110,8 @@
                     <span class="card-id">SYS_MOD_03</span>
                     <span class="card-status active">ONLINE</span>
                 </div>
-                <h3>DEVOPS MATRIX</h3>
-                <p>Master docker-compose orchestration, gVisor runtime sandboxing, and eBPF kernel event filters.</p>
+                <h3>DEVOPS & CONTAINERS</h3>
+                <p>Deploy docker orchestration, configure secure gVisor sandboxes, and inspect kernels using eBPF probes.</p>
                 <a href="https://polar.sh/terminal-academy/products/starter" class="form-submit-btn" style="text-align: center; text-decoration: none; margin-top: auto; padding: 0.6rem; font-size: 1.1rem;">
                     <span>ACTIVATE NODE</span>
                 </a>
@@ -196,14 +213,14 @@
             <div class="footer-container">
                 <div class="footer-logo">TERMINAL_ACADEMY // B2B_PORTAL</div>
                 <div class="footer-links">
-                    <a href="https://github.com/codename-terminal/academy" target="_blank" class="github-showcase-link" title="GitHub Project" style="border-radius: 12px; display: inline-flex; align-items: center; gap: 8px;">
+                    <a href="https://github.com/888ank888/terminal-academy-by-ank" target="_blank" class="github-showcase-link" title="GitHub Project" style="border-radius: 12px; display: inline-flex; align-items: center; gap: 8px;">
                         <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
                             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
                         </svg>
                         <span>GitHub</span>
                     </a>
                 </div>
-                <div class="footer-meta">NODE: ACTIVE // SEC_STREAM: SECURE // VER: 2026.06.10</div>
+                <div class="footer-meta">NODE: ACTIVE // SEC_STREAM: SECURE // VER: 2026.07.01</div>
             </div>
         </footer>
     </div>
@@ -488,6 +505,72 @@
             
             typeNextLine();
         };
+
+        // OS Detection and Dynamic Download configuration
+        const repoReleases = "https://github.com/888ank888/terminal-academy-by-ank/releases/latest/download";
+        const downloadPaths = {
+            "macOS Apple Silicon": `${repoReleases}/terminal-academy_aarch64.dmg`,
+            "macOS Intel": `${repoReleases}/terminal-academy_x64.dmg`,
+            "Windows x64": `${repoReleases}/terminal-academy_x64_en-US.msi`,
+            "Linux deb": `${repoReleases}/terminal-academy_amd64.deb`,
+            "Linux AppImage": `${repoReleases}/terminal-academy_amd64.AppImage`
+        };
+
+        function detectOS() {
+            const userAgent = window.navigator.userAgent.toLowerCase();
+            const downloadBtn = document.getElementById('osDownloadBtn');
+            const spanText = downloadBtn.querySelector('span');
+
+            let detectedOS = "macOS Apple Silicon"; // default fallback
+            let label = "DOWNLOAD FOR MACOS (APPLE SILICON)";
+
+            if (userAgent.indexOf("win") !== -1) {
+                detectedOS = "Windows x64";
+                label = "DOWNLOAD FOR WINDOWS (MSI)";
+            } else if (userAgent.indexOf("mac") !== -1) {
+                let isAppleSilicon = true;
+                try {
+                    const canvas = document.createElement("canvas");
+                    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+                    if (gl) {
+                        const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+                        if (debugInfo) {
+                            const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_VENDOR_ID || 0x9245) || "";
+                            if (renderer.toLowerCase().indexOf("intel") !== -1 || renderer.toLowerCase().indexOf("amd") !== -1 || renderer.toLowerCase().indexOf("nvidia") !== -1) {
+                                isAppleSilicon = false;
+                            }
+                        }
+                    }
+                } catch (e) {}
+
+                if (isAppleSilicon) {
+                    detectedOS = "macOS Apple Silicon";
+                    label = "DOWNLOAD FOR MACOS (M1/M2/M3/M4)";
+                } else {
+                    detectedOS = "macOS Intel";
+                    label = "DOWNLOAD FOR MACOS (INTEL / OLDER)";
+                }
+            } else if (userAgent.indexOf("linux") !== -1) {
+                detectedOS = "Linux deb";
+                label = "DOWNLOAD FOR LINUX (DEB)";
+            }
+
+            downloadBtn.href = downloadPaths[detectedOS] || "https://github.com/888ank888/terminal-academy-by-ank/releases";
+            spanText.textContent = label;
+        }
+
+        window.handleManualOSSelect = function() {
+            const selector = document.getElementById('osSelector');
+            const downloadBtn = document.getElementById('osDownloadBtn');
+            const selectedVal = selector.value;
+            if (downloadPaths[selectedVal]) {
+                downloadBtn.href = downloadPaths[selectedVal];
+                downloadBtn.querySelector('span').textContent = `DOWNLOAD FOR ${selectedVal.toUpperCase()}`;
+            }
+        };
+
+        // Trigger on load
+        detectOS();
     </script>
 </body>
 </html>

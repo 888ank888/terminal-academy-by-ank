@@ -84,7 +84,7 @@ fn spawn_pty(
     .arg("ConnectTimeout=5")
     .arg("root@89.22.239.107")
     .arg(format!(
-      "docker run -d --name {} --network terminal-academy-by-ank_sandbox-network --memory 512m --cpus 0.25 --rm terminal-academy/sandbox:latest sleep infinity",
+      "docker run -d --name {} --network terminal-academy-by-ank_sandbox-network --memory 512m --cpus 0.25 --rm terminal-academy/sandbox:latest sleep 7200",
       container_name
     ))
     .output();
@@ -243,7 +243,7 @@ fn reset_sandbox(state: State<'_, PtyState>) -> Result<(), String> {
       .arg("ConnectTimeout=5")
       .arg("root@89.22.239.107")
       .arg(format!(
-        "docker run -d --name {} --network terminal-academy-by-ank_sandbox-network --memory 512m --cpus 0.25 --rm terminal-academy/sandbox:latest sleep infinity",
+        "docker run -d --name {} --network terminal-academy-by-ank_sandbox-network --memory 512m --cpus 0.25 --rm terminal-academy/sandbox:latest sleep 7200",
         container_name
       ))
       .output();
