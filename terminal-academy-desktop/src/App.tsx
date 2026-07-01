@@ -378,6 +378,7 @@ const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, 
   const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastQueryTimeRef = useRef<number>(0);
   const activeApiKey = apiKey || defaultApiKey;
 
   useEffect(() => {
@@ -397,6 +398,13 @@ const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, 
   }, [terminalEvent]);
 
   const handleTerminalEvent = async (type: 'before' | 'after', cmd: string, output: string) => {
+    const now = Date.now();
+    if (now - lastQueryTimeRef.current < 2500) {
+      console.warn("[RATE LIMIT] API call throttled to prevent excessive token consumption.");
+      return;
+    }
+    lastQueryTimeRef.current = now;
+
     if (type === 'before') {
       if (cmd.endsWith(' [BLOCKED]')) {
         const rawCmd = cmd.replace(' [BLOCKED]', '');
@@ -532,6 +540,13 @@ CRITICAL PERSONALITY & FORMATTING RULES:
   };
 
   const triggerCommandExplanation = async (cmd: string) => {
+    const now = Date.now();
+    if (now - lastQueryTimeRef.current < 2500) {
+      setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? 'Вы отправляете запросы слишком быстро. Пожалуйста, подождите.' : 'You are sending requests too quickly. Please wait a moment.' }]);
+      return;
+    }
+    lastQueryTimeRef.current = now;
+
     const userMsg = lang === 'ru' ? `Объясни команду: ${cmd}` : `Explain the command: ${cmd}`;
     const newMsgs = [...messages, { role: 'user', text: userMsg }];
     setMessages(newMsgs);
@@ -595,6 +610,13 @@ Context:
 
   const handleSend = async () => {
     if (!input.trim()) return;
+    const now = Date.now();
+    if (now - lastQueryTimeRef.current < 2500) {
+      setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? 'Вы отправляете запросы слишком быстро. Пожалуйста, подождите.' : 'You are sending requests too quickly. Please wait a moment.' }]);
+      return;
+    }
+    lastQueryTimeRef.current = now;
+
     const userMsg = input.trim();
     setInput('');
     
