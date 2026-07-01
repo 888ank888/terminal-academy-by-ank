@@ -33,7 +33,7 @@ html, body, #root {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 85, 0, 0.15);
-  border-radius: 20px;
+  border-radius: 26px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -201,7 +201,7 @@ html, body, #root {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-color);
-  border-radius: 20px;
+  border-radius: 26px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -382,4 +382,45 @@ body.global-dragging .widget-body {
 
 .incidents-grid div:hover {
   transform: translateX(2px);
+}
+
+@keyframes geminiGlow {
+  0% {
+    box-shadow: 0 0 4px rgba(255, 85, 0, 0.3), 0 0 10px rgba(255, 203, 107, 0.1);
+    border-color: rgba(255, 85, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(255, 85, 0, 0.7), 0 0 24px rgba(255, 203, 107, 0.4);
+    border-color: rgba(255, 203, 107, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 4px rgba(255, 85, 0, 0.3), 0 0 10px rgba(255, 203, 107, 0.1);
+    border-color: rgba(255, 85, 0, 0.4);
+  }
+}
+
+.chat-input-wrapper-glow {
+  animation: geminiGlow 3.5s infinite ease-in-out;
+}
+
+@keyframes itemHighlight {
+  0% { border-left-color: rgba(255, 85, 0, 0.4); }
+  50% { border-left-color: rgba(255, 203, 107, 0.9); }
+  100% { border-left-color: rgba(255, 85, 0, 0.4); }
+}
+
+.active-sidebar-item {
+  border-left: 3px solid var(--accent-primary) !important;
+  animation: itemHighlight 2s infinite ease-in-out;
+  background: rgba(255, 85, 0, 0.04) !important;
+}
+
+.learning-path-node {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+.learning-path-node:hover {
+  box-shadow: 0 0 16px rgba(255, 85, 0, 0.5) !important;
+  border-color: var(--accent-primary) !important;
+  transform: scale(1.05) translateY(-2px) !important;
 }

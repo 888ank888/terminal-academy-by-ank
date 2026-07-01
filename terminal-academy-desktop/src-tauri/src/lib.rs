@@ -6,7 +6,7 @@ use tauri::{AppHandle, Emitter, State, Manager};
 struct PtyState {
   master: Mutex<Option<Box<dyn MasterPty + Send>>>,
   writer: Mutex<Option<Box<dyn Write + Send>>>,
-  session_id: Mutex<Option<String>>,
+  container_number: Mutex<Option<u32>>,
 }
 
 impl Default for PtyState {
@@ -14,16 +14,48 @@ impl Default for PtyState {
     Self {
       master: Mutex::new(None),
       writer: Mutex::new(None),
-      session_id: Mutex::new(None),
+      container_number: Mutex::new(None),
     }
   }
+}
+
+// Scans active remote containers to find the smallest available positive index (e.g. academy-sandbox-1)
+fn allocate_container_number() -> u32 {
+  let output = std::process::Command::new("ssh")
+    .arg("-i")
+    .arg("/Users/ank/.ssh/id_ed25519")
+    .arg("-o")
+    .arg("ConnectTimeout=3")
+    .arg("root@89.22.239.107")
+    .arg("docker ps -a --filter name=academy-sandbox- --format {{.Names}}")
+    .output();
+
+  let mut active_indices = Vec::new();
+
+  if let Ok(out) = output {
+    let stdout_str = String::from_utf8_lossy(&out.stdout);
+    for line in stdout_str.lines() {
+      let name = line.trim();
+      if name.starts_with("academy-sandbox-") {
+        let suffix = &name["academy-sandbox-".len()..];
+        if let Ok(num) = suffix.parse::<u32>() {
+          active_indices.push(num);
+        }
+      }
+    }
+  }
+
+  let mut candidate = 1;
+  while active_indices.contains(&candidate) {
+    candidate += 1;
+  }
+  candidate
 }
 
 #[tauri::command]
 fn spawn_pty(
   app: AppHandle,
   state: State<'_, PtyState>,
-  session_id: String,
 ) -> Result<(), String> {
   let pty_system = native_pty_system();
   let pair = pty_system
@@ -35,13 +67,14 @@ fn spawn_pty(
     })
     .map_err(|e| e.to_string())?;
 
-  // Save the session ID in state
+  // Allocate container number sequentially and save it
+  let num = allocate_container_number();
   {
-    let mut state_session = state.session_id.lock().unwrap();
-    *state_session = Some(session_id.clone());
+    let mut state_num = state.container_number.lock().unwrap();
+    *state_num = Some(num);
   }
 
-  let container_name = format!("academy-sandbox-{}", session_id);
+  let container_name = format!("academy-sandbox-{}", num);
 
   // Pre-create/run the container remotely if not exists, limit resource and map network, using standard --rm for auto-cleanup
   let _ = std::process::Command::new("ssh")
@@ -154,25 +187,30 @@ fn resize_pty(
 }
 
 #[tauri::command]
-fn get_docker_status(session_id: String) -> bool {
-  let container_name = format!("academy-sandbox-{}", session_id);
-  std::process::Command::new("ssh")
-    .arg("-i")
-    .arg("/Users/ank/.ssh/id_ed25519")
-    .arg("-o")
-    .arg("ConnectTimeout=3")
-    .arg("root@89.22.239.107")
-    .arg(format!("docker inspect {}", container_name))
-    .output()
-    .map(|out| out.status.success())
-    .unwrap_or(false)
+fn get_docker_status(state: State<'_, PtyState>) -> bool {
+  let num_opt = state.container_number.lock().unwrap().clone();
+  if let Some(num) = num_opt {
+    let container_name = format!("academy-sandbox-{}", num);
+    std::process::Command::new("ssh")
+      .arg("-i")
+      .arg("/Users/ank/.ssh/id_ed25519")
+      .arg("-o")
+      .arg("ConnectTimeout=3")
+      .arg("root@89.22.239.107")
+      .arg(format!("docker inspect {}", container_name))
+      .output()
+      .map(|out| out.status.success())
+      .unwrap_or(false)
+  } else {
+    false
+  }
 }
 
 #[tauri::command]
 fn destroy_sandbox(state: State<'_, PtyState>) -> Result<(), String> {
-  let session_id_opt = state.session_id.lock().unwrap().clone();
-  if let Some(session_id) = session_id_opt {
-    let container_name = format!("academy-sandbox-{}", session_id);
+  let num_opt = state.container_number.lock().unwrap().clone();
+  if let Some(num) = num_opt {
+    let container_name = format!("academy-sandbox-{}", num);
     let _ = std::process::Command::new("ssh")
       .arg("-i")
       .arg("/Users/ank/.ssh/id_ed25519")
@@ -185,20 +223,48 @@ fn destroy_sandbox(state: State<'_, PtyState>) -> Result<(), String> {
   Ok(())
 }
 
+#[tauri::command]
+fn reset_sandbox(state: State<'_, PtyState>) -> Result<(), String> {
+  let num_opt = state.container_number.lock().unwrap().clone();
+  if let Some(num) = num_opt {
+    let container_name = format!("academy-sandbox-{}", num);
+    let _ = std::process::Command::new("ssh")
+      .arg("-i")
+      .arg("/Users/ank/.ssh/id_ed25519")
+      .arg("-o")
+      .arg("ConnectTimeout=5")
+      .arg("root@89.22.239.107")
+      .arg(format!("docker stop {}", container_name))
+      .output();
+    let _ = std::process::Command::new("ssh")
+      .arg("-i")
+      .arg("/Users/ank/.ssh/id_ed25519")
+      .arg("-o")
+      .arg("ConnectTimeout=5")
+      .arg("root@89.22.239.107")
+      .arg(format!(
+        "docker run -d --name {} --network terminal-academy-by-ank_sandbox-network --memory 512m --cpus 0.25 --rm terminal-academy/sandbox:latest sleep infinity",
+        container_name
+      ))
+      .output();
+  }
+  Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
     .manage(PtyState::default())
-    .invoke_handler(tauri::generate_handler![spawn_pty, write_pty, resize_pty, get_docker_status, destroy_sandbox])
+    .invoke_handler(tauri::generate_handler![spawn_pty, write_pty, resize_pty, get_docker_status, destroy_sandbox, reset_sandbox])
     .on_window_event(|window, event| {
       if let tauri::WindowEvent::Destroyed = event {
-        let session_id_opt = {
+        let num_opt = {
           let state = window.state::<PtyState>();
-          let x = state.session_id.lock().unwrap().clone();
+          let x = state.container_number.lock().unwrap().clone();
           x
         };
-        if let Some(session_id) = session_id_opt {
-          let container_name = format!("academy-sandbox-{}", session_id);
+        if let Some(num) = num_opt {
+          let container_name = format!("academy-sandbox-{}", num);
           let _ = std::process::Command::new("ssh")
             .arg("-i")
             .arg("/Users/ank/.ssh/id_ed25519")

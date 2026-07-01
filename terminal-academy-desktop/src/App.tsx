@@ -143,7 +143,7 @@ function parseSyllabus(md: string): SyllabusNode[] {
 }
 
 // --- UI Widgets --- //
-const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, sessionId, onCommandBeforeExec, onCommandAfterExec }: any) => {
+const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, onCommandBeforeExec, onCommandAfterExec }: any) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const termInstanceRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -218,6 +218,17 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, sessionI
         // Intercept Enter to extract target command before exec
         if (arg.key === 'Enter' && arg.type === 'keydown' && term) {
           const cmd = getCommandFromBuffer(term);
+          if (cmd === 'reset-sandbox' || cmd === 'reset') {
+            term.write('\r\n\x1b[33m[SYSTEM] Recycling container sandbox instance...\x1b[0m\r\n');
+            invoke('reset_sandbox').then(() => {
+              term?.write('\x1b[32m[SYSTEM] Sandbox successfully recycled! Press Enter to start shell.\x1b[0m\r\n');
+            }).catch(err => {
+              term?.write(`\x1b[31m[SYSTEM] Reset error: ${err}\x1b[0m\r\n`);
+            });
+            // Clear input buffer on PTY side so it doesn't execute on the old shell
+            invoke('write_pty', { data: '\x03\r' }).catch(() => {});
+            return false;
+          }
           if (cmd && onCommandBeforeExec) {
             onCommandBeforeExec(cmd);
           }
@@ -243,7 +254,7 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, sessionI
       termInstanceRef.current = term;
       fitAddonRef.current = fitAddon;
 
-      invoke('spawn_pty', { sessionId }).catch(err => {
+      invoke('spawn_pty').catch(err => {
         term?.write(`\r\n\x1b[31mError spawning PTY: ${err}\x1b[0m\r\n`);
       });
 
@@ -341,13 +352,14 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, sessionI
   );
 };
 
-const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, terminalBuffer, systemStats, explainCommand, setExplainCommand, terminalEvent, setTerminalEvent }: any) => {
+const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, terminalBuffer, systemStats, explainCommand, setExplainCommand, terminalEvent, setTerminalEvent, defaultApiKey }: any) => {
   const [messages, setMessages] = useState<Array<{ role: string; text: string }>>([]);
   const [input, setInput] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const activeApiKey = apiKey || defaultApiKey;
 
   useEffect(() => {
     if (explainCommand) {
@@ -378,7 +390,7 @@ const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, 
         }]);
       }
     } else if (type === 'after') {
-      if (!apiKey) return; // Silent if no API key set yet
+      if (!activeApiKey) return; // Silent if no API key set yet
       setLoading(true);
       try {
         const eventPrompt = lang === 'ru' 
@@ -401,19 +413,20 @@ ${output || '(no output)'}
           parts: [{ text: m.text }]
         }));
 
-        const systemInstruction = `You are AI Mentor Ank, the Socratic tutor for the Terminal Academy.
+        const systemInstruction = `You are AI Mentor Ank, the sarcastic, condescending but educational Socratic tutor for the Terminal Academy.
 The student has just executed the command "${cmd}" in the sandbox terminal.
 The output of the command was:
 """
 ${output}
 """
-Your task is to analyze this command execution and output.
-Respond in the chat with:
-1. Short Explanation: Briefly explain what this command did and what the output means.
-2. Warnings or Guidance: If there was an error (e.g. permission denied, command not found), guide them Socratically to the correct command. Do not write copy-pasteable commands.
-Keep your response concise, Socratic, and educational. Do not use emojis.`;
+Analyze this command and output. Respond in the chat.
+CRITICAL PERSONALITY & FORMATTING RULES:
+1. Be consistently sarcastic, witty, and slightly condescending about their choice of command or results, but remain Socratic and educational.
+2. DO NOT use any markdown formatting like double asterisks (**), lists, or headers. Output ONLY clean, natural plain text with regular spacing and paragraph breaks.
+3. Keep it brief. Guide them conceptually. Do not give them direct solutions to copy-paste.
+4. Support both Russian and English responses (reply in Russian if the student's context is Russian, otherwise English).`;
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -459,7 +472,7 @@ Keep your response concise, Socratic, and educational. Do not use emojis.`;
     const newMsgs = [...messages, { role: 'user', text: userMsg }];
     setMessages(newMsgs);
     
-    if (!apiKey) {
+    if (!activeApiKey) {
       setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? 'Ошибка: Пожалуйста, задайте ваш Gemini API ключ в настройках.' : 'Error: Please set your Gemini API key in settings to consult with me.' }]);
       return;
     }
@@ -471,14 +484,14 @@ Keep your response concise, Socratic, and educational. Do not use emojis.`;
         parts: [{ text: m.text }]
       }));
 
-      const systemInstruction = `You are AI Mentor Ank, the Socratic tutor for the Terminal Academy.
+      const systemInstruction = `You are AI Mentor Ank, the sarcastic Socratic tutor for the Terminal Academy.
 The student clicked the command "${cmd}" in the Command Grimoire.
 Your task is to explain this command inside the chat before they run it in the terminal.
-Provide:
-1. Context: When and where this command is typically used.
-2. Purpose: What the command aims to achieve.
-3. Effects: What changes or outputs this command produces.
-Keep it Socratic and informative. Do not use emojis or icons in your output.
+CRITICAL PERSONALITY & FORMATTING RULES:
+1. Explain it with a sarcastic, witty tone. Act like explaining this is slightly beneath you but you do it anyway out of duty.
+2. DO NOT use any markdown tags (like **, * or headers). Output ONLY clean, plain-text paragraphs.
+3. Explain the context, purpose, and effects of the command socratically. Do not write copy-pasteable commands.
+4. Respond in Russian if the student's prompt or context is Russian, otherwise English.
 
 Real-time System Stats & Status:
 - CPU Usage: ${systemStats?.cpu || 0}%
@@ -497,7 +510,7 @@ Context:
 - Active incident: ${activeIncident?.title || 'None'}
 - Incident instructions: ${activeIncident?.desc || 'None'}`;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -524,7 +537,7 @@ Context:
     const newMsgs = [...messages, { role: 'user', text: userMsg }];
     setMessages(newMsgs);
     
-    if (!apiKey) {
+    if (!activeApiKey) {
       setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? 'Ошибка: Пожалуйста, задайте ваш Gemini API ключ в настройках.' : 'Error: Please set your Gemini API key in settings to consult with me.' }]);
       return;
     }
@@ -536,13 +549,13 @@ Context:
         parts: [{ text: m.text }]
       }));
 
-      const systemInstruction = `You are AI Mentor Ank, the Socratic tutor for the Terminal Academy.
+      const systemInstruction = `You are AI Mentor Ank, the sarcastic, condescending but educational Socratic tutor for the Terminal Academy.
 Your role is to guide the student through practical terminal challenges (system administration, networking, devops, app hosting).
-CRITICAL RULES:
-1. DO NOT give direct answers or write out copy-pasteable bash commands.
-2. Ask leading questions and guide the student to discover the answer themselves.
-3. Suggest diagnostic commands to help them examine the system (e.g. "What happens when you run 'ls -la' in that directory?").
-4. Maintain a supportive, encouraging, and Socratic tone.
+CRITICAL PERSONALITY & FORMATTING RULES:
+1. Be consistently sarcastic, witty, and condescending, but guide them conceptually (Socratic).
+2. DO NOT give direct answers or write out copy-pasteable bash commands. Ask leading questions so they discover the solution.
+3. DO NOT use any markdown formatting like ** or *. Output ONLY clean, plain-text paragraphs.
+4. Respond in Russian if the student's prompt is in Russian, otherwise English.
 5. If they are stuck on a specific error, explain what the error means conceptually.
 6. Warn the student immediately if they run unsafe commands (e.g., rm -rf without argument, recursive deletion of root, invalid chmod settings).
 7. Suggest specific maintenance or debugging tasks if the system statistics show abnormal indicators.
@@ -564,7 +577,7 @@ Context:
 - Active incident: ${activeIncident?.title || 'None'}
 - Incident instructions: ${activeIncident?.desc || 'None'}`;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -583,24 +596,32 @@ Context:
     }
   };
 
+  const cleanMarkdown = (text: string) => {
+    return text
+      .replace(/\*\*/g, '')
+      .replace(/\*/g, '')
+      .replace(/__/g, '')
+      .replace(/#/g, '')
+      .replace(/`{1,3}/g, '')
+      .trim();
+  };
+
   return (
     <div className="widget-content">
       <div className="widget-header chat-header" {...(bindDrag ? bindDrag() : {})}>
         <div className="title" style={{ touchAction: 'none' }}>AI Mentor Ank</div>
-        <button className="settings-btn" onClick={() => setShowSettings(!showSettings)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a6accd', padding: '0 8px', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Settings
-        </button>
+        <button className="settings-btn" onClick={() => setShowSettings(!showSettings)}>Settings</button>
       </div>
 
-      <div className="widget-body chat-body" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100% - 38px)', padding: '12px' }}>
+      <div className="widget-body chat-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '14px', position: 'relative' }}>
         {showSettings && (
-          <div className="settings-panel" style={{ background: '#1c1c28', padding: '12px', borderRadius: '8px', marginBottom: '12px', border: '1px solid var(--accent-primary)' }}>
-            <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95rem', color: 'var(--accent-primary)' }}>{t[lang].apiSettings}</h4>
+          <div className="chat-settings-panel" style={{ padding: '12px', background: 'rgba(255, 85, 0, 0.04)', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '12px' }}>
+            <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Gemini API Key</label>
             <input 
               type="password" 
-              placeholder="Paste Gemini API Key" 
+              placeholder="AI Studio API Key" 
               value={apiKey} 
-              onChange={e => setApiKey(e.target.value)} 
+              onChange={e => setApiKey(e.target.value)}
               style={{ width: '100%', padding: '6px', background: '#050506', border: '1px solid rgba(255, 85, 0, 0.3)', color: '#fff', fontSize: '0.9rem', borderRadius: '4px', marginBottom: '8px', outline: 'none' }}
             />
             <button onClick={saveKey} style={{ background: 'var(--accent-primary)', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.9rem', transition: 'var(--transition-smooth)' }}>{t[lang].saveKey}</button>
@@ -635,7 +656,7 @@ Context:
                   boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
                 }}
               >
-                <p style={{ margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{m.text}</p>
+                <p style={{ margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{cleanMarkdown(m.text)}</p>
               </div>
             </motion.div>
           ))}
@@ -651,7 +672,7 @@ Context:
         </div>
 
         <div 
-          className="chat-input-wrapper" 
+          className="chat-input-wrapper chat-input-wrapper-glow" 
           style={{ 
             padding: '2px', 
             borderRadius: '24px', 
@@ -669,14 +690,16 @@ Context:
               onKeyDown={e => e.key === 'Enter' && handleSend()}
               style={{ flex: 1, background: 'transparent', border: 'none', color: '#fff', fontSize: '0.95rem', outline: 'none', padding: '6px 0' }}
             />
-             <button 
-              onClick={handleSend} 
+            <motion.button 
+              onClick={handleSend}
+              whileHover={{ scale: 1.05, background: 'rgba(255, 85, 0, 0.25)', boxShadow: '0 0 12px var(--accent-primary)' }}
+              whileTap={{ scale: 0.95 }}
               style={{ 
-                background: 'var(--accent-primary)', 
-                border: 'none', 
-                color: '#fff', 
-                padding: '6px 14px', 
-                borderRadius: '16px', 
+                background: 'rgba(255, 85, 0, 0.1)', 
+                border: '1px solid var(--accent-primary)', 
+                color: 'var(--accent-primary)', 
+                padding: '6px 16px', 
+                borderRadius: '20px', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
@@ -684,12 +707,12 @@ Context:
                 fontSize: '0.75rem',
                 fontWeight: 'bold',
                 textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                transition: 'var(--transition-smooth)'
+                letterSpacing: '0.08em',
+                transition: 'all 0.2s ease-in-out'
               }}
             >
               Send
-            </button>
+            </motion.button>
           </div>
         </div>
       </div>
@@ -918,8 +941,8 @@ const LessonWidget = ({
             return (
               <motion.div 
                 key={n.id} 
-                className="node-card" 
-                whileHover={{ scale: 1.015, boxShadow: '0 4px 25px rgba(255, 85, 0, 0.08)', borderColor: 'rgba(255, 85, 0, 0.25)' }}
+                className="node-card learning-path-node" 
+                whileHover={{ scale: 1.05, boxShadow: '0 0 16px rgba(255, 85, 0, 0.5)', borderColor: 'var(--accent-primary)' }}
                 transition={{ type: 'spring', stiffness: 350, damping: 20 }}
                 style={{ 
                   position: 'relative',
@@ -975,6 +998,7 @@ const LessonWidget = ({
                         return (
                           <motion.div
                             key={inc.id}
+                            className={isActive ? 'active-sidebar-item' : ''}
                             whileHover={{ scale: 1.01, x: 2, background: 'rgba(255, 85, 0, 0.04)', borderColor: 'rgba(255, 85, 0, 0.3)' }}
                             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                             onClick={() => {
@@ -1227,6 +1251,85 @@ const FluidWindow = ({ id, slotIdx, zoomedOut, onDragEnd, cellW, cellH, children
   );
 };
 
+const ParticleBackground = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationId: number;
+    let particles: Array<{ x: number; y: number; vx: number; vy: number; radius: number; alpha: number }> = [];
+
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Initialize particles
+    const particleCount = 45;
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        radius: Math.random() * 2 + 1,
+        alpha: Math.random() * 0.5 + 0.1
+      });
+    }
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Wrap around boundaries
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 85, 0, ${p.alpha})`;
+        ctx.fill();
+      });
+
+      animationId = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    return () => {
+      window.removeEventListener('resize', resizeCanvas);
+      cancelAnimationFrame(animationId);
+    };
+  }, []);
+
+  return (
+    <canvas 
+      ref={canvasRef} 
+      style={{ 
+        position: 'absolute', 
+        top: 0, 
+        left: 0, 
+        width: '100%', 
+        height: '100%', 
+        zIndex: 0, 
+        pointerEvents: 'none',
+        opacity: 0.6
+      }} 
+    />
+  );
+};
+
 // --- Main App --- //
 export default function App() {
   const [zoomedOut, setZoomedOut] = useState(false);
@@ -1256,8 +1359,8 @@ export default function App() {
 
   const terminalBufferRef = useRef<string>('');
   const panTimeoutRef = useRef<any>(null);
-  const sessionId = useRef('session-' + Math.random().toString(36).substring(2, 15));
   const [terminalEvent, setTerminalEvent] = useState<{ type: 'before' | 'after'; cmd: string; output?: string } | null>(null);
+  const [defaultApiKey, setDefaultApiKey] = useState('');
 
   const handleCommandBeforeExec = (cmd: string) => {
     setTerminalEvent({ type: 'before', cmd });
@@ -1275,7 +1378,7 @@ export default function App() {
       const mStr = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
       const sStr = (seconds % 60).toString().padStart(2, '0');
 
-      invoke<boolean>('get_docker_status', { sessionId: sessionId.current })
+      invoke<boolean>('get_docker_status')
         .then(active => {
           setStats(prev => ({
             ...prev,
@@ -1385,6 +1488,21 @@ export default function App() {
       .catch(() => {
         // Fallback to English
         t.ru = { ...t.en };
+      });
+
+    // Load default API key fallback config if present (ignored in git)
+    fetch('/config.json')
+      .then(res => {
+        if (!res.ok) throw new Error('Not found');
+        return res.json();
+      })
+      .then(data => {
+        if (data.default_api_key) {
+          setDefaultApiKey(data.default_api_key);
+        }
+      })
+      .catch(() => {
+        setDefaultApiKey('');
       });
 
     const handleResize = () => {
@@ -1631,6 +1749,7 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
 
   return (
     <div className="viewport">
+      <ParticleBackground />
       {!showHud ? (
         <button 
           className="hud-toggle-btn"
@@ -1730,6 +1849,7 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
                   setExplainCommand={setExplainCommand}
                   terminalEvent={terminalEvent}
                   setTerminalEvent={setTerminalEvent}
+                  defaultApiKey={defaultApiKey}
                 />
               </FluidWindow>
               
@@ -1740,7 +1860,6 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
               <FluidWindow id="term" slotIdx={widgetSlots.term} zoomedOut={zoomedOut} onDragEnd={handleDragEnd} cellW={dimensions.w / 12} cellH={dimensions.h / 8}>
                 <TerminalWidget 
                   lang={lang} 
-                  sessionId={sessionId.current}
                   onTerminalData={(data: string) => {
                     terminalBufferRef.current = (terminalBufferRef.current + data).slice(-2000);
                   }}
