@@ -18,7 +18,7 @@ const t: { [key: string]: { [key: string]: string } } = {
     hudViewOverview: "VIEW: OVERVIEW",
     hudShow: "SHOW HUD (CTRL+H)",
     hudHide: "HIDE HUD",
-    screen: "SCREEN",
+    screen: "HOME",
     guideTitle: "Syllabus Guide",
     guideText: "Choose a branch curriculum tab, click on any of the module nodes below to expand the available incidents, and consult AI Mentor Ank in the Chat box to solve tasks inside the sandbox terminal.",
     modulesTitle: "Learning Path",
@@ -28,7 +28,7 @@ const t: { [key: string]: { [key: string]: string } } = {
     askButton: "Send",
     apiSettings: "API Key Settings",
     saveKey: "Save Key",
-    terminalTitle: "Sandbox Terminal (ank@sandbox)",
+    terminalTitle: "Sandbox Room (ank@sandbox)",
     grimoireTitle: "Command Grimoire",
     grimoireDesc: "Suggested Diagnostic Commands:",
     monitorTitle: "System Monitoring",
@@ -191,11 +191,19 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, onComman
       term.loadAddon(fitAddon);
       term.open(terminalRef.current);
 
-      // Completely disable paste actions on the PTY element
+      // Intercept paste events: write data to terminal and notify mentor
       terminalRef.current.addEventListener('paste', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        term?.write('\r\n\x1b[31m[CLIPBOARD LOCK] Pasting is disabled. Please type commands manually.\x1b[0m\r\n');
+        const clipboardData = e.clipboardData || (window as any).clipboardData;
+        const pastedText = clipboardData.getData('text') || '';
+        if (pastedText) {
+          term?.write(pastedText);
+          invoke('write_pty', { data: pastedText }).catch(err => console.error(err));
+          if (onCommandBeforeExec) {
+            onCommandBeforeExec(pastedText + " [PASTED]");
+          }
+        }
       }, true);
 
       const getCommandFromBuffer = (tInst: XTerm) => {
@@ -209,13 +217,6 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, onComman
       let lastExecutedCommand = '';
 
       term.attachCustomKeyEventHandler((arg: KeyboardEvent) => {
-        // Intercept and drop Ctrl+V and Cmd+V key sequences, printing feedback
-        if ((arg.ctrlKey || arg.metaKey) && arg.key.toLowerCase() === 'v') {
-          if (arg.type === 'keydown') {
-            term?.write('\r\n\x1b[31m[CLIPBOARD LOCK] Pasting is disabled. Please type commands manually.\x1b[0m\r\n');
-          }
-          return false;
-        }
         // Intercept Ctrl+H and bubble it up to main window toggles instead of backspace
         if (arg.ctrlKey && arg.key.toLowerCase() === 'h') {
           if (arg.type === 'keydown') {
@@ -406,6 +407,49 @@ const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, 
     lastQueryTimeRef.current = now;
 
     if (type === 'before') {
+      if (cmd.endsWith(' [PASTED]')) {
+        const rawCmd = cmd.replace(' [PASTED]', '');
+        if (!activeApiKey) return;
+        setLoading(true);
+        try {
+          const pastePrompt = lang === 'ru'
+            ? `[БЕЗОПАСНОСТЬ: Студент вставил скопированный текст в терминал] Вставленный текст: ${rawCmd}`
+            : `[SECURITY: Student pasted copied text into terminal] Pasted text: ${rawCmd}`;
+            
+          const newMsgs = [...messages, { role: 'user', text: pastePrompt }];
+          const history = newMsgs.map(m => ({
+            role: m.role === 'ank' ? 'model' : 'user',
+            parts: [{ text: m.text }]
+          }));
+
+          const systemInstruction = `You are AI Mentor Ank, the sarcastic Socratic tutor for the Terminal Academy.
+The student has just pasted copied text into the active terminal: "${rawCmd}".
+Respond in a highly sarcastic, condescending tone. Scold them for copy-pasting commands instead of typing them manually to learn, tell them they are cheating themselves, and make a sarcastic remark about lazy engineers.
+CRITICAL PERSONALITY & FORMATTING RULES:
+1. Be extremely sarcastic and scolding about copy-pasting.
+2. DO NOT use any markdown tags (like **, * or lists). Output ONLY clean, plain-text paragraphs.
+3. Keep it brief.
+4. Respond in Russian if the student's context is Russian, otherwise English.`;
+
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: history,
+              systemInstruction: { parts: [{ text: systemInstruction }] }
+            })
+          });
+
+          const json = await response.json();
+          const answer = json?.candidates?.[0]?.content?.parts?.[0]?.text || 'Typing builds muscle memory. Do not copy paste.';
+          setMessages(prev => [...prev, { role: 'ank', text: answer }]);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
       if (cmd.endsWith(' [BLOCKED]')) {
         const rawCmd = cmd.replace(' [BLOCKED]', '');
         if (!activeApiKey) return;
@@ -695,8 +739,10 @@ Context:
   return (
     <div className="widget-content">
       <div className="widget-header chat-header" {...(bindDrag ? bindDrag() : {})}>
-        <div className="title" style={{ touchAction: 'none' }}>AI Mentor Ank</div>
-        <button className="settings-btn" onClick={() => setShowSettings(!showSettings)}>Settings</button>
+        <div className="title" style={{ touchAction: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-primary)', display: 'inline-block', boxShadow: '0 0 8px var(--accent-primary)' }}></span>
+          AI Mentor Ank
+        </div>
       </div>
 
       <div className="widget-body chat-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '14px', position: 'relative' }}>
@@ -731,15 +777,9 @@ Context:
                 className={`message ${m.role === 'ank' ? 'incoming' : 'outgoing'}`} 
                 style={{ 
                   padding: '10px 14px', 
-                  borderRadius: '16px', 
-                  borderBottomLeftRadius: m.role === 'ank' ? '2px' : '16px',
-                  borderBottomRightRadius: m.role === 'ank' ? '16px' : '2px',
-                  background: m.role === 'ank' ? 'rgba(255, 85, 0, 0.04)' : 'rgba(255, 255, 255, 0.02)', 
-                  borderLeft: m.role === 'ank' ? '3px solid var(--accent-primary)' : '3px solid var(--text-muted)',
-                  color: 'var(--text-main)', 
                   fontSize: '0.92rem', 
                   maxWidth: '90%',
-                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+                  lineHeight: '1.45'
                 }}
               >
                 <p style={{ margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{cleanMarkdown(m.text)}</p>
@@ -778,26 +818,28 @@ Context:
             />
             <motion.button 
               onClick={handleSend}
-              whileHover={{ scale: 1.05, background: 'rgba(255, 85, 0, 0.25)', boxShadow: '0 0 12px var(--accent-primary)' }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.1, background: 'rgba(255, 85, 0, 0.9)', color: '#000', boxShadow: '0 0 15px var(--accent-primary)' }}
+              whileTap={{ scale: 0.9 }}
               style={{ 
-                background: 'rgba(255, 85, 0, 0.1)', 
+                background: 'rgba(255, 85, 0, 0.15)', 
                 border: '1px solid var(--accent-primary)', 
                 color: 'var(--accent-primary)', 
-                padding: '6px 16px', 
-                borderRadius: '20px', 
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
                 cursor: 'pointer',
-                fontSize: '0.75rem',
-                fontWeight: 'bold',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                transition: 'all 0.2s ease-in-out'
+                transition: 'var(--transition-smooth)',
+                flexShrink: 0
               }}
+              title={lang === 'ru' ? 'Отправить' : 'Send'}
             >
-              Send
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
             </motion.button>
           </div>
         </div>
@@ -828,9 +870,7 @@ const LibraryWidget = ({ bindDrag, activeIncident, lang, onExplainCommand }: any
       </div>
       <div className="widget-body library-body" style={{ padding: '12px', height: 'calc(100% - 38px)', overflowY: 'auto' }}>
         <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t[lang].grimoireDesc}</p>
-        <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'var(--accent-primary)', fontStyle: 'italic', fontWeight: 500 }}>
-          {lang === 'ru' ? 'Вводите команды вручную для развития мышечной памяти' : 'Type commands manually to build muscle memory'}
-        </p>
+
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {commands.map((cmd, idx) => (
             <motion.li 
@@ -877,7 +917,7 @@ const MonitoringWidget = ({ bindDrag, lang, stats }: any) => {
       <div className="widget-header" {...(bindDrag ? bindDrag() : {})}>
         <div className="title" style={{ touchAction: 'none' }}>{t[lang].monitorTitle}</div>
       </div>
-      <div className="widget-body" style={{ padding: '16px', height: 'calc(100% - 38px)', overflowY: 'auto' }}>
+      <div className="widget-body" style={{ padding: '16px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.85rem' }}>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
@@ -1028,8 +1068,8 @@ const LessonWidget = ({
               <motion.div 
                 key={n.id} 
                 className="node-card learning-path-node" 
-                whileHover={{ scale: 1.05, boxShadow: '0 0 16px rgba(255, 85, 0, 0.5)', borderColor: 'var(--accent-primary)' }}
-                transition={{ type: 'spring', stiffness: 350, damping: 20 }}
+                whileHover={{ boxShadow: '0 0 16px rgba(255, 85, 0, 0.25)', borderColor: 'var(--accent-primary)' }}
+                transition={{ type: 'tween', duration: 0.2 }}
                 style={{ 
                   position: 'relative',
                   border: isExpanded ? '1px solid rgba(255, 85, 0, 0.2)' : '1px solid var(--border-color)', 
@@ -1219,8 +1259,8 @@ const FluidWindow = ({ id, slotIdx, zoomedOut, onDragEnd, cellW, cellH, children
   const gap = 12;
   const targetX = slot.col * safeCellW + gap / 2;
   const targetY = slot.row * safeCellH + gap / 2;
-  const w = slot.w * safeCellW - gap;
-  const h = slot.h * safeCellH - gap;
+  const w = Math.max(slot.w * safeCellW - gap, slot.w * 65);
+  const h = Math.max(slot.h * safeCellH - gap, slot.h * 50);
 
   const x = useMotionValue(targetX);
   const y = useMotionValue(targetY);
@@ -1456,6 +1496,61 @@ export default function App() {
     setTerminalEvent({ type: 'after', cmd, output });
   };
 
+  // Touchpad gesture swipe navigation between Homes (macOS/Windows)
+  useEffect(() => {
+    let lastSwipeTime = 0;
+    const handleTouchpadSwipe = (e: WheelEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.widget-body') || target.closest('.xterm-viewport')) return;
+
+      const now = Date.now();
+      if (now - lastSwipeTime < 800) return;
+
+      const threshold = 55;
+      const dx = e.deltaX;
+      const dy = e.deltaY;
+
+      if (Math.abs(dx) > Math.abs(dy)) {
+        if (Math.abs(dx) > threshold) {
+          lastSwipeTime = now;
+          if (dx > 0) {
+            setActiveScreen(prev => {
+              if (prev === 1) return 2;
+              if (prev === 3) return 4;
+              return prev;
+            });
+          } else {
+            setActiveScreen(prev => {
+              if (prev === 2) return 1;
+              if (prev === 4) return 3;
+              return prev;
+            });
+          }
+        }
+      } else {
+        if (Math.abs(dy) > threshold) {
+          lastSwipeTime = now;
+          if (dy > 0) {
+            setActiveScreen(prev => {
+              if (prev === 1) return 3;
+              if (prev === 2) return 4;
+              return prev;
+            });
+          } else {
+            setActiveScreen(prev => {
+              if (prev === 3) return 1;
+              if (prev === 4) return 2;
+              return prev;
+            });
+          }
+        }
+      }
+    };
+
+    window.addEventListener('wheel', handleTouchpadSwipe, { passive: true });
+    return () => window.removeEventListener('wheel', handleTouchpadSwipe);
+  }, []);
+
   useEffect(() => {
     let seconds = 0;
     const timer = setInterval(() => {
@@ -1683,7 +1778,7 @@ export default function App() {
           // If already waiting to pan to this screen, do nothing
           if (panTimeoutRef.current) return;
 
-          // Start a 400ms delay before panning (controlled focus teleport)
+          // Start a 1200ms delay before panning to prevent accidental edge teleports
           panTimeoutRef.current = setTimeout(() => {
             setActiveScreen(prev => {
               if (targetScreenPan !== null) {
@@ -1695,7 +1790,7 @@ export default function App() {
               return prev;
             });
             panTimeoutRef.current = null;
-          }, 400);
+          }, 1200);
         } else {
           // Mouse left the edge, cancel the transition timer
           if (panTimeoutRef.current) {
