@@ -16,3 +16,7 @@ tmp/
 **/__pycache__/
 **/.DS_Store
 infra/*.sock
+token.*
+config.json
+*.rtf
+*.txt
