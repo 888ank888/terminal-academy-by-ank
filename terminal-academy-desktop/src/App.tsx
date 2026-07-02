@@ -996,6 +996,40 @@ const MonitoringWidget = ({ bindDrag, lang, stats }: any) => {
   );
 };
 
+const skillTreeNodes = [
+  // --- Linux Branch ---
+  { id: 'linux-1', label: 'Linux Core', x: 100, y: 150, course: 'linux', nodeId: 1, desc: 'Master CLI navigation, text parsing, file permissions, and environment variables.', deps: [] },
+  { id: 'linux-2', label: 'CLI Scripting', x: 250, y: 100, course: 'linux', nodeId: 2, desc: 'Write bash automation scripts, pipes, filters, and command chaining.', deps: ['linux-1'] },
+  { id: 'linux-3', label: 'Permissions & Sudo', x: 250, y: 200, course: 'linux', nodeId: 3, desc: 'Configure sudoers, group boundaries, and standard file ownership.', deps: ['linux-1'] },
+  
+  // --- Networking Branch ---
+  { id: 'net-1', label: 'SSH & Port Forwarding', x: 420, y: 100, course: 'network', nodeId: 1, desc: 'Configure SSH servers, key file authenticators, and local/remote tunnel forwards.', deps: ['linux-2'] },
+  { id: 'net-2', label: 'UFW Firewalls', x: 580, y: 100, course: 'network', nodeId: 2, desc: 'Set up iptables wrappers, block IPs, and enforce network isolation.', deps: ['net-1'] },
+  { id: 'net-3', label: 'fail2ban Intrusion Defense', x: 740, y: 100, course: 'network', nodeId: 3, desc: 'Configure log jail filters, automated IP bans, and ssh brute-forcing prevention.', deps: ['net-2'] },
+  
+  // --- DevOps & Containers ---
+  { id: 'devops-1', label: 'Docker Containers', x: 420, y: 280, course: 'devops', nodeId: 1, desc: 'Run isolated namespaces, mount volume paths, and compile custom Dockerfiles.', deps: ['linux-3'] },
+  { id: 'devops-2', label: 'Docker Compose Stack', x: 580, y: 280, course: 'devops', nodeId: 2, desc: 'Orchestrate multi-tier services, depends_on order, and internal virtual networks.', deps: ['devops-1'] },
+  { id: 'devops-3', label: 'gVisor & eBPF Security', x: 740, y: 280, course: 'devops', nodeId: 3, desc: 'Isolate container syscall kernels and trace sandbox buffers via eBPF probes.', deps: ['devops-2'] },
+
+  // --- Hosting & Game Servers Branch ---
+  { id: 'host-systemd', label: 'systemd Services', x: 250, y: 450, course: 'hosting', nodeId: 1, desc: 'Create systemd units, startup loops, journalctl troubleshooting, and limits.', deps: ['linux-3'] },
+  { id: 'host-nginx', label: 'Nginx Web Server', x: 420, y: 450, course: 'hosting', nodeId: 3, desc: 'Deploy static web directories, server blocks, custom ports, and headers.', deps: ['host-systemd'] },
+  { id: 'host-proxy', label: 'Reverse Proxy & Upstreams', x: 580, y: 450, course: 'hosting', nodeId: 8, desc: 'Proxy WS connections, handle upstream load balancers, and configure SSL (Certbot).', deps: ['host-nginx'] },
+  
+  { id: 'host-db', label: 'PostgreSQL Server', x: 420, y: 550, course: 'hosting', nodeId: 5, desc: 'Configure database queries, pg_hba credentials, logical dumps, and replication slots.', deps: ['host-systemd'] },
+  { id: 'host-redis', label: 'Redis Cache & Cluster', x: 580, y: 550, course: 'hosting', nodeId: 6, desc: 'Set up key eviction profiles, Sentinel failovers, and persistence snapshots.', deps: ['host-systemd'] },
+  
+  { id: 'host-minecraft', label: 'Vanilla Java Server', x: 740, y: 420, course: 'hosting', nodeId: 7, desc: 'Launch server.jar, allocate RAM, update properties, whitelist, and write launch scripts.', deps: ['host-systemd'] },
+  { id: 'host-bedrock', label: 'Bedrock Server Edition', x: 880, y: 420, course: 'hosting', nodeId: 11, desc: 'Run C++ bedrock servers, named pipes commands control, and back up worlds.', deps: ['host-minecraft'] },
+  { id: 'host-spigot', label: 'Spigot/Paper Plugins', x: 880, y: 490, course: 'hosting', nodeId: 13, desc: 'Optimize Paper configs, handle LuckPerms nodes, and install plugin integrations.', deps: ['host-minecraft'] },
+  { id: 'host-bungee', label: 'BungeeCord Waterfall Proxy', x: 1000, y: 490, course: 'hosting', nodeId: 18, desc: 'Link server mode tunnels, block backend direct scans, and balance player lobbies.', deps: ['host-spigot'] },
+  { id: 'host-modded', label: 'Forge/Fabric Modded Server', x: 880, y: 350, course: 'hosting', nodeId: 15, desc: 'Allocate modpack JVM resources, fix entity tick crashes, and manage registries.', deps: ['host-minecraft'] },
+  
+  { id: 'host-mon', label: 'Performance logs & htop', x: 740, y: 550, course: 'hosting', nodeId: 19, desc: 'Track process resource leaks, use iotop, tcpdump, and strace diagnostic systems.', deps: ['host-systemd'] },
+  { id: 'host-cicd', label: 'CI/CD automated deployments', x: 880, y: 550, course: 'hosting', nodeId: 20, desc: 'Automate server backups, write zero-downtime scripts, and configure git hooks.', deps: ['host-mon'] }
+];
+
 const LessonWidget = ({ 
   bindDrag, 
   courses, 
@@ -1011,6 +1045,251 @@ const LessonWidget = ({
   setFullscreen
 }: any) => {
   const [expandedNodeId, setExpandedNodeId] = useState<number | null>(1);
+  const [activeSkillNodeId, setActiveSkillNodeId] = useState<string>('linux-1');
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+
+  // Sync active visual tree node with standard selection changes
+  useEffect(() => {
+    if (activeNode) {
+      const match = skillTreeNodes.find(n => n.course === activeCourse.id && n.nodeId === activeNode.id);
+      if (match) {
+        setActiveSkillNodeId(match.id);
+      }
+    }
+  }, [activeNode, activeCourse]);
+
+  const activeNodeInfo = skillTreeNodes.find(n => n.id === activeSkillNodeId);
+
+  if (isFullscreen) {
+    return (
+      <div className="widget-content" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div className="widget-header lib-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="title" style={{ touchAction: 'none' }}>
+            {lang === 'ru' ? 'Карта Направлений и Развилок (Skill Tree)' : 'Interactive Skill Tree & Branching Roadmap'}
+          </div>
+          <button 
+            onClick={() => setFullscreen(false)} 
+            style={{ 
+              background: 'rgba(255, 85, 0, 0.15)', 
+              border: '1px stroke var(--accent-primary)', 
+              borderColor: 'var(--accent-primary)',
+              color: 'var(--accent-primary)', 
+              padding: '6px 14px', 
+              borderRadius: '6px', 
+              cursor: 'pointer', 
+              fontSize: '0.8rem',
+              fontWeight: 'bold',
+              transition: 'var(--transition-smooth)'
+            }}
+          >
+            {lang === 'ru' ? 'СВЕРНУТЬ В СПИСОК' : 'RESTORE TO LIST'}
+          </button>
+        </div>
+        
+        <div className="fullscreen-body" style={{ flex: 1, display: 'flex', background: '#050506', position: 'relative', overflow: 'hidden' }}>
+          {/* SVG Map Canvas */}
+          <div style={{ flex: 1, position: 'relative', overflow: 'auto', borderRight: '1px solid var(--border-color)' }}>
+            <svg 
+              width="1080" 
+              height="650" 
+              style={{ background: 'radial-gradient(circle at center, #08080f 0%, #030305 100%)', display: 'block' }}
+            >
+              {/* Grid Background Overlay */}
+              <defs>
+                <pattern id="skillGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255, 255, 255, 0.02)" strokeWidth="1" />
+                </pattern>
+                <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="6" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <rect width="1080" height="650" fill="url(#skillGrid)" />
+              
+              {/* Connection Lines */}
+              {skillTreeNodes.map(node => {
+                return node.deps.map(depId => {
+                  const parent = skillTreeNodes.find(n => n.id === depId);
+                  if (!parent) return null;
+                  const isSelectedPath = activeSkillNodeId === node.id || activeSkillNodeId === parent.id;
+                  return (
+                    <line
+                      key={`${parent.id}-${node.id}`}
+                      x1={parent.x}
+                      y1={parent.y}
+                      x2={node.x}
+                      y2={node.y}
+                      stroke={isSelectedPath ? 'var(--accent-primary)' : 'rgba(255, 85, 0, 0.15)'}
+                      strokeWidth={isSelectedPath ? 3 : 1.5}
+                      strokeDasharray={isSelectedPath ? "none" : "5,5"}
+                      style={{ transition: 'all 0.3s ease' }}
+                    />
+                  );
+                });
+              })}
+              
+              {/* Nodes */}
+              {skillTreeNodes.map(node => {
+                const isSelected = activeSkillNodeId === node.id;
+                const isHovered = hoveredNodeId === node.id;
+                
+                // Color based on course
+                let color = 'rgba(255, 85, 0, 0.4)';
+                if (node.course === 'linux') color = '#38bdf8';
+                if (node.course === 'network') color = '#a855f7';
+                if (node.course === 'devops') color = '#22c55e';
+                if (node.course === 'hosting') color = '#eab308';
+                
+                return (
+                  <g 
+                    key={node.id}
+                    transform={`translate(${node.x}, ${node.y})`}
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => {
+                      setActiveSkillNodeId(node.id);
+                      const targetCourse = courses.find((c: any) => c.id === node.course);
+                      if (targetCourse) {
+                        setActiveCourse(targetCourse);
+                        setExpandedNodeId(node.nodeId);
+                      }
+                    }}
+                    onMouseEnter={() => setHoveredNodeId(node.id)}
+                    onMouseLeave={() => setHoveredNodeId(null)}
+                  >
+                    {/* Glowing outer shadow ring */}
+                    <circle
+                      r={isSelected || isHovered ? 26 : 20}
+                      fill="none"
+                      stroke={isSelected ? 'var(--accent-primary)' : color}
+                      strokeWidth={isSelected ? 3 : 1.5}
+                      style={{ transition: 'all 0.2s ease', opacity: isSelected || isHovered ? 1 : 0.6 }}
+                      filter={isSelected || isHovered ? 'url(#neonGlow)' : 'none'}
+                    />
+                    
+                    {/* Inner core circle */}
+                    <circle
+                      r={14}
+                      fill={isSelected ? 'var(--accent-primary)' : '#050506'}
+                      stroke={isSelected ? 'var(--accent-primary)' : color}
+                      strokeWidth={1}
+                    />
+                    
+                    {/* Course marker text letter */}
+                    <text
+                      textAnchor="middle"
+                      dy="4"
+                      fill={isSelected ? '#000' : '#fff'}
+                      style={{ fontSize: '10px', fontWeight: 'bold', fontFamily: 'monospace' }}
+                    >
+                      {node.nodeId}
+                    </text>
+                    
+                    {/* Node Text Label below */}
+                    <text
+                      textAnchor="middle"
+                      y={38}
+                      fill={isSelected ? 'var(--accent-primary)' : '#cbd5e1'}
+                      style={{ 
+                        fontSize: '11px', 
+                        fontWeight: isSelected ? 'bold' : 'normal', 
+                        fontFamily: 'monospace',
+                        textShadow: isSelected ? '0 0 8px rgba(255, 85, 0, 0.4)' : 'none'
+                      }}
+                    >
+                      {node.label.toUpperCase()}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+          
+          {/* Right Side Sidebar - Interactive Lesson Panel */}
+          <div style={{ width: '380px', display: 'flex', flexDirection: 'column', background: '#09090f', padding: '20px', overflowY: 'auto' }}>
+            {activeNodeInfo ? (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 'bold', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                    {activeNodeInfo.course.toUpperCase()} BRANCH
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Module {activeNodeInfo.nodeId}
+                  </span>
+                </div>
+                
+                <h3 style={{ margin: '0 0 12px 0', fontSize: '1.25rem', color: '#fff', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px', textTransform: 'uppercase', fontFamily: 'var(--font-geometric)' }}>
+                  {activeNodeInfo.label}
+                </h3>
+                
+                <p style={{ margin: '0 0 20px 0', fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                  {activeNodeInfo.desc}
+                </p>
+                
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  {lang === 'ru' ? 'Практические Инциденты' : 'Practical Incidents'}
+                </h4>
+                
+                {/* Dynamically loaded syllabus nodes for the selected module */}
+                {nodes.find((n: any) => n.id === activeNodeInfo.nodeId) ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {nodes.find((n: any) => n.id === activeNodeInfo.nodeId).incidents.map((inc: any) => {
+                      const isActive = activeIncident?.id === inc.id && activeNode?.id === activeNodeInfo.nodeId;
+                      return (
+                        <div
+                          key={inc.id}
+                          onClick={() => {
+                            const nodeObj = nodes.find((n: any) => n.id === activeNodeInfo.nodeId);
+                            setActiveNode(nodeObj);
+                            setActiveIncident(inc);
+                          }}
+                          style={{
+                            padding: '10px 12px',
+                            background: isActive ? 'rgba(255, 85, 0, 0.08)' : 'rgba(255, 255, 255, 0.01)',
+                            border: isActive ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'var(--transition-smooth)',
+                            boxShadow: isActive ? '0 0 8px rgba(255, 85, 0, 0.15)' : 'none'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: isActive ? 'var(--accent-primary)' : '#fff' }}>
+                              {inc.id}. {inc.title.toUpperCase()}
+                            </span>
+                            {inc.isBoss && (
+                              <span style={{ background: 'var(--accent-primary)', color: '#fff', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '24px', fontWeight: 'bold' }}>
+                                BOSS
+                              </span>
+                            )}
+                          </div>
+                          {isActive && (
+                            <p style={{ margin: '6px 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                              {inc.desc}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                    {lang === 'ru' ? 'Загрузка инцидентов курса...' : 'Loading incidents details...'}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.85rem' }}>
+                {lang === 'ru' ? 'Выберите тему на развилке для просмотра уроков' : 'Select a topic node on the tree to view lessons'}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="widget-content">
