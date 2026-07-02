@@ -66,12 +66,12 @@
                 <p class="hero-subtitle">
                     A zero-dependency, pure-terminal learning platform for teens. Master Linux, DevOps, and systems thinking with an AI mentor that forces you to figure it out.
                 </p>
-                <div class="hero-actions" style="display: flex; flex-direction: column; gap: 12px; align-items: flex-start; margin-bottom: 20px;">
+                <div class="hero-actions" style="margin-bottom: 24px;">
                     <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                         <a id="osDownloadBtn" href="#" class="btn btn-primary">
                             <span>Download Desktop App</span>
                         </a>
-                        <select id="osSelector" class="btn btn-secondary" onchange="handleManualOSSelect()" style="padding: 0 12px; height: 50px; background: #050506; color: #fff; border: 1px solid var(--border-color); border-radius: 8px; font-family: monospace; font-size: 0.9rem; cursor: pointer;">
+                        <select id="osSelector" class="os-selector" onchange="handleManualOSSelect()">
                             <option value="macOS Apple Silicon">macOS (M1/M2/M3/M4)</option>
                             <option value="macOS Intel">macOS (Intel)</option>
                             <option value="Windows x64">Windows (MSI)</option>
