@@ -134,7 +134,7 @@
                 <hr class="pixel-divider">
                 <div class="role-line">
                     <h2>FRONTEND ENGINEERING</h2>
-                    <span class="tags">REACT // VANILLA // CURSES</span>
+                    <span class="tags">REACT // TAURI // DESKTOP v2.0.0</span>
                 </div>
                 <hr class="pixel-divider">
                 <div class="role-line">
@@ -520,6 +520,19 @@
             const userAgent = window.navigator.userAgent.toLowerCase();
             const downloadBtn = document.getElementById('osDownloadBtn');
             const spanText = downloadBtn.querySelector('span');
+
+            // Restrict direct downloads on mobile devices
+            const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+            if (isMobile) {
+                downloadBtn.href = "#";
+                downloadBtn.style.opacity = "0.5";
+                downloadBtn.style.cursor = "not-allowed";
+                downloadBtn.style.pointerEvents = "none";
+                spanText.textContent = "DESKTOP APPLICATION (NOT AVAILABLE ON MOBILE)";
+                const selector = document.getElementById('osSelector');
+                if (selector) selector.style.display = "none";
+                return;
+            }
 
             let detectedOS = "macOS Apple Silicon"; // default fallback
             let label = "DOWNLOAD FOR MACOS (APPLE SILICON)";

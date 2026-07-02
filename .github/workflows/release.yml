@@ -52,7 +52,7 @@ jobs:
         with:
           projectPath: "./terminal-academy-desktop"
           tagName: v__VERSION__
-          releaseName: "Terminal Academy v__VERSION__"
+          releaseName: "First Release"
           releaseBody: "See assets below for the cross-platform native install packages."
           releaseDraft: true
           prerelease: false
