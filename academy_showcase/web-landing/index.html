@@ -58,7 +58,7 @@
     <main>
         <section class="hero container">
             <div class="hero-content reveal-up">
-                <div class="badge">v2.0.0-beta incoming 🚀</div>
+                <div class="badge">v2.0.0 released 🚀</div>
                 <h1 class="hero-title">
                     Don't play with blocks.<br>
                     <span class="gradient-text">Build real systems.</span>
@@ -66,9 +66,20 @@
                 <p class="hero-subtitle">
                     A zero-dependency, pure-terminal learning platform for teens. Master Linux, DevOps, and systems thinking with an AI mentor that forces you to figure it out.
                 </p>
-                <div class="hero-actions">
-                    <a href="https://github.com/888ank888/terminal-academy-by-ank" target="_blank" class="btn btn-primary">Start Hacking</a>
-                    <a href="#demo" class="btn btn-secondary">See how it works</a>
+                <div class="hero-actions" style="display: flex; flex-direction: column; gap: 12px; align-items: flex-start; margin-bottom: 20px;">
+                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                        <a id="osDownloadBtn" href="#" class="btn btn-primary">
+                            <span>Download Desktop App</span>
+                        </a>
+                        <select id="osSelector" class="btn btn-secondary" onchange="handleManualOSSelect()" style="padding: 0 12px; height: 50px; background: #050506; color: #fff; border: 1px solid var(--border-color); border-radius: 8px; font-family: monospace; font-size: 0.9rem; cursor: pointer;">
+                            <option value="macOS Apple Silicon">macOS (M1/M2/M3/M4)</option>
+                            <option value="macOS Intel">macOS (Intel)</option>
+                            <option value="Windows x64">Windows (MSI)</option>
+                            <option value="Linux deb">Linux (DEB)</option>
+                            <option value="Linux AppImage">Linux (AppImage)</option>
+                        </select>
+                    </div>
+                    <a href="https://github.com/888ank888/terminal-academy-by-ank" target="_blank" class="btn btn-secondary">View GitHub Repository</a>
                 </div>
                 
                 <div class="stats-row reveal-up" style="--delay: 200ms;">
@@ -142,9 +153,9 @@
                     <p>Your entire workspace is organized across 4 dedicated panels: Terminal, AI Mentor Chat, Command Grimoire, and System Monitoring. Zoom out to see the full overview, scroll to snap into any individual screen with pixel-perfect fluid physics.</p>
                 </div>
                 <div class="feature-card reveal-up" style="--delay: 0.4s">
-                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg></div>
-                    <h3>5,000-Node Skill Tree</h3>
-                    <p>Ditch linear learning paths. Build a completely unique career across a massive, interconnected Web of Knowledge. Combine nodes like [Linux] + [Networking] to unlock advanced branches like [Minecraft Server Admin] or [Kubernetes].</p>
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg></div>
+                    <h3>Interactive Branching Skill Tree</h3>
+                    <p>Ditch linear learning paths. Visualize your career across an interconnected 20-Node Skill Tree. Unlock advanced branches from Linux Core to Networking, Docker container compose stacks, and game servers deployment hosting.</p>
                 </div>
                 <div class="feature-card reveal-up" style="--delay: 0.5s">
                     <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg></div>
@@ -234,5 +245,88 @@
     </footer>
 
     <script src="script.js?v=2"></script>
+    <script>
+        // OS Detection and Dynamic Download configuration for Desktop v2.0.0
+        const repoReleases = "https://github.com/888ank888/terminal-academy-by-ank/releases/latest/download";
+        const downloadPaths = {
+            "macOS Apple Silicon": `${repoReleases}/terminal-academy_2.0.0_universal.dmg`,
+            "macOS Intel": `${repoReleases}/terminal-academy_2.0.0_universal.dmg`,
+            "Windows x64": `${repoReleases}/terminal-academy_2.0.0_x64_en-US.msi`,
+            "Linux deb": `${repoReleases}/terminal-academy_2.0.0_amd64.deb`,
+            "Linux AppImage": `${repoReleases}/terminal-academy_2.0.0_amd64.AppImage`
+        };
+
+        function runOSDetection() {
+            const userAgent = window.navigator.userAgent.toLowerCase();
+            const downloadBtn = document.getElementById('osDownloadBtn');
+            const selector = document.getElementById('osSelector');
+            if (!downloadBtn) return;
+            const spanText = downloadBtn.querySelector('span');
+
+            // Detect mobile devices first and block downloads
+            const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+            if (isMobile) {
+                downloadBtn.href = "#";
+                downloadBtn.style.opacity = "0.5";
+                downloadBtn.style.cursor = "not-allowed";
+                downloadBtn.style.pointerEvents = "none";
+                spanText.textContent = "DESKTOP APPLICATION ONLY";
+                if (selector) selector.style.display = "none";
+                return;
+            }
+
+            let detectedOS = "macOS Apple Silicon"; // default fallback
+            let label = "DOWNLOAD FOR MACOS (M1/M2/M3/M4)";
+
+            if (userAgent.indexOf("win") !== -1) {
+                detectedOS = "Windows x64";
+                label = "DOWNLOAD FOR WINDOWS (MSI)";
+            } else if (userAgent.indexOf("mac") !== -1) {
+                let isAppleSilicon = true;
+                try {
+                    const canvas = document.createElement("canvas");
+                    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+                    if (gl) {
+                        const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+                        if (debugInfo) {
+                            const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_VENDOR_ID || 0x9245) || "";
+                            if (renderer.toLowerCase().indexOf("intel") !== -1 || renderer.toLowerCase().indexOf("amd") !== -1 || renderer.toLowerCase().indexOf("nvidia") !== -1) {
+                                isAppleSilicon = false;
+                            }
+                        }
+                    }
+                } catch (e) {}
+
+                if (isAppleSilicon) {
+                    detectedOS = "macOS Apple Silicon";
+                    label = "DOWNLOAD FOR MACOS (M1/M2/M3/M4)";
+                } else {
+                    detectedOS = "macOS Intel";
+                    label = "DOWNLOAD FOR MACOS (INTEL)";
+                }
+            } else if (userAgent.indexOf("linux") !== -1) {
+                detectedOS = "Linux deb";
+                label = "DOWNLOAD FOR LINUX (DEB)";
+            }
+
+            downloadBtn.href = downloadPaths[detectedOS] || "https://github.com/888ank888/terminal-academy-by-ank/releases";
+            spanText.textContent = label;
+            if (selector) selector.value = detectedOS;
+        }
+
+        window.handleManualOSSelect = function() {
+            const selector = document.getElementById('osSelector');
+            const downloadBtn = document.getElementById('osDownloadBtn');
+            if (!selector || !downloadBtn) return;
+            const selectedVal = selector.value;
+            if (downloadPaths[selectedVal]) {
+                downloadBtn.href = downloadPaths[selectedVal];
+                downloadBtn.querySelector('span').textContent = `DOWNLOAD FOR ${selectedVal.toUpperCase()}`;
+            }
+        };
+
+        // Run OS detection on load
+        runOSDetection();
+    </script>
 </body>
 </html>
