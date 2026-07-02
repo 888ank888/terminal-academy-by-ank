@@ -21,7 +21,7 @@ const t: { [key: string]: { [key: string]: string } } = {
     screen: "HOME",
     guideTitle: "Syllabus Guide",
     guideText: "Choose a branch curriculum tab, click on any of the module nodes below to expand the available incidents, and consult AI Mentor Ank in the Chat box to solve tasks inside the sandbox terminal.",
-    modulesTitle: "Learning Path",
+    modulesTitle: "Module",
     incidentsTitle: "Incidents",
     bossIncident: "BOSS INCIDENT",
     askAnk: "Ask Ank...",
@@ -1006,16 +1006,34 @@ const LessonWidget = ({
   setActiveNode, 
   activeIncident, 
   setActiveIncident,
-  lang
+  lang,
+  isFullscreen,
+  setFullscreen
 }: any) => {
   const [expandedNodeId, setExpandedNodeId] = useState<number | null>(1);
 
   return (
     <div className="widget-content">
-      <div className="widget-header lib-header" {...(bindDrag ? bindDrag() : {})}>
+      <div className="widget-header lib-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} {...(bindDrag ? bindDrag() : {})}>
         <div className="title" style={{ touchAction: 'none' }}>
           {lang === 'ru' ? 'Учебный План' : 'Syllabus & Lessons'}
         </div>
+        <button 
+          onClick={() => setFullscreen && setFullscreen(!isFullscreen)} 
+          style={{ 
+            background: 'rgba(255, 85, 0, 0.1)', 
+            border: '1px solid var(--accent-primary)', 
+            color: 'var(--accent-primary)', 
+            padding: '4px 10px', 
+            borderRadius: '6px', 
+            cursor: 'pointer', 
+            fontSize: '0.75rem',
+            fontWeight: 'bold',
+            transition: 'var(--transition-smooth)'
+          }}
+        >
+          {isFullscreen ? (lang === 'ru' ? 'СВЕРНУТЬ' : 'RESTORE') : (lang === 'ru' ? 'РАЗВЕРНУТЬ' : 'EXPAND')}
+        </button>
       </div>
       <div className="widget-body" style={{ padding: '16px', height: 'calc(100% - 38px)', overflowY: 'auto' }}>
         
@@ -1069,21 +1087,8 @@ const LessonWidget = ({
           {nodes.map((n: any) => {
             const isExpanded = expandedNodeId === n.id;
             return (
-              <motion.div 
-                key={n.id} 
-                className="node-card learning-path-node" 
-                whileHover={{ boxShadow: '0 0 16px rgba(255, 85, 0, 0.25)', borderColor: 'var(--accent-primary)' }}
-                transition={{ type: 'tween', duration: 0.2 }}
-                style={{ 
-                  position: 'relative',
-                  border: isExpanded ? '1px solid rgba(255, 85, 0, 0.2)' : '1px solid var(--border-color)', 
-                  borderRadius: '16px', 
-                  background: isExpanded ? 'rgba(5, 5, 6, 0.4)' : 'rgba(255, 255, 255, 0.01)',
-                  boxShadow: isExpanded ? '0 4px 20px rgba(0,0,0,0.3)' : 'none',
-                  transition: 'var(--transition-smooth)'
-                }}
-              >
-                {/* Timeline circular node marker */}
+              <div key={n.id} style={{ position: 'relative' }}>
+                {/* Timeline circular node marker (outside the card so it never moves on hover!) */}
                 <span style={{
                   position: 'absolute',
                   left: '-22px',
@@ -1098,75 +1103,88 @@ const LessonWidget = ({
                   transition: 'var(--transition-smooth)'
                 }} />
 
-                <div 
-                  className="node-card-header" 
-                  onClick={() => setExpandedNodeId(isExpanded ? null : n.id)}
+                <motion.div 
+                  className="node-card learning-path-node" 
+                  whileHover={{ boxShadow: '0 0 16px rgba(255, 85, 0, 0.25)', borderColor: 'var(--accent-primary)' }}
+                  transition={{ type: 'tween', duration: 0.2 }}
                   style={{ 
-                    padding: '12px 16px', 
-                    cursor: 'pointer', 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    fontSize: '0.9rem',
-                    fontWeight: 600
+                    border: isExpanded ? '1px solid rgba(255, 85, 0, 0.2)' : '1px solid var(--border-color)', 
+                    borderRadius: '16px', 
+                    background: isExpanded ? 'rgba(5, 5, 6, 0.4)' : 'rgba(255, 255, 255, 0.01)',
+                    boxShadow: isExpanded ? '0 4px 20px rgba(0,0,0,0.3)' : 'none',
+                    transition: 'var(--transition-smooth)'
                   }}
                 >
-                  <span style={{ color: isExpanded ? 'var(--accent-primary)' : 'var(--text-main)', letterSpacing: '0.02em' }}>
-                    {t[lang].modulesTitle} {n.id}: {n.title.toUpperCase()}
-                  </span>
-                  <span style={{ color: 'var(--accent-primary)', fontSize: '0.75rem' }}>{isExpanded ? '▼' : '▶'}</span>
-                </div>
-
-                {isExpanded && (
-                  <div className="node-card-body" style={{ padding: '0 16px 16px 16px' }}>
-                    <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-                      {n.description}
-                    </p>
-                    <div className="incidents-grid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {n.incidents.map((inc: any) => {
-                        const isActive = activeIncident?.id === inc.id && activeNode?.id === n.id;
-                        return (
-                          <motion.div
-                            key={inc.id}
-                            className={isActive ? 'active-sidebar-item' : ''}
-                            whileHover={{ scale: 1.01, x: 2, background: 'rgba(255, 85, 0, 0.04)', borderColor: 'rgba(255, 85, 0, 0.3)' }}
-                            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                            onClick={() => {
-                              setActiveNode(n);
-                              setActiveIncident(inc);
-                            }}
-                            style={{
-                              padding: '10px 12px',
-                              background: isActive ? 'rgba(255, 85, 0, 0.04)' : 'rgba(255, 255, 255, 0.01)',
-                              border: isActive ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
-                              borderRadius: '12px',
-                              cursor: 'pointer',
-                              boxShadow: isActive ? '0 0 10px rgba(255, 85, 0, 0.15)' : 'none',
-                              transition: 'var(--transition-smooth)'
-                            }}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: isActive ? 'var(--accent-primary)' : 'var(--text-main)' }}>
-                                {inc.id}. {inc.title.toUpperCase()}
-                              </span>
-                              {inc.isBoss && (
-                                <span style={{ background: 'var(--accent-primary)', color: '#fff', fontSize: '0.65rem', padding: '2px 6px', borderRadius: '24px', fontWeight: 'bold', letterSpacing: '0.05em' }}>
-                                  {t[lang].bossIncident}
-                                </span>
-                              )}
-                            </div>
-                            {isActive && (
-                              <p style={{ margin: '6px 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-                                {inc.desc}
-                              </p>
-                            )}
-                          </motion.div>
-                        );
-                      })}
-                    </div>
+                  <div 
+                    className="node-card-header" 
+                    onClick={() => setExpandedNodeId(isExpanded ? null : n.id)}
+                    style={{ 
+                      padding: '12px 16px', 
+                      cursor: 'pointer', 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      fontSize: '0.9rem',
+                      fontWeight: 600
+                    }}
+                  >
+                    <span style={{ color: isExpanded ? 'var(--accent-primary)' : 'var(--text-main)', letterSpacing: '0.02em' }}>
+                      {t[lang].modulesTitle} {n.id}: {n.title.toUpperCase()}
+                    </span>
+                    <span style={{ color: 'var(--accent-primary)', fontSize: '0.75rem' }}>{isExpanded ? '▼' : '▶'}</span>
                   </div>
-                )}
-              </motion.div>
+
+                  {isExpanded && (
+                    <div className="node-card-body" style={{ padding: '0 16px 16px 16px' }}>
+                      <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                        {n.description}
+                      </p>
+                      <div className="incidents-grid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {n.incidents.map((inc: any) => {
+                          const isActive = activeIncident?.id === inc.id && activeNode?.id === n.id;
+                          return (
+                            <motion.div
+                              key={inc.id}
+                              className={isActive ? 'active-sidebar-item' : ''}
+                              whileHover={{ scale: 1.01, x: 2, background: 'rgba(255, 85, 0, 0.04)', borderColor: 'rgba(255, 85, 0, 0.3)' }}
+                              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                              onClick={() => {
+                                setActiveNode(n);
+                                setActiveIncident(inc);
+                              }}
+                              style={{
+                                padding: '10px 12px',
+                                background: isActive ? 'rgba(255, 85, 0, 0.04)' : 'rgba(255, 255, 255, 0.01)',
+                                border: isActive ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                                borderRadius: '12px',
+                                cursor: 'pointer',
+                                boxShadow: isActive ? '0 0 10px rgba(255, 85, 0, 0.15)' : 'none',
+                                transition: 'var(--transition-smooth)'
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: isActive ? 'var(--accent-primary)' : 'var(--text-main)' }}>
+                                  {inc.id}. {inc.title.toUpperCase()}
+                                </span>
+                                {inc.isBoss && (
+                                  <span style={{ background: 'var(--accent-primary)', color: '#fff', fontSize: '0.65rem', padding: '2px 6px', borderRadius: '24px', fontWeight: 'bold', letterSpacing: '0.05em' }}>
+                                    {t[lang].bossIncident}
+                                  </span>
+                                )}
+                              </div>
+                              {isActive && (
+                                <p style={{ margin: '6px 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                                  {inc.desc}
+                                </p>
+                              )}
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              </div>
             );
           })}
         </div>
@@ -1255,26 +1273,37 @@ const generateSlots = () => {
 const slots = generateSlots();
 
 // --- Fluid Window Drag Wrapper --- //
-const FluidWindow = ({ id, slotIdx, zoomedOut, onDragEnd, cellW, cellH, children }: any) => {
+const FluidWindow = ({ id, slotIdx, zoomedOut, onDragEnd, cellW, cellH, isFullscreen, children }: any) => {
   const slot = slots[slotIdx];
   const safeCellW = cellW || (window.innerWidth / 12);
   const safeCellH = cellH || (window.innerHeight / 8);
 
   const gap = 12;
-  const targetX = slot.col * safeCellW + gap / 2;
-  const targetY = slot.row * safeCellH + gap / 2;
-  const w = Math.max(slot.w * safeCellW - gap, slot.w * 65);
-  const h = Math.max(slot.h * safeCellH - gap, slot.h * 50);
+  const targetX = isFullscreen ? 0 : slot.col * safeCellW + gap / 2;
+  const targetY = isFullscreen ? 0 : slot.row * safeCellH + gap / 2;
+  const w = isFullscreen ? 12 * safeCellW - gap : Math.max(slot.w * safeCellW - gap, slot.w * 65);
+  const h = isFullscreen ? 8 * safeCellH - gap : Math.max(slot.h * safeCellH - gap, slot.h * 50);
 
   const x = useMotionValue(targetX);
   const y = useMotionValue(targetY);
   
-  const [zIndex, setZIndex] = useState(10);
+  const [zIndex, setZIndex] = useState(isFullscreen ? 200 : 10);
   const widgetRef = useRef<HTMLDivElement>(null);
   const springConfig = { type: 'spring', stiffness: 300, damping: 30 };
 
-  // Animate to position when slot changes (e.g. from swapping) or resize happens
   useEffect(() => {
+    setZIndex(isFullscreen ? 200 : 10);
+  }, [isFullscreen]);
+
+  // Animate to position when slot changes (e.g. from swapping) or resize happens
+  const isMountedRef = useRef(false);
+  useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      x.set(targetX);
+      y.set(targetY);
+      return;
+    }
     // @ts-ignore
     animate(x, targetX, springConfig);
     // @ts-ignore
@@ -1283,6 +1312,7 @@ const FluidWindow = ({ id, slotIdx, zoomedOut, onDragEnd, cellW, cellH, children
 
   // Delta-based drag prevents jumps from gesture offset out-of-sync
   const bindDrag = useDrag(({ delta: [dx, dy], first, last }) => {
+    if (isFullscreen) return; // Disable dragging when in fullscreen mode!
     if (first) {
       window.getSelection()?.removeAllRanges();
       setZIndex(100);
@@ -1467,6 +1497,7 @@ export default function App() {
   const [isReady, setIsReady] = useState(true);
   const [showHud, setShowHud] = useState(false);
   const [lang, setLang] = useState<'en' | 'ru'>('en');
+  const [syllabusExpanded, setSyllabusExpanded] = useState(false);
   
   const [stats, setStats] = useState({
     cpu: 12,
@@ -2062,7 +2093,15 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
                 />
               </FluidWindow>
               
-              <FluidWindow id="lesson" slotIdx={widgetSlots.lesson} zoomedOut={zoomedOut} onDragEnd={handleDragEnd} cellW={dimensions.w / 12} cellH={dimensions.h / 8}>
+              <FluidWindow 
+                id="lesson" 
+                slotIdx={widgetSlots.lesson} 
+                zoomedOut={zoomedOut} 
+                onDragEnd={handleDragEnd} 
+                cellW={dimensions.w / 12} 
+                cellH={dimensions.h / 8}
+                isFullscreen={syllabusExpanded}
+              >
                 <LessonWidget 
                   courses={courses}
                   activeCourse={activeCourse}
@@ -2073,6 +2112,8 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
                   activeIncident={activeIncident}
                   setActiveIncident={setActiveIncident}
                   lang={lang}
+                  isFullscreen={syllabusExpanded}
+                  setFullscreen={setSyllabusExpanded}
                 />
               </FluidWindow>
  
