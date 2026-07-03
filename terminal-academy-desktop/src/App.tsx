@@ -445,9 +445,14 @@ CRITICAL PERSONALITY & FORMATTING RULES:
           });
 
           const json = await response.json();
+          if (json?.error) {
+            setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? `Ошибка API: ${json.error.message}` : `API Error: ${json.error.message}` }]);
+            return;
+          }
           const answer = json?.candidates?.[0]?.content?.parts?.[0]?.text || 'Typing builds muscle memory. Do not paste.';
           setMessages(prev => [...prev, { role: 'ank', text: answer }]);
-        } catch (err) {
+        } catch (err: any) {
+          setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? `Ошибка буфера обмена: ${err.message}` : `Clipboard error: ${err.message}` }]);
           console.error(err);
         } finally {
           setLoading(false);
@@ -489,9 +494,14 @@ CRITICAL PERSONALITY & FORMATTING RULES:
           });
 
           const json = await response.json();
+          if (json?.error) {
+            setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? `Ошибка API: ${json.error.message}` : `API Error: ${json.error.message}` }]);
+            return;
+          }
           const answer = json?.candidates?.[0]?.content?.parts?.[0]?.text || 'That command is forbidden.';
           setMessages(prev => [...prev, { role: 'ank', text: answer }]);
-        } catch (err) {
+        } catch (err: any) {
+          setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? `Ошибка блокировки: ${err.message}` : `Block error: ${err.message}` }]);
           console.error(err);
         } finally {
           setLoading(false);
@@ -556,9 +566,14 @@ CRITICAL PERSONALITY & FORMATTING RULES:
         });
 
         const json = await response.json();
+        if (json?.error) {
+          setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? `Ошибка API: ${json.error.message}` : `API Error: ${json.error.message}` }]);
+          return;
+        }
         const answer = json?.candidates?.[0]?.content?.parts?.[0]?.text || 'No comment on that command.';
         setMessages(prev => [...prev, { role: 'ank', text: answer }]);
       } catch (err: any) {
+        setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? `Ошибка реакции: ${err.message}` : `Reaction error: ${err.message}` }]);
         console.error('Ank reaction error:', err);
       } finally {
         setLoading(false);
@@ -721,6 +736,10 @@ Context:
       });
 
       const json = await response.json();
+      if (json?.error) {
+        setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? `Ошибка API: ${json.error.message}` : `API Error: ${json.error.message}` }]);
+        return;
+      }
       const answer = json?.candidates?.[0]?.content?.parts?.[0]?.text || 'I am sorry, I had trouble processing that request. Please try again.';
       setMessages(prev => [...prev, { role: 'ank', text: answer }]);
     } catch (err: any) {
@@ -743,14 +762,35 @@ Context:
   return (
     <div className="widget-content">
       <div className="widget-header chat-header" {...(bindDrag ? bindDrag() : {})}>
-        <div className="title" style={{ touchAction: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-primary)', display: 'inline-block', boxShadow: '0 0 8px var(--accent-primary)' }}></span>
-          AI Mentor Ank
+        <div className="title" style={{ touchAction: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-primary)', display: 'inline-block', boxShadow: '0 0 8px var(--accent-primary)' }}></span>
+            AI Mentor Ank
+          </div>
+          <button 
+            onClick={() => setShowSettings(!showSettings)} 
+            style={{ 
+              background: 'transparent', 
+              border: 'none', 
+              color: 'var(--text-muted)', 
+              cursor: 'pointer', 
+              fontSize: '0.75rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              padding: '2px 8px',
+              borderRadius: '4px',
+              transition: 'var(--transition-smooth)'
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-primary)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+          >
+            {showSettings ? 'Close Key' : 'Set API Key'}
+          </button>
         </div>
       </div>
 
       <div className="widget-body chat-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '14px', position: 'relative' }}>
-        {showSettings && (
+        {(!activeApiKey || showSettings) && (
           <div className="chat-settings-panel" style={{ padding: '12px', background: 'rgba(255, 85, 0, 0.04)', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '12px' }}>
             <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Gemini API Key</label>
             <input 
@@ -1603,8 +1643,20 @@ const FluidWindow = ({ id, slotIdx, zoomedOut, onDragEnd, cellW, cellH, isFullsc
     }
     
     const scale = zoomedOut ? 0.5 : 1;
-    x.set(x.get() + dx / scale);
-    y.set(y.get() + dy / scale);
+    const nextX = x.get() + dx / scale;
+    const nextY = y.get() + dy / scale;
+    
+    const screenIdx = Math.floor(slotIdx / 5);
+    const screenCol = screenIdx % 2;
+    const screenRow = Math.floor(screenIdx / 2);
+    
+    const minBoundX = screenCol * 12 * safeCellW;
+    const maxBoundX = (screenCol + 1) * 12 * safeCellW - 50;
+    const minBoundY = screenRow * 8 * safeCellH;
+    const maxBoundY = (screenRow + 1) * 8 * safeCellH - 50;
+    
+    x.set(Math.max(minBoundX - 200, Math.min(nextX, maxBoundX + 200)));
+    y.set(Math.max(minBoundY, Math.min(nextY, maxBoundY)));
 
     if (last) {
       document.body.classList.remove('global-dragging');
@@ -1801,6 +1853,33 @@ export default function App() {
   const panTimeoutRef = useRef<any>(null);
   const [terminalEvent, setTerminalEvent] = useState<{ type: 'before' | 'after'; cmd: string; output?: string } | null>(null);
   const [defaultApiKey, setDefaultApiKey] = useState('');
+  const [isBooted, setIsBooted] = useState(false);
+  const [bootLog, setBootLog] = useState<string[]>([]);
+  const [showBootButton, setShowBootButton] = useState(false);
+
+  useEffect(() => {
+    if (isBooted) return;
+    const logs = [
+      "[SYSTEM] Initializing Terminal Academy Engine v2.0.0...",
+      "[SYSTEM] Loading sandboxed Linux virtualization shim...",
+      "[SYSTEM] Enforcing gVisor userspace kernel constraints...",
+      "[SYSTEM] Synchronizing Command Grimoire threat database...",
+      "[SYSTEM] Establishing telemetry connections...",
+      "[SYSTEM] Reviving AI Mentor Ank telemetry core...",
+      "[SYSTEM] Boot sequence complete. Interface ready."
+    ];
+    let idx = 0;
+    const interval = setInterval(() => {
+      if (idx < logs.length) {
+        setBootLog(prev => [...prev, logs[idx]]);
+        idx++;
+      } else {
+        clearInterval(interval);
+        setShowBootButton(true);
+      }
+    }, 450);
+    return () => clearInterval(interval);
+  }, [isBooted]);
 
   const handleCommandBeforeExec = (cmd: string) => {
     setTerminalEvent({ type: 'before', cmd });
@@ -2244,6 +2323,162 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
 
   return (
     <div className="viewport">
+      {!isBooted && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'radial-gradient(circle at center, #0a0a14 0%, #030305 100%)',
+          color: '#fff',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999,
+          fontFamily: 'monospace',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            backgroundImage: 'radial-gradient(rgba(255, 85, 0, 0.05) 1px, transparent 0)',
+            backgroundSize: '24px 24px',
+            opacity: 0.8,
+            pointerEvents: 'none'
+          }} />
+
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.8 }}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '30px', zIndex: 2 }}
+          >
+            <div style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '20px',
+              background: 'rgba(255, 85, 0, 0.05)',
+              border: '2px solid var(--accent-primary)',
+              boxShadow: '0 0 20px rgba(255, 85, 0, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '2.5rem',
+              fontWeight: 'bold',
+              color: 'var(--accent-primary)',
+              marginBottom: '15px',
+              textShadow: '0 0 10px rgba(255, 85, 0, 0.5)'
+            }}>
+              //
+            </div>
+            <h1 style={{
+              fontSize: '1.8rem',
+              fontWeight: 800,
+              letterSpacing: '0.15em',
+              margin: '0 0 8px 0',
+              textTransform: 'uppercase',
+              color: '#fff',
+              textShadow: '0 0 12px rgba(255,255,255,0.2)',
+              fontFamily: 'Space Grotesk, sans-serif'
+            }}>
+              Terminal Academy
+            </h1>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
+              CODENAME: SYSTEMS ACADEMY v2.0.0
+            </span>
+          </motion.div>
+
+          <div style={{
+            width: '500px',
+            height: '180px',
+            background: 'rgba(0,0,0,0.4)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '12px',
+            padding: '16px',
+            overflowY: 'auto',
+            fontSize: '0.8rem',
+            lineHeight: '1.6',
+            color: '#38bdf8',
+            marginBottom: '30px',
+            zIndex: 2,
+            boxShadow: 'inset 0 0 15px rgba(0,0,0,0.5)'
+          }}>
+            {bootLog.map((log, idx) => (
+              <div key={idx} style={{ color: log.includes('ready') || log.includes('complete') ? '#22c55e' : '#38bdf8' }}>
+                {log}
+              </div>
+            ))}
+            {!showBootButton && <span className="term-cursor" style={{ display: 'inline-block', width: '8px', height: '14px', background: '#38bdf8', marginLeft: '4px', verticalAlign: 'middle' }} />}
+          </div>
+
+          {showBootButton && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              style={{
+                width: '500px',
+                background: 'rgba(234, 179, 8, 0.05)',
+                border: '1px solid rgba(234, 179, 8, 0.2)',
+                borderRadius: '12px',
+                padding: '16px',
+                textAlign: 'center',
+                marginBottom: '30px',
+                zIndex: 2
+              }}
+            >
+              <div style={{ color: '#eab308', fontWeight: 'bold', fontSize: '0.85rem', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {lang === 'ru' ? '⚠️ РЕКОМЕНДАЦИЯ ПО ИНТЕРФЕЙСУ' : '⚠️ INTERFACE RECOMMENDATION'}
+              </div>
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                {lang === 'ru' 
+                  ? 'Для корректной работы 4-экранной консоли и развилок, пожалуйста, ВКЛЮЧИТЕ ПОЛНОЭКРАННЫЙ РЕЖИМ (нажмите кнопку войти или клавишу F11 после входа).' 
+                  : 'For optimal experience with the 4-panel console and skill tree branches, please ACTIVATE FULLSCREEN MODE (click the entry button or press F11).'}
+              </p>
+            </motion.div>
+          )}
+
+          {showBootButton && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+              onClick={async () => {
+                try {
+                  const { getCurrentWindow } = await import('@tauri-apps/api/window');
+                  const appWindow = getCurrentWindow();
+                  await appWindow.setFullscreen(true);
+                } catch (e) {
+                  document.documentElement.requestFullscreen().catch(() => {});
+                }
+                setIsBooted(true);
+              }}
+              style={{
+                padding: '14px 40px',
+                background: 'rgba(255, 85, 0, 0.1)',
+                border: '2px solid var(--accent-primary)',
+                color: 'var(--accent-primary)',
+                borderRadius: '30px',
+                fontSize: '0.95rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                boxShadow: '0 0 25px rgba(255, 85, 0, 0.25)',
+                transition: 'all 0.3s ease',
+                zIndex: 2
+              }}
+              whileHover={{ scale: 1.05, boxShadow: '0 0 35px rgba(255, 85, 0, 0.45)', background: 'var(--accent-primary)', color: '#000' }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {lang === 'ru' ? 'Инициализировать Систему' : 'BOOT SYSTEM ENVIRONMENT'}
+            </motion.button>
+          )}
+        </div>
+      )}
       <ParticleBackground />
       {!showHud ? (
         <button 
