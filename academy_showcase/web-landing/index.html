@@ -79,7 +79,6 @@
                             <option value="Linux AppImage">Linux (AppImage)</option>
                         </select>
                     </div>
-                    <a href="https://github.com/888ank888/terminal-academy-by-ank" target="_blank" class="btn btn-secondary">View GitHub Repository</a>
                 </div>
                 
                 <div class="stats-row reveal-up" style="--delay: 200ms;">
@@ -175,67 +174,7 @@
             </div>
         </section>
 
-        <!-- Secondary Marquee (Reversed) -->
-        <div id="lesson-marquee" class="marquee-container" style="background: rgba(255,85,0,0.05); border-color: rgba(255,85,0,0.2);">
-            <div class="marquee-content" style="animation-direction: reverse; animation-duration: 25s;">
-                <span class="marquee-item" style="color: var(--accent-primary);">LESSON 0 // INITIALIZE</span>
-                <span class="marquee-item" style="color: var(--accent-primary);">LESSON 0 // INITIALIZE</span>
-                <span class="marquee-item" style="color: var(--accent-primary);">LESSON 0 // INITIALIZE</span>
-                <span class="marquee-item" style="color: var(--accent-primary);">LESSON 0 // INITIALIZE</span>
-                <span class="marquee-item" style="color: var(--accent-primary);">LESSON 0 // INITIALIZE</span>
-                <span class="marquee-item" style="color: var(--accent-primary);">LESSON 0 // INITIALIZE</span>
-                <span class="marquee-item" style="color: var(--accent-primary);">LESSON 0 // INITIALIZE</span>
-                <span class="marquee-item" style="color: var(--accent-primary);">LESSON 0 // INITIALIZE</span>
-            </div>
-        </div>
 
-        <!-- Installation Lesson 0 -->
-        <section id="installation-lesson" class="lesson-section container">
-            <h2 class="section-title reveal-up">Lesson 0: System Boot</h2>
-            
-            <div class="lesson-grid">
-                <!-- Left: Terminal -->
-                <div class="lesson-visual reveal-up" style="--delay: 0.1s;">
-                    <div class="terminal-mockup terminal-lesson" id="lesson-terminal-container">
-                        <div class="terminal-header">
-                            <div class="terminal-dots">
-                                <span class="dot close"></span>
-                                <span class="dot min"></span>
-                                <span class="dot max"></span>
-                            </div>
-                            <div class="terminal-title">install@terminal-academy ~</div>
-                        </div>
-                        <div class="terminal-body" id="lesson-typewriter">
-                            <div class="line"><span class="term-out">Waiting for OS detection...</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right: Steps -->
-                <div class="lesson-content reveal-up" style="--delay: 0.3s;">
-                    <div class="os-selector-wrap">
-                        <p class="os-label">Is this your OS?</p>
-                        <select id="os-selector" class="os-selector">
-                            <option value="mac">macOS</option>
-                            <option value="linux">Linux / Server</option>
-                            <option value="win">Windows</option>
-                        </select>
-                    </div>
-
-                    <div class="steps-container" id="steps-container">
-                        <!-- JS injects steps here based on OS -->
-                    </div>
-
-                    <div class="security-badge reveal-up" style="--delay: 0.4s;">
-                        <svg class="shield-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                        <div class="security-text">
-                            <strong>100% Safe & Open Source</strong>
-                            <span>All core logic is auditable on GitHub. No background daemons, no tracking, no telemetry. Runs entirely locally.</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
     </main>
 
     <footer class="footer container">
@@ -244,7 +183,7 @@
         </div>
     </footer>
 
-    <script src="script.js?v=2"></script>
+    <script type="module" src="script.js?v=2"></script>
     <script>
         // OS Detection and Dynamic Download configuration for Desktop v2.0.0
         const repoReleases = "https://github.com/888ank888/terminal-academy-by-ank/releases/latest/download";

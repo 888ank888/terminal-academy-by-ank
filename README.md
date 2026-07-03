@@ -1,20 +1,20 @@
-# Terminal Academy 🚀
+# Terminal Academy 🚀 (v2.0.0)
 
-An international, systems-first educational platform teaching real Linux administration, network architecture, and DevOps to adolescents through an interactive command-line interface.
+An international, systems-first educational platform teaching real Linux administration, network architecture, and DevOps to teens through an interactive, glassmorphic desktop environment.
 
 ---
 
-# Terminal Academy 🚀
-
-An international, systems-first educational platform teaching real Linux administration, network architecture, and DevOps to adolescents through an interactive glassmorphic desktop environment.
+## 🚀 Key Features in v2.0.0
+* **Interactive Branching Skill Tree:** Visualize and select courses across an interconnected 20-Node syllabus roadmap (from Linux Core to Docker containers, reverse proxies, databases, and Minecraft servers).
+* **Tauri Desktop Application:** High-performance desktop application built using Tauri (Rust), React (TypeScript), and Tailwind-inspired custom CSS themes.
+* **AI Mentor Ank:** Powered by Gemini, Ank acts as your personal mission controller, dynamically guiding you through practical terminal incidents.
+* **Secure Sandbox Virtualization:** Sandboxed systems environment runs inside Alpine Linux containers, isolated by gVisor (`runsc`) user space kernel shims.
 
 ---
 
 ## 🛠️ Quick Start Guide
 
-### Option 1: Tauri Desktop Application (Recommended)
-The primary client is a cross-platform desktop application built using Tauri (Rust), React (TypeScript), and Vite. It features a rich glassmorphic HUD dashboard, an active system monitor, diagnostic libraries, and an interactive AI Mentor Ank (powered by Gemini).
-
+### Spawning the Desktop client
 To run the desktop application locally:
 1. Navigate to the desktop client folder:
    ```bash
@@ -26,54 +26,18 @@ To run the desktop application locally:
    ```
 3. Run the development stack:
    ```bash
-   npm run desktop
+   npm run dev
    ```
-   *(Note: You can also use the `./start.sh` launcher script in the root directory, which automatically clears any socket conflicts and launches the Tauri development environment in one command.)*
+   *(Note: You can also execute `./start.sh` in the repository root to automatically resolve socket conflicts and boot the Tauri environment in one step.)*
 
-**Requirements:**
+### Requirements:
 * Node.js (v18+)
-* Rust & Cargo (to compile the Tauri backend)
-* An SSH key at `~/.ssh/id_ed25519` authorized to connect to the remote sandbox allocator server.
-* A Gemini API Key (configured in the app settings, or populated in `public/config.json`).
-
----
-
-### Option 2: Legacy CLI Curses Client (Alternative Demo)
-A lightweight command-line interface HUD client built using Python's standard `curses` library.
-
-1. Navigate to the CLI client folder:
-   ```bash
-   cd cli-client
-   ```
-2. *(Windows Only)* Install the curses library port:
-   ```cmd
-   pip install windows-curses
-   ```
-3. Launch the terminal client:
-   ```bash
-   python3 main.py
-   ```
-
----
-
-### Option 3: Local Sandboxed Infrastructure (Docker & gVisor)
-If you wish to host the sandbox environments locally rather than using the remote server, you can spawn the secure multi-tenant stack via Docker Compose.
-
-**Requirements:** Docker with the `runsc` (gVisor) runtime configured.
-1. Spawns the sandbox and sidecar services:
-   ```bash
-   docker compose up -d --build
-   ```
-2. Attach to the secure sandbox container:
-   ```bash
-   docker exec -it academy-sandbox /bin/bash
-   ```
+* Rust & Cargo (to compile Tauri backend bindings)
+* A Gemini API Key (configured inside the application dashboard)
 
 ---
 
 ## 📂 Repository Structure
 * `/terminal-academy-desktop`: Tauri desktop client (React frontend & Rust native PTY/SSH core).
-* `/cli-client`: Legacy Python curses terminal HUD client and sandboxed Dockerfile configuration.
-* `/web-landing`: High-fidelity B2B SaaS console landing page.
+* `/academy_showcase/web-landing`: High-fidelity, glassmorphic desktop download website.
 * `/infra`: Server provisioning and telemetry sockets.
-
