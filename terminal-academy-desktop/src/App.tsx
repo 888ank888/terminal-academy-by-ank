@@ -1880,7 +1880,44 @@ export default function App() {
     }, 450);
     return () => clearInterval(interval);
   }, [isBooted]);
+  const APP_VERSION = "2.0.0";
+  const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
+  const [updateUrl, setUpdateUrl] = useState<string>('');
 
+  useEffect(() => {
+    // Check for updates on GitHub Releases
+    fetch('https://api.github.com/repos/888ank888/terminal-academy-by-ank/releases/latest')
+      .then(res => res.json())
+      .then(data => {
+        const latestTag = data.tag_name;
+        if (latestTag) {
+          const cleanLatest = latestTag.replace(/[^0-9.]/g, '');
+          const cleanCurrent = APP_VERSION.replace(/[^0-9.]/g, '');
+          
+          // Simple semver comparison helper
+          const latestParts = cleanLatest.split('.').map(Number);
+          const currentParts = cleanCurrent.split('.').map(Number);
+          let isNewer = false;
+          for (let i = 0; i < Math.max(latestParts.length, currentParts.length); i++) {
+            const l = latestParts[i] || 0;
+            const c = currentParts[i] || 0;
+            if (l > c) {
+              isNewer = true;
+              break;
+            } else if (l < c) {
+              break;
+            }
+          }
+
+          if (isNewer) {
+            setUpdateAvailable(latestTag);
+            const asset = data.assets?.find((a: any) => a.name.endsWith('.dmg') || a.name.endsWith('.msi'));
+            setUpdateUrl(asset ? asset.browser_download_url : data.html_url);
+          }
+        }
+      })
+      .catch(err => console.error('Error checking for updates:', err));
+  }, []);
   const handleCommandBeforeExec = (cmd: string) => {
     setTerminalEvent({ type: 'before', cmd });
   };
@@ -2257,7 +2294,7 @@ export default function App() {
   };
 
 // --- Detached Floating HUD Header --- //
-const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, activeCourse, lang, setLang }: any) => {
+const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, activeCourse, lang, setLang, updateAvailable, updateUrl }: any) => {
   return (
     <div className="hud-header">
       <div className="hud-brand">
@@ -2269,6 +2306,50 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
         <span className="hud-value">{activeCourse?.name.toUpperCase() || 'NONE'}</span>
       </div>
       <div className="hud-controls">
+        {updateAvailable && (
+          <motion.button 
+            animate={{ 
+              boxShadow: [
+                '0 0 8px rgba(34, 197, 94, 0.4)',
+                '0 0 20px rgba(34, 197, 94, 0.7)',
+                '0 0 8px rgba(34, 197, 94, 0.4)'
+              ] 
+            }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            onClick={() => {
+              try {
+                // Tauri shell open
+                import('@tauri-apps/plugin-shell').then(({ open }) => {
+                  open(updateUrl);
+                }).catch(() => {
+                  window.open(updateUrl, '_blank');
+                });
+              } catch (e) {
+                window.open(updateUrl, '_blank');
+              }
+            }}
+            style={{
+              background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+              border: 'none',
+              color: '#fff',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 0 10px rgba(34, 197, 94, 0.4)',
+              marginRight: '8px'
+            }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#fff' }} />
+            {lang === 'ru' ? `Обновить до ${updateAvailable}` : `Update to ${updateAvailable}`}
+          </motion.button>
+        )}
         <button 
           className="hud-btn lang-toggle-btn"
           onClick={() => setLang((prev: string) => prev === 'en' ? 'ru' : 'en')}
@@ -2516,6 +2597,8 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
             activeCourse={activeCourse}
             lang={lang}
             setLang={setLang}
+            updateAvailable={updateAvailable}
+            updateUrl={updateUrl}
           />
           <button 
             className="hud-close-btn"
