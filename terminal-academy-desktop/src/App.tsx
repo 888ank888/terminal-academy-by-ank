@@ -366,9 +366,7 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, onComman
             boxShadow: '0 0 10px rgba(255, 50, 50, 0.08)',
             letterSpacing: '0.03em'
           }}>
-            {lang === 'ru' 
-              ? 'ВНИМАНИЕ: ПЕСОЧНИЦА ОФФЛАЙН (АКТИВНА ХОСТ-СИСТЕМА!)' 
-              : 'WARNING: SANDBOX OFFLINE (HOST SYSTEM ACTIVE!)'}
+            {'WARNING: SANDBOX OFFLINE (HOST SYSTEM ACTIVE!)'}
           </div>
         )}
         <div ref={terminalRef} style={{ width: '100%', flex: 1, overflow: 'hidden' }} />
@@ -416,9 +414,7 @@ const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, 
         if (!activeApiKey) return;
         setLoading(true);
         try {
-          const pastePrompt = lang === 'ru'
-            ? `[БЕЗОПАСНОСТЬ: Студент попытался вставить скопированный текст в терминал]`
-            : `[SECURITY: Student attempted to paste copied text into terminal]`;
+          const pastePrompt = `[SECURITY: Student attempted to paste copied text into terminal]`;
             
           const newMsgs = [...messages, { role: 'user', text: pastePrompt }];
           const history = newMsgs.map(m => ({
@@ -433,7 +429,7 @@ CRITICAL PERSONALITY & FORMATTING RULES:
 1. Be extremely sarcastic and scolding about their attempt to paste.
 2. DO NOT use any markdown tags (like **, * or lists). Output ONLY clean, plain-text paragraphs.
 3. Keep it brief.
-4. Respond in Russian if the student's context is Russian, otherwise English.`;
+4. Respond in English only.`;
 
           const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
             method: 'POST',
@@ -446,13 +442,13 @@ CRITICAL PERSONALITY & FORMATTING RULES:
 
           const json = await response.json();
           if (json?.error) {
-            setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? `Ошибка API: ${json.error.message}` : `API Error: ${json.error.message}` }]);
+            setMessages(prev => [...prev, { role: 'ank', text: `API Error: ${json.error.message}` }]);
             return;
           }
           const answer = json?.candidates?.[0]?.content?.parts?.[0]?.text || 'Typing builds muscle memory. Do not paste.';
           setMessages(prev => [...prev, { role: 'ank', text: answer }]);
         } catch (err: any) {
-          setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? `Ошибка буфера обмена: ${err.message}` : `Clipboard error: ${err.message}` }]);
+          setMessages(prev => [...prev, { role: 'ank', text: `Clipboard error: ${err.message}` }]);
           console.error(err);
         } finally {
           setLoading(false);
@@ -464,9 +460,7 @@ CRITICAL PERSONALITY & FORMATTING RULES:
         if (!activeApiKey) return;
         setLoading(true);
         try {
-          const blockPrompt = lang === 'ru'
-            ? `[БЕЗОПАСНОСТЬ: Студент пытался выполнить заблокированную команду] Команда: ${rawCmd}`
-            : `[SECURITY: Student tried to execute blocked command] Command: ${rawCmd}`;
+          const blockPrompt = `[SECURITY: Student tried to execute blocked command] Command: ${rawCmd}`;
             
           const newMsgs = [...messages, { role: 'user', text: blockPrompt }];
           const history = newMsgs.map(m => ({
@@ -482,7 +476,7 @@ CRITICAL PERSONALITY & FORMATTING RULES:
 1. Be sarcastic and condescending about their attempt to run "${rawCmd}".
 2. DO NOT use any markdown tags (like **, * or lists). Output ONLY clean, plain-text paragraphs.
 3. Keep it brief. Do not give any copy-pasteable alternatives.
-4. Respond in Russian if the student's context is Russian, otherwise English.`;
+4. Respond in English only.`;
 
           const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
             method: 'POST',
@@ -495,13 +489,13 @@ CRITICAL PERSONALITY & FORMATTING RULES:
 
           const json = await response.json();
           if (json?.error) {
-            setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? `Ошибка API: ${json.error.message}` : `API Error: ${json.error.message}` }]);
+            setMessages(prev => [...prev, { role: 'ank', text: `API Error: ${json.error.message}` }]);
             return;
           }
           const answer = json?.candidates?.[0]?.content?.parts?.[0]?.text || 'That command is forbidden.';
           setMessages(prev => [...prev, { role: 'ank', text: answer }]);
         } catch (err: any) {
-          setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? `Ошибка блокировки: ${err.message}` : `Block error: ${err.message}` }]);
+          setMessages(prev => [...prev, { role: 'ank', text: `Block error: ${err.message}` }]);
           console.error(err);
         } finally {
           setLoading(false);
@@ -514,23 +508,14 @@ CRITICAL PERSONALITY & FORMATTING RULES:
       if (isDangerous) {
         setMessages(prev => [...prev, { 
           role: 'ank', 
-          text: lang === 'ru' 
-            ? `ВНИМАНИЕ: Вы собираетесь выполнить потенциально опасную команду: "${cmd}". Убедитесь, что вы понимаете последствия перед запуском!` 
-            : `WARNING: You are about to run a potentially destructive command: "${cmd}". Ensure you understand the consequences before proceeding!`
+          text: `WARNING: You are about to run a potentially destructive command: "${cmd}". Ensure you understand the consequences before proceeding!`
         }]);
       }
     } else if (type === 'after') {
       if (!activeApiKey) return; // Silent if no API key set yet
       setLoading(true);
       try {
-        const eventPrompt = lang === 'ru' 
-          ? `[СОБЫТИЕ: Студент выполнил команду в терминале]
-Команда: ${cmd}
-Вывод команды:
-"""
-${output || '(нет вывода)'}
-"""`
-          : `[EVENT: Student executed terminal command]
+        const eventPrompt = `[EVENT: Student executed terminal command]
 Command: ${cmd}
 Output:
 """
@@ -554,7 +539,7 @@ CRITICAL PERSONALITY & FORMATTING RULES:
 1. Be consistently sarcastic, witty, and slightly condescending about their choice of command or results, but remain Socratic and educational.
 2. DO NOT use any markdown formatting like double asterisks (**), lists, or headers. Output ONLY clean, natural plain text with regular spacing and paragraph breaks.
 3. Keep it brief. Guide them conceptually. Do not give them direct solutions to copy-paste.
-4. Support both Russian and English responses (reply in Russian if the student's context is Russian, otherwise English).`;
+4. Respond in English only.`;
 
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
           method: 'POST',
@@ -567,13 +552,13 @@ CRITICAL PERSONALITY & FORMATTING RULES:
 
         const json = await response.json();
         if (json?.error) {
-          setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? `Ошибка API: ${json.error.message}` : `API Error: ${json.error.message}` }]);
+          setMessages(prev => [...prev, { role: 'ank', text: `API Error: ${json.error.message}` }]);
           return;
         }
         const answer = json?.candidates?.[0]?.content?.parts?.[0]?.text || 'No comment on that command.';
         setMessages(prev => [...prev, { role: 'ank', text: answer }]);
       } catch (err: any) {
-        setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? `Ошибка реакции: ${err.message}` : `Reaction error: ${err.message}` }]);
+        setMessages(prev => [...prev, { role: 'ank', text: `Reaction error: ${err.message}` }]);
         console.error('Ank reaction error:', err);
       } finally {
         setLoading(false);
@@ -605,17 +590,17 @@ CRITICAL PERSONALITY & FORMATTING RULES:
   const triggerCommandExplanation = async (cmd: string) => {
     const now = Date.now();
     if (now - lastQueryTimeRef.current < 2500) {
-      setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? 'Вы отправляете запросы слишком быстро. Пожалуйста, подождите.' : 'You are sending requests too quickly. Please wait a moment.' }]);
+      setMessages(prev => [...prev, { role: 'ank', text: 'You are sending requests too quickly. Please wait a moment.' }]);
       return;
     }
     lastQueryTimeRef.current = now;
 
-    const userMsg = lang === 'ru' ? `Объясни команду: ${cmd}` : `Explain the command: ${cmd}`;
+    const userMsg = `Explain the command: ${cmd}`;
     const newMsgs = [...messages, { role: 'user', text: userMsg }];
     setMessages(newMsgs);
     
     if (!activeApiKey) {
-      setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? 'Ошибка: Пожалуйста, задайте ваш Gemini API ключ в настройках.' : 'Error: Please set your Gemini API key in settings to consult with me.' }]);
+      setMessages(prev => [...prev, { role: 'ank', text: 'Error: Please set your Gemini API key in settings to consult with me.' }]);
       return;
     }
 
@@ -675,7 +660,7 @@ Context:
     if (!input.trim()) return;
     const now = Date.now();
     if (now - lastQueryTimeRef.current < 2500) {
-      setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? 'Вы отправляете запросы слишком быстро. Пожалуйста, подождите.' : 'You are sending requests too quickly. Please wait a moment.' }]);
+      setMessages(prev => [...prev, { role: 'ank', text: 'You are sending requests too quickly. Please wait a moment.' }]);
       return;
     }
     lastQueryTimeRef.current = now;
@@ -687,7 +672,7 @@ Context:
     setMessages(newMsgs);
     
     if (!activeApiKey) {
-      setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? 'Ошибка: Пожалуйста, задайте ваш Gemini API ключ в настройках.' : 'Error: Please set your Gemini API key in settings to consult with me.' }]);
+      setMessages(prev => [...prev, { role: 'ank', text: 'Error: Please set your Gemini API key in settings to consult with me.' }]);
       return;
     }
 
@@ -737,13 +722,13 @@ Context:
 
       const json = await response.json();
       if (json?.error) {
-        setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? `Ошибка API: ${json.error.message}` : `API Error: ${json.error.message}` }]);
+        setMessages(prev => [...prev, { role: 'ank', text: `API Error: ${json.error.message}` }]);
         return;
       }
       const answer = json?.candidates?.[0]?.content?.parts?.[0]?.text || 'I am sorry, I had trouble processing that request. Please try again.';
       setMessages(prev => [...prev, { role: 'ank', text: answer }]);
     } catch (err: any) {
-      setMessages(prev => [...prev, { role: 'ank', text: lang === 'ru' ? `Ошибка консультации: ${err.message}` : `Error consulting Ank: ${err.message}` }]);
+      setMessages(prev => [...prev, { role: 'ank', text: `Error consulting Ank: ${err.message}` }]);
     } finally {
       setLoading(false);
     }
@@ -878,7 +863,7 @@ Context:
                 transition: 'var(--transition-smooth)',
                 flexShrink: 0
               }}
-              title={lang === 'ru' ? 'Отправить' : 'Send'}
+              title={'Send'}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -942,7 +927,7 @@ const LibraryWidget = ({ bindDrag, activeIncident, lang, onExplainCommand }: any
               >
                 <span>{cmd}</span>
                 <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {lang === 'ru' ? 'Объяснить' : 'Explain'}
+                  {'Explain'}
                 </span>
               </div>
             </motion.li>
@@ -1105,7 +1090,7 @@ const LessonWidget = ({
       <div className="widget-content" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <div className="widget-header lib-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="title" style={{ touchAction: 'none' }}>
-            {lang === 'ru' ? 'Карта Направлений и Развилок (Skill Tree)' : 'Interactive Skill Tree & Branching Roadmap'}
+            {'Interactive Skill Tree & Branching Roadmap'}
           </div>
           <button 
             onClick={() => setFullscreen(false)} 
@@ -1122,7 +1107,7 @@ const LessonWidget = ({
               transition: 'var(--transition-smooth)'
             }}
           >
-            {lang === 'ru' ? 'СВЕРНУТЬ В СПИСОК' : 'RESTORE TO LIST'}
+            {'RESTORE TO LIST'}
           </button>
         </div>
         
@@ -1269,7 +1254,7 @@ const LessonWidget = ({
                 </p>
                 
                 <h4 style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {lang === 'ru' ? 'Практические Инциденты' : 'Practical Incidents'}
+                  {'Practical Incidents'}
                 </h4>
                 
                 {/* Dynamically loaded syllabus nodes for the selected module */}
@@ -1316,13 +1301,13 @@ const LessonWidget = ({
                   </div>
                 ) : (
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                    {lang === 'ru' ? 'Загрузка инцидентов курса...' : 'Loading incidents details...'}
+                    {'Loading incidents details...'}
                   </div>
                 )}
               </>
             ) : (
               <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.85rem' }}>
-                {lang === 'ru' ? 'Выберите тему на развилке для просмотра уроков' : 'Select a topic node on the tree to view lessons'}
+                {'Select a topic node on the tree to view lessons'}
               </div>
             )}
           </div>
@@ -1335,7 +1320,7 @@ const LessonWidget = ({
     <div className="widget-content">
       <div className="widget-header lib-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} {...(bindDrag ? bindDrag() : {})}>
         <div className="title" style={{ touchAction: 'none' }}>
-          {lang === 'ru' ? 'Учебный План' : 'Syllabus & Lessons'}
+          {'Syllabus & Lessons'}
         </div>
         <button 
           onClick={() => setFullscreen && setFullscreen(!isFullscreen)} 
@@ -1351,7 +1336,7 @@ const LessonWidget = ({
             transition: 'var(--transition-smooth)'
           }}
         >
-          {isFullscreen ? (lang === 'ru' ? 'СВЕРНУТЬ' : 'RESTORE') : (lang === 'ru' ? 'РАЗВЕРНУТЬ' : 'EXPAND')}
+          {isFullscreen ? 'RESTORE' : 'EXPAND'}
         </button>
       </div>
       <div className="widget-body" style={{ padding: '16px', height: 'calc(100% - 38px)', overflowY: 'auto' }}>
@@ -1827,7 +1812,7 @@ export default function App() {
   const [activeScreen, setActiveScreen] = useState(1);
   const [isReady, setIsReady] = useState(true);
   const [showHud, setShowHud] = useState(false);
-  const [lang, setLang] = useState<'en' | 'ru'>('en');
+  const lang = 'en';
   const [syllabusExpanded, setSyllabusExpanded] = useState(false);
   
   const [stats, setStats] = useState({
@@ -2294,7 +2279,7 @@ export default function App() {
   };
 
 // --- Detached Floating HUD Header --- //
-const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, activeCourse, lang, setLang, updateAvailable, updateUrl }: any) => {
+const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, activeCourse, lang, updateAvailable, updateUrl }: any) => {
   return (
     <div className="hud-header">
       <div className="hud-brand">
@@ -2317,16 +2302,7 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
             }}
             transition={{ repeat: Infinity, duration: 2 }}
             onClick={() => {
-              try {
-                // Tauri shell open
-                import('@tauri-apps/plugin-shell').then(({ open }) => {
-                  open(updateUrl);
-                }).catch(() => {
-                  window.open(updateUrl, '_blank');
-                });
-              } catch (e) {
-                window.open(updateUrl, '_blank');
-              }
+              window.open(updateUrl, '_blank');
             }}
             style={{
               background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
@@ -2347,16 +2323,10 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
             whileTap={{ scale: 0.95 }}
           >
             <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#fff' }} />
-            {lang === 'ru' ? `Обновить до ${updateAvailable}` : `Update to ${updateAvailable}`}
+            {`Update to ${updateAvailable}`}
           </motion.button>
         )}
-        <button 
-          className="hud-btn lang-toggle-btn"
-          onClick={() => setLang((prev: string) => prev === 'en' ? 'ru' : 'en')}
-          style={{ fontWeight: 'bold', minWidth: '40px' }}
-        >
-          {lang.toUpperCase()}
-        </button>
+
         <button 
           className={`hud-btn ${zoomedOut ? 'active' : ''}`}
           onClick={() => setZoomedOut(!zoomedOut)}
@@ -2512,12 +2482,10 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
               }}
             >
               <div style={{ color: '#eab308', fontWeight: 'bold', fontSize: '0.85rem', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                {lang === 'ru' ? '⚠️ РЕКОМЕНДАЦИЯ ПО ИНТЕРФЕЙСУ' : '⚠️ INTERFACE RECOMMENDATION'}
+                {'⚠️ INTERFACE RECOMMENDATION'}
               </div>
               <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
-                {lang === 'ru' 
-                  ? 'Для корректной работы 4-экранной консоли и развилок, пожалуйста, ВКЛЮЧИТЕ ПОЛНОЭКРАННЫЙ РЕЖИМ (нажмите кнопку войти или клавишу F11 после входа).' 
-                  : 'For optimal experience with the 4-panel console and skill tree branches, please ACTIVATE FULLSCREEN MODE (click the entry button or press F11).'}
+                {'For optimal experience with the 4-panel console and skill tree branches, please ACTIVATE FULLSCREEN MODE (click the entry button or press F11).'}
               </p>
             </motion.div>
           )}
@@ -2555,7 +2523,7 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
               whileHover={{ scale: 1.05, boxShadow: '0 0 35px rgba(255, 85, 0, 0.45)', background: 'var(--accent-primary)', color: '#000' }}
               whileTap={{ scale: 0.98 }}
             >
-              {lang === 'ru' ? 'Инициализировать Систему' : 'BOOT SYSTEM ENVIRONMENT'}
+              {'BOOT SYSTEM ENVIRONMENT'}
             </motion.button>
           )}
         </div>
@@ -2596,7 +2564,6 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
             setActiveScreen={setActiveScreen}
             activeCourse={activeCourse}
             lang={lang}
-            setLang={setLang}
             updateAvailable={updateAvailable}
             updateUrl={updateUrl}
           />
