@@ -1845,7 +1845,7 @@ export default function App() {
   useEffect(() => {
     if (isBooted) return;
     const logs = [
-      "[SYSTEM] Initializing Terminal Academy Engine v2.0.0...",
+      "[SYSTEM] Initializing Terminal Academy Engine v2.0.1...",
       "[SYSTEM] Loading sandboxed Linux virtualization shim...",
       "[SYSTEM] Enforcing gVisor userspace kernel constraints...",
       "[SYSTEM] Synchronizing Command Grimoire threat database...",
@@ -1865,7 +1865,7 @@ export default function App() {
     }, 450);
     return () => clearInterval(interval);
   }, [isBooted]);
-  const APP_VERSION = "2.0.0";
+  const APP_VERSION = "2.0.1";
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [updateUrl, setUpdateUrl] = useState<string>('');
 
@@ -2438,7 +2438,7 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
               Terminal Academy
             </h1>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
-              CODENAME: SYSTEMS ACADEMY v2.0.0
+              CODENAME: SYSTEMS ACADEMY v2.0.1
             </span>
           </motion.div>
 
@@ -2466,45 +2466,11 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
           </div>
 
           {showBootButton && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              style={{
-                width: '500px',
-                background: 'rgba(234, 179, 8, 0.05)',
-                border: '1px solid rgba(234, 179, 8, 0.2)',
-                borderRadius: '12px',
-                padding: '16px',
-                textAlign: 'center',
-                marginBottom: '30px',
-                zIndex: 2
-              }}
-            >
-              <div style={{ color: '#eab308', fontWeight: 'bold', fontSize: '0.85rem', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                {'⚠️ INTERFACE RECOMMENDATION'}
-              </div>
-              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
-                {'For optimal experience with the 4-panel console and skill tree branches, please ACTIVATE FULLSCREEN MODE (click the entry button or press F11).'}
-              </p>
-            </motion.div>
-          )}
-
-          {showBootButton && (
             <motion.button
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-              onClick={async () => {
-                try {
-                  const { getCurrentWindow } = await import('@tauri-apps/api/window');
-                  const appWindow = getCurrentWindow();
-                  await appWindow.setFullscreen(true);
-                } catch (e) {
-                  document.documentElement.requestFullscreen().catch(() => {});
-                }
-                setIsBooted(true);
-              }}
+              onClick={() => setIsBooted(true)}
               style={{
                 padding: '14px 40px',
                 background: 'rgba(255, 85, 0, 0.1)',
