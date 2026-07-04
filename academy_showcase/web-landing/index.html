@@ -185,15 +185,35 @@
 
     <script type="module" src="script.js?v=2"></script>
     <script>
-        // OS Detection and Dynamic Download configuration for Desktop v2.0.0
-        const repoReleases = "https://github.com/888ank888/terminal-academy-by-ank/releases/latest/download";
+        // OS Detection and Dynamic Download configuration for Desktop
+        const defaultVersion = "1.1.0"; // Default fallback
         const downloadPaths = {
-            "macOS Apple Silicon": `${repoReleases}/terminal-academy_2.0.0_universal.dmg`,
-            "macOS Intel": `${repoReleases}/terminal-academy_2.0.0_universal.dmg`,
-            "Windows x64": `${repoReleases}/terminal-academy_2.0.0_x64_en-US.msi`,
-            "Linux deb": `${repoReleases}/terminal-academy_2.0.0_amd64.deb`,
-            "Linux AppImage": `${repoReleases}/terminal-academy_2.0.0_amd64.AppImage`
+            "macOS Apple Silicon": `https://github.com/888ank888/terminal-academy-by-ank/releases/download/v${defaultVersion}/terminal-academy_${defaultVersion}_universal.dmg`,
+            "macOS Intel": `https://github.com/888ank888/terminal-academy-by-ank/releases/download/v${defaultVersion}/terminal-academy_${defaultVersion}_universal.dmg`,
+            "Windows x64": `https://github.com/888ank888/terminal-academy-by-ank/releases/download/v${defaultVersion}/terminal-academy_${defaultVersion}_x64_en-US.msi`,
+            "Linux deb": `https://github.com/888ank888/terminal-academy-by-ank/releases/download/v${defaultVersion}/terminal-academy_${defaultVersion}_amd64.deb`,
+            "Linux AppImage": `https://github.com/888ank888/terminal-academy-by-ank/releases/download/v${defaultVersion}/terminal-academy_${defaultVersion}_amd64.AppImage`
         };
+
+        // Query the latest release dynamically
+        fetch("https://api.github.com/repos/888ank888/terminal-academy-by-ank/releases/latest")
+            .then(res => res.json())
+            .then(data => {
+                const tag = data.tag_name;
+                if (tag) {
+                    const ver = tag.replace("v", "");
+                    const baseUrl = `https://github.com/888ank888/terminal-academy-by-ank/releases/download/${tag}`;
+                    
+                    downloadPaths["macOS Apple Silicon"] = `${baseUrl}/terminal-academy_${ver}_universal.dmg`;
+                    downloadPaths["macOS Intel"] = `${baseUrl}/terminal-academy_${ver}_universal.dmg`;
+                    downloadPaths["Windows x64"] = `${baseUrl}/terminal-academy_${ver}_x64_en-US.msi`;
+                    downloadPaths["Linux deb"] = `${baseUrl}/terminal-academy_${ver}_amd64.deb`;
+                    downloadPaths["Linux AppImage"] = `${baseUrl}/terminal-academy_${ver}_amd64.AppImage`;
+                    
+                    runOSDetection();
+                }
+            })
+            .catch(err => console.error("Error fetching latest release:", err));
 
         function runOSDetection() {
             const userAgent = window.navigator.userAgent.toLowerCase();
