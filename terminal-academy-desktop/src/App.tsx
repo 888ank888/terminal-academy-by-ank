@@ -1839,32 +1839,6 @@ export default function App() {
   const [terminalEvent, setTerminalEvent] = useState<{ type: 'before' | 'after'; cmd: string; output?: string } | null>(null);
   const [defaultApiKey, setDefaultApiKey] = useState('');
   const [bootStage, setBootStage] = useState<'welcome' | 'transitioning' | 'ready'>('welcome');
-  const [bootLog, setBootLog] = useState<string[]>([]);
-  const [showBootButton, setShowBootButton] = useState(false);
-
-  useEffect(() => {
-    if (bootStage !== 'welcome') return;
-    const logs = [
-      "[SYSTEM] Initializing Terminal Academy Engine v2.0.2...",
-      "[SYSTEM] Loading sandboxed Linux virtualization shim...",
-      "[SYSTEM] Enforcing gVisor userspace kernel constraints...",
-      "[SYSTEM] Synchronizing Command Grimoire threat database...",
-      "[SYSTEM] Establishing telemetry connections...",
-      "[SYSTEM] Reviving AI Mentor Ank telemetry core...",
-      "[SYSTEM] Boot sequence complete. Interface ready."
-    ];
-    let idx = 0;
-    const interval = setInterval(() => {
-      if (idx < logs.length) {
-        setBootLog(prev => [...prev, logs[idx]]);
-        idx++;
-      } else {
-        clearInterval(interval);
-        setShowBootButton(true);
-      }
-    }, 450);
-    return () => clearInterval(interval);
-  }, [bootStage]);
   const APP_VERSION = "2.0.2";
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [updateUrl, setUpdateUrl] = useState<string>('');
@@ -2454,112 +2428,52 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
               </span>
             </motion.div>
 
-            {bootStage === 'welcome' ? (
+            {bootStage === 'welcome' || bootStage === 'transitioning' ? (
               <>
-                <div style={{
-                  width: '500px',
-                  height: '160px',
-                  background: 'rgba(0,0,0,0.4)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  overflowY: 'auto',
-                  fontSize: '0.8rem',
-                  lineHeight: '1.6',
-                  color: '#38bdf8',
-                  marginBottom: '20px',
-                  zIndex: 2,
-                  boxShadow: 'inset 0 0 15px rgba(0,0,0,0.5)'
-                }}>
-                  {bootLog.map((log, idx) => (
-                    <div key={idx} style={{ color: log.includes('ready') || log.includes('complete') ? '#22c55e' : '#38bdf8' }}>
-                      {log}
-                    </div>
-                  ))}
-                  {!showBootButton && <span className="term-cursor" style={{ display: 'inline-block', width: '8px', height: '14px', background: '#38bdf8', marginLeft: '4px', verticalAlign: 'middle' }} />}
-                </div>
-
-                {showBootButton && (
-                  <>
-                    <p style={{ margin: '0 0 20px 0', fontSize: '0.75rem', color: '#eab308', letterSpacing: '0.05em', zIndex: 2, maxWidth: '480px', textAlign: 'center', lineHeight: '1.4' }}>
-                      {'⚠️ RECOMMENDED: Expand the window to fullscreen mode to fit the 4-panel dashboard panels properly.'}
-                    </p>
-                    <motion.button
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                      onClick={async () => {
-                        // Go Fullscreen
-                        try {
-                          const { getCurrentWindow } = await import('@tauri-apps/api/window');
-                          const appWindow = getCurrentWindow();
-                          await appWindow.setFullscreen(true);
-                        } catch (e) {
-                          document.documentElement.requestFullscreen().catch(() => {});
-                        }
-                        
-                        setBootStage('transitioning');
-                        setTimeout(() => {
-                          setBootStage('ready');
-                        }, 1800); // Plays transition phase for 1.8 seconds
-                      }}
-                      style={{
-                        padding: '14px 40px',
-                        background: 'rgba(255, 85, 0, 0.1)',
-                        border: '2px solid var(--accent-primary)',
-                        color: 'var(--accent-primary)',
-                        borderRadius: '30px',
-                        fontSize: '0.95rem',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.1em',
-                        boxShadow: '0 0 25px rgba(255, 85, 0, 0.25)',
-                        transition: 'all 0.3s ease',
-                        zIndex: 2
-                      }}
-                      whileHover={{ scale: 1.05, boxShadow: '0 0 35px rgba(255, 85, 0, 0.45)', background: 'var(--accent-primary)', color: '#000' }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      {'ENTER FULLSCREEN & BOOT'}
-                    </motion.button>
-                  </>
-                )}
+                <p style={{ margin: '0 0 25px 0', fontSize: '0.85rem', color: '#eab308', letterSpacing: '0.05em', zIndex: 2, maxWidth: '480px', textAlign: 'center', lineHeight: '1.4' }}>
+                  {'⚠️ RECOMMENDED: Expand the window to fullscreen mode to fit the 4-panel dashboard panels properly.'}
+                </p>
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                  onClick={async () => {
+                    // Go Fullscreen
+                    try {
+                      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+                      const appWindow = getCurrentWindow();
+                      await appWindow.setFullscreen(true);
+                    } catch (e) {
+                      document.documentElement.requestFullscreen().catch(() => {});
+                    }
+                    
+                    setBootStage('transitioning');
+                    setTimeout(() => {
+                      setBootStage('ready');
+                    }, 150);
+                  }}
+                  style={{
+                    padding: '14px 40px',
+                    background: 'rgba(255, 85, 0, 0.1)',
+                    border: '2px solid var(--accent-primary)',
+                    color: 'var(--accent-primary)',
+                    borderRadius: '30px',
+                    fontSize: '0.95rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    boxShadow: '0 0 25px rgba(255, 85, 0, 0.25)',
+                    transition: 'all 0.3s ease',
+                    zIndex: 2
+                  }}
+                  whileHover={{ scale: 1.05, boxShadow: '0 0 35px rgba(255, 85, 0, 0.45)', background: 'var(--accent-primary)', color: '#000' }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {'ENTER FULLSCREEN & BOOT'}
+                </motion.button>
               </>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2 }}
-              >
-                <div style={{
-                  width: '300px',
-                  height: '4px',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '2px',
-                  overflow: 'hidden',
-                  marginBottom: '20px',
-                  position: 'relative'
-                }}>
-                  <motion.div 
-                    initial={{ left: '-100%' }}
-                    animate={{ left: '100%' }}
-                    transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
-                    style={{
-                      position: 'absolute',
-                      width: '50%',
-                      height: '100%',
-                      background: 'var(--accent-primary)',
-                      boxShadow: '0 0 10px var(--accent-primary)'
-                    }}
-                  />
-                </div>
-                <div style={{ color: 'var(--accent-primary)', fontSize: '0.85rem', letterSpacing: '0.25em', fontWeight: 'bold', textTransform: 'uppercase' }}>
-                  {'INITIALIZING SECURE SYSTEMS TERMINAL...'}
-                </div>
-              </motion.div>
-            )}
+            ) : null}
           </motion.div>
         )}
       </AnimatePresence>
