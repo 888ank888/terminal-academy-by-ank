@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, useMotionValue, animate } from 'framer-motion';
+import { motion, useMotionValue, animate, AnimatePresence } from 'framer-motion';
 import { useDrag } from '@use-gesture/react';
 import { CheckSquare } from 'lucide-react';
 import { Terminal as XTerm } from 'xterm';
@@ -1838,14 +1838,14 @@ export default function App() {
   const panTimeoutRef = useRef<any>(null);
   const [terminalEvent, setTerminalEvent] = useState<{ type: 'before' | 'after'; cmd: string; output?: string } | null>(null);
   const [defaultApiKey, setDefaultApiKey] = useState('');
-  const [isBooted, setIsBooted] = useState(false);
+  const [bootStage, setBootStage] = useState<'welcome' | 'transitioning' | 'ready'>('welcome');
   const [bootLog, setBootLog] = useState<string[]>([]);
   const [showBootButton, setShowBootButton] = useState(false);
 
   useEffect(() => {
-    if (isBooted) return;
+    if (bootStage !== 'welcome') return;
     const logs = [
-      "[SYSTEM] Initializing Terminal Academy Engine v2.0.1...",
+      "[SYSTEM] Initializing Terminal Academy Engine v2.0.2...",
       "[SYSTEM] Loading sandboxed Linux virtualization shim...",
       "[SYSTEM] Enforcing gVisor userspace kernel constraints...",
       "[SYSTEM] Synchronizing Command Grimoire threat database...",
@@ -1864,8 +1864,8 @@ export default function App() {
       }
     }, 450);
     return () => clearInterval(interval);
-  }, [isBooted]);
-  const APP_VERSION = "2.0.1";
+  }, [bootStage]);
+  const APP_VERSION = "2.0.2";
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [updateUrl, setUpdateUrl] = useState<string>('');
 
@@ -2374,126 +2374,195 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
 
   return (
     <div className="viewport">
-      {!isBooted && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          background: 'radial-gradient(circle at center, #0a0a14 0%, #030305 100%)',
-          color: '#fff',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 99999,
-          fontFamily: 'monospace',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            position: 'absolute',
-            width: '100%',
-            height: '100%',
-            backgroundImage: 'radial-gradient(rgba(255, 85, 0, 0.05) 1px, transparent 0)',
-            backgroundSize: '24px 24px',
-            opacity: 0.8,
-            pointerEvents: 'none'
-          }} />
-
+      <AnimatePresence>
+        {bootStage !== 'ready' && (
           <motion.div 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.8 }}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '30px', zIndex: 2 }}
-          >
-            <div style={{
-              width: '80px',
-              height: '80px',
-              borderRadius: '20px',
-              background: 'rgba(255, 85, 0, 0.05)',
-              border: '2px solid var(--accent-primary)',
-              boxShadow: '0 0 20px rgba(255, 85, 0, 0.3)',
+            key="welcome-overlay"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, ease: 'easeInOut' }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              background: 'radial-gradient(circle at center, #0a0a14 0%, #030305 100%)',
+              color: '#fff',
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '2.5rem',
-              fontWeight: 'bold',
-              color: 'var(--accent-primary)',
-              marginBottom: '15px',
-              textShadow: '0 0 10px rgba(255, 85, 0, 0.5)'
-            }}>
-              //
-            </div>
-            <h1 style={{
-              fontSize: '1.8rem',
-              fontWeight: 800,
-              letterSpacing: '0.15em',
-              margin: '0 0 8px 0',
-              textTransform: 'uppercase',
-              color: '#fff',
-              textShadow: '0 0 12px rgba(255,255,255,0.2)',
-              fontFamily: 'Space Grotesk, sans-serif'
-            }}>
-              Terminal Academy
-            </h1>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
-              CODENAME: SYSTEMS ACADEMY v2.0.1
-            </span>
-          </motion.div>
+              zIndex: 99999,
+              fontFamily: 'monospace',
+              overflow: 'hidden'
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              backgroundImage: 'radial-gradient(rgba(255, 85, 0, 0.05) 1px, transparent 0)',
+              backgroundSize: '24px 24px',
+              opacity: 0.8,
+              pointerEvents: 'none'
+            }} />
 
-          <div style={{
-            width: '500px',
-            height: '180px',
-            background: 'rgba(0,0,0,0.4)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '12px',
-            padding: '16px',
-            overflowY: 'auto',
-            fontSize: '0.8rem',
-            lineHeight: '1.6',
-            color: '#38bdf8',
-            marginBottom: '30px',
-            zIndex: 2,
-            boxShadow: 'inset 0 0 15px rgba(0,0,0,0.5)'
-          }}>
-            {bootLog.map((log, idx) => (
-              <div key={idx} style={{ color: log.includes('ready') || log.includes('complete') ? '#22c55e' : '#38bdf8' }}>
-                {log}
-              </div>
-            ))}
-            {!showBootButton && <span className="term-cursor" style={{ display: 'inline-block', width: '8px', height: '14px', background: '#38bdf8', marginLeft: '4px', verticalAlign: 'middle' }} />}
-          </div>
-
-          {showBootButton && (
-            <motion.button
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-              onClick={() => setIsBooted(true)}
-              style={{
-                padding: '14px 40px',
-                background: 'rgba(255, 85, 0, 0.1)',
-                border: '2px solid var(--accent-primary)',
-                color: 'var(--accent-primary)',
-                borderRadius: '30px',
-                fontSize: '0.95rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                boxShadow: '0 0 25px rgba(255, 85, 0, 0.25)',
-                transition: 'all 0.3s ease',
-                zIndex: 2
-              }}
-              whileHover={{ scale: 1.05, boxShadow: '0 0 35px rgba(255, 85, 0, 0.45)', background: 'var(--accent-primary)', color: '#000' }}
-              whileTap={{ scale: 0.98 }}
+            {/* Logo Container (Ready to load the transparent 800x600 animation) */}
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.8 }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px', zIndex: 2 }}
             >
-              {'BOOT SYSTEM ENVIRONMENT'}
-            </motion.button>
-          )}
-        </div>
-      )}
+              <div 
+                id="welcome-logo-container"
+                style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '20px',
+                  background: 'rgba(255, 85, 0, 0.05)',
+                  border: '2px solid var(--accent-primary)',
+                  boxShadow: '0 0 20px rgba(255, 85, 0, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '2.5rem',
+                  fontWeight: 'bold',
+                  color: 'var(--accent-primary)',
+                  marginBottom: '15px',
+                  textShadow: '0 0 10px rgba(255, 85, 0, 0.5)',
+                  transition: 'all 0.5s ease'
+                }}
+              >
+                //
+              </div>
+              <h1 style={{
+                fontSize: '1.8rem',
+                fontWeight: 800,
+                letterSpacing: '0.15em',
+                margin: '0 0 8px 0',
+                textTransform: 'uppercase',
+                color: '#fff',
+                textShadow: '0 0 12px rgba(255,255,255,0.2)',
+                fontFamily: 'Space Grotesk, sans-serif'
+              }}>
+                Terminal Academy
+              </h1>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
+                CODENAME: SYSTEMS ACADEMY v2.0.2
+              </span>
+            </motion.div>
+
+            {bootStage === 'welcome' ? (
+              <>
+                <div style={{
+                  width: '500px',
+                  height: '160px',
+                  background: 'rgba(0,0,0,0.4)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  overflowY: 'auto',
+                  fontSize: '0.8rem',
+                  lineHeight: '1.6',
+                  color: '#38bdf8',
+                  marginBottom: '20px',
+                  zIndex: 2,
+                  boxShadow: 'inset 0 0 15px rgba(0,0,0,0.5)'
+                }}>
+                  {bootLog.map((log, idx) => (
+                    <div key={idx} style={{ color: log.includes('ready') || log.includes('complete') ? '#22c55e' : '#38bdf8' }}>
+                      {log}
+                    </div>
+                  ))}
+                  {!showBootButton && <span className="term-cursor" style={{ display: 'inline-block', width: '8px', height: '14px', background: '#38bdf8', marginLeft: '4px', verticalAlign: 'middle' }} />}
+                </div>
+
+                {showBootButton && (
+                  <>
+                    <p style={{ margin: '0 0 20px 0', fontSize: '0.75rem', color: '#eab308', letterSpacing: '0.05em', zIndex: 2, maxWidth: '480px', textAlign: 'center', lineHeight: '1.4' }}>
+                      {'⚠️ RECOMMENDED: Expand the window to fullscreen mode to fit the 4-panel dashboard panels properly.'}
+                    </p>
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                      onClick={async () => {
+                        // Go Fullscreen
+                        try {
+                          const { getCurrentWindow } = await import('@tauri-apps/api/window');
+                          const appWindow = getCurrentWindow();
+                          await appWindow.setFullscreen(true);
+                        } catch (e) {
+                          document.documentElement.requestFullscreen().catch(() => {});
+                        }
+                        
+                        setBootStage('transitioning');
+                        setTimeout(() => {
+                          setBootStage('ready');
+                        }, 1800); // Plays transition phase for 1.8 seconds
+                      }}
+                      style={{
+                        padding: '14px 40px',
+                        background: 'rgba(255, 85, 0, 0.1)',
+                        border: '2px solid var(--accent-primary)',
+                        color: 'var(--accent-primary)',
+                        borderRadius: '30px',
+                        fontSize: '0.95rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        boxShadow: '0 0 25px rgba(255, 85, 0, 0.25)',
+                        transition: 'all 0.3s ease',
+                        zIndex: 2
+                      }}
+                      whileHover={{ scale: 1.05, boxShadow: '0 0 35px rgba(255, 85, 0, 0.45)', background: 'var(--accent-primary)', color: '#000' }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {'ENTER FULLSCREEN & BOOT'}
+                    </motion.button>
+                  </>
+                )}
+              </>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2 }}
+              >
+                <div style={{
+                  width: '300px',
+                  height: '4px',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: '2px',
+                  overflow: 'hidden',
+                  marginBottom: '20px',
+                  position: 'relative'
+                }}>
+                  <motion.div 
+                    initial={{ left: '-100%' }}
+                    animate={{ left: '100%' }}
+                    transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
+                    style={{
+                      position: 'absolute',
+                      width: '50%',
+                      height: '100%',
+                      background: 'var(--accent-primary)',
+                      boxShadow: '0 0 10px var(--accent-primary)'
+                    }}
+                  />
+                </div>
+                <div style={{ color: 'var(--accent-primary)', fontSize: '0.85rem', letterSpacing: '0.25em', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                  {'INITIALIZING SECURE SYSTEMS TERMINAL...'}
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
       <ParticleBackground />
       {!showHud ? (
         <button 
