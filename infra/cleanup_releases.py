@@ -26,7 +26,7 @@ tags_to_delete = [
     "v0.2.0",
     "v0.2.1",
     "v0.3.0",
-    "v1.0.0",
+    "v1.0.0-beta",
     "v1.0.1",
     "v1.1.0",
     "v2.2.0",
@@ -34,13 +34,13 @@ tags_to_delete = [
 ]
 
 releases_to_keep = {
-    "v1.0.0-beta": {
-        "title": "v1.0.0-beta - Initial Beta Release",
-        "body": "First beta release of Terminal Academy client application. Includes interactive terminal simulation, basic command tree, and AI Ank Mentor integration."
+    "v1.0.0": {
+        "title": "v1.0.0 - Python Client Beta",
+        "body": "First beta release of the Python-based Terminal Academy client."
     },
     "v2.0.0": {
-        "title": "v2.0.0 - Official Release",
-        "body": "Official release of Terminal Academy v2.0.0. Fully polished terminal simulation interface, interactive branching skill tree, in-app update notifications, start.sh launcher, and enhanced sandbox security controls."
+        "title": "v2.0.0 - Application",
+        "body": "Official launch of the Terminal Academy desktop application container environment."
     }
 }
 
