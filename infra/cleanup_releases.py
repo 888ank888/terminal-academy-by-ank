@@ -45,6 +45,10 @@ releases_to_keep = {
     "v2.0.1": {
         "title": "v2.0.1 - Bug Fixes",
         "body": "Patch release resolving boot transition issues and welcome screen layout stability."
+    },
+    "v2.0.2": {
+        "title": "v2.0.2 - Transitions & UI Improvements",
+        "body": "Introduces smooth multi-stage startup transitions and exit animation overlay."
     }
 }
 
