@@ -41,6 +41,10 @@ releases_to_keep = {
     "v2.0.0": {
         "title": "v2.0.0 - Application",
         "body": "Official launch of the Terminal Academy desktop application container environment."
+    },
+    "v2.0.1": {
+        "title": "v2.0.1 - Bug Fixes",
+        "body": "Patch release resolving boot transition issues and welcome screen layout stability."
     }
 }
 
@@ -84,11 +88,16 @@ for r in releases:
 # Update/Create keep releases
 existing_releases = {r["tag_name"]: r["id"] for r in releases if r["tag_name"] not in tags_to_delete}
 
-local_dmg = "/Users/ank/Documents/CODENAME_TERMINAL_ACADEMY/terminal-academy-desktop/src-tauri/target/release/bundle/dmg/terminal-academy_2.0.0_x64.dmg"
-
 for tag, meta in releases_to_keep.items():
     ver = tag.replace("v", "")
     print(f"\n--- Processing Release {tag} ---")
+    
+    local_dmg = f"/Users/ank/Documents/CODENAME_TERMINAL_ACADEMY/terminal-academy-desktop/src-tauri/target/release/bundle/dmg/terminal-academy_{ver}_x64.dmg"
+    # Fallback to 2.0.0 if loading a beta or missing DMG
+    if not os.path.exists(local_dmg):
+        local_dmg = "/Users/ank/Documents/CODENAME_TERMINAL_ACADEMY/terminal-academy-desktop/src-tauri/target/release/bundle/dmg/terminal-academy_2.0.0_x64.dmg"
+        if not os.path.exists(local_dmg):
+            local_dmg = "/Users/ank/Documents/CODENAME_TERMINAL_ACADEMY/terminal-academy-desktop/src-tauri/target/release/bundle/dmg/terminal-academy_2.0.1_x64.dmg"
     
     if tag in existing_releases:
         release_id = existing_releases[tag]
