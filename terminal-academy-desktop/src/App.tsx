@@ -1839,7 +1839,7 @@ export default function App() {
   const [terminalEvent, setTerminalEvent] = useState<{ type: 'before' | 'after'; cmd: string; output?: string } | null>(null);
   const [defaultApiKey, setDefaultApiKey] = useState('');
   const [bootStage, setBootStage] = useState<'welcome' | 'transitioning' | 'ready'>('welcome');
-  const APP_VERSION = "2.0.2";
+  const APP_VERSION = "2.0.3";
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [updateUrl, setUpdateUrl] = useState<string>('');
 
@@ -2424,7 +2424,7 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
                 Terminal Academy
               </h1>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
-                CODENAME: SYSTEMS ACADEMY v2.0.2
+                CODENAME: SYSTEMS ACADEMY v2.0.3
               </span>
             </motion.div>
 
