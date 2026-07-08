@@ -10,17 +10,5 @@ spec:
   policyTypes:
   - Egress
   egress:
-  # Whitelist DNS resolution
-  - ports:
-    - protocol: UDP
-      port: 53
-    - protocol: TCP
-      port: 53
-  # Whitelist Fastly/Alpine CDN package mirrors
-  - to:
-    - ipBlock:
-        cidr: 151.101.0.0/16
-  # Whitelist Cloudflare/npm registry mirror IP range
-  - to:
-    - ipBlock:
-        cidr: 104.16.0.0/12
+  # Dev/testing mode: Allow all outbound egress traffic
+  - {}

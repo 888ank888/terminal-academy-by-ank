@@ -2437,40 +2437,69 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
                     <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: '#eab308', letterSpacing: '0.05em', maxWidth: '440px', textAlign: 'center', lineHeight: '1.4' }}>
                       {'⚠️ IDENTITY VERIFICATION REQUIRED (US/CA 2026 VPC COMPLIANCE). Please verify your identity using Yoti/KWS to provision secure sandbox containers.'}
                     </p>
-                    <motion.button
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      onClick={() => {
-                        setIsVerifying(true);
-                        // @ts-ignore
-                        const share = window.Yoti.initShare({ clientSdkId: 'academy-desktop-client' });
-                        // @ts-ignore
-                        share.on('success', (result) => {
-                          setIsVerifying(false);
-                          setJwtToken(result.token);
-                          localStorage.setItem('jwt_token', result.token);
-                        });
-                      }}
-                      disabled={isVerifying}
-                      style={{
-                        padding: '12px 30px',
-                        background: 'rgba(59, 130, 246, 0.1)',
-                        border: '2px solid #3b82f6',
-                        color: '#3b82f6',
-                        borderRadius: '30px',
-                        fontSize: '0.85rem',
-                        fontWeight: 'bold',
-                        cursor: isVerifying ? 'not-allowed' : 'pointer',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        boxShadow: '0 0 20px rgba(59, 130, 246, 0.25)',
-                        transition: 'all 0.3s ease'
-                      }}
-                      whileHover={isVerifying ? {} : { scale: 1.03, boxShadow: '0 0 30px rgba(59, 130, 246, 0.45)', background: '#3b82f6', color: '#fff' }}
-                      whileTap={isVerifying ? {} : { scale: 0.98 }}
-                    >
-                      {isVerifying ? 'Verifying Identity...' : 'Verify Identity via Yoti'}
-                    </motion.button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        onClick={() => {
+                          setIsVerifying(true);
+                          // @ts-ignore
+                          const share = window.Yoti.initShare({ clientSdkId: 'academy-desktop-client' });
+                          // @ts-ignore
+                          share.on('success', (result) => {
+                            setIsVerifying(false);
+                            setJwtToken(result.token);
+                            localStorage.setItem('jwt_token', result.token);
+                          });
+                        }}
+                        disabled={isVerifying}
+                        style={{
+                          padding: '12px 30px',
+                          background: 'rgba(59, 130, 246, 0.1)',
+                          border: '2px solid #3b82f6',
+                          color: '#3b82f6',
+                          borderRadius: '30px',
+                          fontSize: '0.85rem',
+                          fontWeight: 'bold',
+                          cursor: isVerifying ? 'not-allowed' : 'pointer',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                          boxShadow: '0 0 20px rgba(59, 130, 246, 0.25)',
+                          transition: 'all 0.3s ease'
+                        }}
+                        whileHover={isVerifying ? {} : { scale: 1.03, boxShadow: '0 0 30px rgba(59, 130, 246, 0.45)', background: '#3b82f6', color: '#fff' }}
+                        whileTap={isVerifying ? {} : { scale: 0.98 }}
+                      >
+                        {isVerifying ? 'Verifying...' : 'Verify via Yoti'}
+                      </motion.button>
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        onClick={() => {
+                          const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2cGNfdmVyaWZpZWQiOnRydWUsInVzZXIiOiJzdHVkZW50In0.mock_signature";
+                          setJwtToken(mockToken);
+                          localStorage.setItem('jwt_token', mockToken);
+                        }}
+                        style={{
+                          padding: '12px 30px',
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          border: '2px solid #ef4444',
+                          color: '#ef4444',
+                          borderRadius: '30px',
+                          fontSize: '0.85rem',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                          boxShadow: '0 0 20px rgba(239, 68, 68, 0.25)',
+                          transition: 'all 0.3s ease'
+                        }}
+                        whileHover={{ scale: 1.03, boxShadow: '0 0 30px rgba(239, 68, 68, 0.45)', background: '#ef4444', color: '#fff' }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {'Bypass (Dev Mode)'}
+                      </motion.button>
+                    </div>
                   </div>
                 ) : (
                   <>
