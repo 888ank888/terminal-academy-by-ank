@@ -1791,7 +1791,7 @@ export default function App() {
   const [bootStage, setBootStage] = useState<'welcome' | 'transitioning' | 'ready'>('ready');
   const [jwtToken, setJwtToken] = useState(localStorage.getItem('jwt_token') || '');
   const [isVerifying, setIsVerifying] = useState(false);
-  const APP_VERSION = "2.0.4";
+  const APP_VERSION = "2.0.5";
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [updateUrl, setUpdateUrl] = useState<string>('');
 

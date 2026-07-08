@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "terminal-academy",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "identifier": "com.terminal-academy.app",
   "build": {
     "frontendDist": "../dist",
@@ -13,8 +13,9 @@
     "windows": [
       {
         "title": "Terminal Academy",
-        "width": 800,
-        "height": 600,
+        "width": 1200,
+        "height": 780,
+        "center": true,
         "resizable": true,
         "fullscreen": false
       }
