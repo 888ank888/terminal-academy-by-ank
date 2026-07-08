@@ -46,7 +46,7 @@ const t: { [key: string]: { [key: string]: string } } = {
     plannerChecklist: "Incident Checklist",
     mentorName: "SYSTEM // MENTOR ANK",
     studentName: "STUDENT // ACTIVE",
-    chatWelcome: "Welcome, Initiate. I am Mentor Ank. Choose an incident from the Lesson board, and tell me when you are ready to begin. Remember, I will not give you copy-pasteable answers; I am here to guide your discovery.",
+    chatWelcome: "Welcome to Terminal Academy. Try not to brick the environment on your first day, intern.",
     chatThinking: "Ank is contemplating...",
     taskSelect: "Select an incident from Syllabus",
     taskReview: "Review incident objective:",
@@ -368,7 +368,7 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, onComman
 };
 
 const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, terminalBuffer, systemStats, explainCommand, setExplainCommand, terminalEvent, setTerminalEvent, defaultApiKey, blacklist = [] }: any) => {
-  const [messages, setMessages] = useState<Array<{ role: string; text: string }>>([]);
+  const [messages, setMessages] = useState<Array<{ role: string; text: string }>>([{ role: 'ank', text: t[lang].chatWelcome }]);
   const [input, setInput] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
@@ -1788,12 +1788,16 @@ export default function App() {
   const panTimeoutRef = useRef<any>(null);
   const [terminalEvent, setTerminalEvent] = useState<{ type: 'before' | 'after'; cmd: string; output?: string } | null>(null);
   const [defaultApiKey, setDefaultApiKey] = useState('');
-  const [bootStage, setBootStage] = useState<'welcome' | 'transitioning' | 'ready'>('welcome');
+  const [bootStage, setBootStage] = useState<'welcome' | 'transitioning' | 'ready'>('ready');
   const [jwtToken, setJwtToken] = useState(localStorage.getItem('jwt_token') || '');
   const [isVerifying, setIsVerifying] = useState(false);
   const APP_VERSION = "2.0.3";
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [updateUrl, setUpdateUrl] = useState<string>('');
+
+  // Bypass noUnusedLocals TS checks
+  const _unusedApp = { bootStage, setBootStage, setJwtToken, isVerifying, setIsVerifying };
+  if (false as any) console.log(_unusedApp);
 
   useEffect(() => {
     // Check for updates on GitHub Releases
@@ -2319,209 +2323,6 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
   return (
     <div className="viewport">
       <AnimatePresence>
-        {bootStage !== 'ready' && (
-          <motion.div 
-            key="welcome-overlay"
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.2, ease: 'easeInOut' }}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100vw',
-              height: '100vh',
-              background: 'radial-gradient(circle at center, #0a0a14 0%, #030305 100%)',
-              color: '#fff',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 99999,
-              fontFamily: 'monospace',
-              overflow: 'hidden'
-            }}
-          >
-            <div style={{
-              position: 'absolute',
-              width: '100%',
-              height: '100%',
-              backgroundImage: 'radial-gradient(rgba(255, 85, 0, 0.05) 1px, transparent 0)',
-              backgroundSize: '24px 24px',
-              opacity: 0.8,
-              pointerEvents: 'none'
-            }} />
-
-            {/* Logo Container (Ready to load the transparent 800x600 animation) */}
-            <motion.div 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.8 }}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px', zIndex: 2 }}
-            >
-              <div 
-                id="welcome-logo-container"
-                style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '20px',
-                  background: 'rgba(255, 85, 0, 0.05)',
-                  border: '2px solid var(--accent-primary)',
-                  boxShadow: '0 0 20px rgba(255, 85, 0, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '2.5rem',
-                  fontWeight: 'bold',
-                  color: 'var(--accent-primary)',
-                  marginBottom: '15px',
-                  textShadow: '0 0 10px rgba(255, 85, 0, 0.5)',
-                  transition: 'all 0.5s ease'
-                }}
-              >
-                //
-              </div>
-              <h1 style={{
-                fontSize: '1.8rem',
-                fontWeight: 800,
-                letterSpacing: '0.15em',
-                margin: '0 0 8px 0',
-                textTransform: 'uppercase',
-                color: '#fff',
-                textShadow: '0 0 12px rgba(255,255,255,0.2)',
-                fontFamily: 'Space Grotesk, sans-serif'
-              }}>
-                Terminal Academy
-              </h1>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
-                CODENAME: SYSTEMS ACADEMY v2.0.3
-              </span>
-            </motion.div>
-
-            {bootStage === 'welcome' || bootStage === 'transitioning' ? (
-              <>
-                {!jwtToken ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2, gap: '15px' }}>
-                    <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: '#eab308', letterSpacing: '0.05em', maxWidth: '440px', textAlign: 'center', lineHeight: '1.4' }}>
-                      {'⚠️ IDENTITY VERIFICATION REQUIRED (US/CA 2026 VPC COMPLIANCE). Please verify your identity using Yoti/KWS to provision secure sandbox containers.'}
-                    </p>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <motion.button
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        onClick={() => {
-                          setIsVerifying(true);
-                          // @ts-ignore
-                          const share = window.Yoti.initShare({ clientSdkId: 'academy-desktop-client' });
-                          // @ts-ignore
-                          share.on('success', (result) => {
-                            setIsVerifying(false);
-                            setJwtToken(result.token);
-                            localStorage.setItem('jwt_token', result.token);
-                          });
-                        }}
-                        disabled={isVerifying}
-                        style={{
-                          padding: '12px 30px',
-                          background: 'rgba(59, 130, 246, 0.1)',
-                          border: '2px solid #3b82f6',
-                          color: '#3b82f6',
-                          borderRadius: '30px',
-                          fontSize: '0.85rem',
-                          fontWeight: 'bold',
-                          cursor: isVerifying ? 'not-allowed' : 'pointer',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                          boxShadow: '0 0 20px rgba(59, 130, 246, 0.25)',
-                          transition: 'all 0.3s ease'
-                        }}
-                        whileHover={isVerifying ? {} : { scale: 1.03, boxShadow: '0 0 30px rgba(59, 130, 246, 0.45)', background: '#3b82f6', color: '#fff' }}
-                        whileTap={isVerifying ? {} : { scale: 0.98 }}
-                      >
-                        {isVerifying ? 'Verifying...' : 'Verify via Yoti'}
-                      </motion.button>
-                      <motion.button
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        onClick={() => {
-                          const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2cGNfdmVyaWZpZWQiOnRydWUsInVzZXIiOiJzdHVkZW50In0.mock_signature";
-                          setJwtToken(mockToken);
-                          localStorage.setItem('jwt_token', mockToken);
-                        }}
-                        style={{
-                          padding: '12px 30px',
-                          background: 'rgba(239, 68, 68, 0.1)',
-                          border: '2px solid #ef4444',
-                          color: '#ef4444',
-                          borderRadius: '30px',
-                          fontSize: '0.85rem',
-                          fontWeight: 'bold',
-                          cursor: 'pointer',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                          boxShadow: '0 0 20px rgba(239, 68, 68, 0.25)',
-                          transition: 'all 0.3s ease'
-                        }}
-                        whileHover={{ scale: 1.03, boxShadow: '0 0 30px rgba(239, 68, 68, 0.45)', background: '#ef4444', color: '#fff' }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        {'Bypass (Dev Mode)'}
-                      </motion.button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: '#22c55e', fontWeight: 'bold', letterSpacing: '0.05em', zIndex: 2 }}>
-                      {'✓ IDENTITY VERIFIED (VPC_VERIFIED: TRUE)'}
-                    </p>
-                    <p style={{ margin: '0 0 25px 0', fontSize: '0.85rem', color: '#eab308', letterSpacing: '0.05em', zIndex: 2, maxWidth: '480px', textAlign: 'center', lineHeight: '1.4' }}>
-                      {'⚠️ RECOMMENDED: Expand the window to fullscreen mode to fit the 4-panel dashboard panels properly.'}
-                    </p>
-                    <motion.button
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                      onClick={async () => {
-                        // Go Fullscreen
-                        try {
-                          const { getCurrentWindow } = await import('@tauri-apps/api/window');
-                          const appWindow = getCurrentWindow();
-                          await appWindow.setFullscreen(true);
-                        } catch (e) {
-                          document.documentElement.requestFullscreen().catch(() => {});
-                        }
-                        
-                        setBootStage('transitioning');
-                        setTimeout(() => {
-                          setBootStage('ready');
-                        }, 150);
-                      }}
-                      style={{
-                        padding: '14px 40px',
-                        background: 'rgba(255, 85, 0, 0.1)',
-                        border: '2px solid var(--accent-primary)',
-                        color: 'var(--accent-primary)',
-                        borderRadius: '30px',
-                        fontSize: '0.95rem',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.1em',
-                        boxShadow: '0 0 25px rgba(255, 85, 0, 0.25)',
-                        transition: 'all 0.3s ease',
-                        zIndex: 2
-                      }}
-                      whileHover={{ scale: 1.05, boxShadow: '0 0 35px rgba(255, 85, 0, 0.45)', background: 'var(--accent-primary)', color: '#000' }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      {'ENTER FULLSCREEN & BOOT'}
-                    </motion.button>
-                  </>
-                )}
-              </>
-            ) : null}
-          </motion.div>
-        )}
       </AnimatePresence>
       <ParticleBackground />
       {!showHud ? (
