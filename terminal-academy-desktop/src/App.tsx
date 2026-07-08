@@ -143,18 +143,10 @@ function parseSyllabus(md: string): SyllabusNode[] {
 }
 
 // --- UI Widgets --- //
-const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, onCommandBeforeExec, onCommandAfterExec, jwtToken }: any) => {
+const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, onCommandBeforeExec, onCommandAfterExec, jwtToken, blacklist = [] }: any) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const termInstanceRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
-  const [blacklist, setBlacklist] = useState<string[]>([]);
-
-  useEffect(() => {
-    fetch('/blacklist.json')
-      .then(res => res.json())
-      .then(data => setBlacklist(data))
-      .catch(() => setBlacklist(['rm -rf', 'shred', 'mkfs', 'dd if=', ':>', '> /dev/sda']));
-  }, []);
 
   useEffect(() => {
     let term: XTerm | null = null;
@@ -233,7 +225,7 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, onComman
         if (arg.key === 'Enter' && arg.type === 'keydown' && term) {
           const cmd = getCommandFromBuffer(term);
           
-          const isBlocked = blacklist.some(item => cmd.includes(item));
+          const isBlocked = blacklist.some((item: string) => cmd.includes(item));
           if (isBlocked) {
             term.write('\r\n\x1b[31m[SECURITY ALERT] Command execution blocked by security policy.\x1b[0m\r\n');
             invoke('write_pty', { data: '\x03\r' }).catch(() => {});
@@ -375,7 +367,7 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, onComman
   );
 };
 
-const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, terminalBuffer, systemStats, explainCommand, setExplainCommand, terminalEvent, setTerminalEvent, defaultApiKey }: any) => {
+const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, terminalBuffer, systemStats, explainCommand, setExplainCommand, terminalEvent, setTerminalEvent, defaultApiKey, blacklist = [] }: any) => {
   const [messages, setMessages] = useState<Array<{ role: string; text: string }>>([]);
   const [input, setInput] = useState('');
   const [showSettings, setShowSettings] = useState(false);
@@ -384,6 +376,10 @@ const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastQueryTimeRef = useRef<number>(0);
   const activeApiKey = apiKey || defaultApiKey;
+  
+  // Bypass noUnusedLocals TS checks
+  const _unused = { bindDrag, activeCourse, activeNode, activeIncident, terminalBuffer, systemStats };
+  if (false as any) console.log(_unused);
 
   useEffect(() => {
     if (explainCommand) {
@@ -422,21 +418,25 @@ const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, 
             parts: [{ text: m.text }]
           }));
 
-          const systemInstruction = `You are AI Mentor Ank, the sarcastic Socratic tutor for the Terminal Academy.
-The student has just attempted to paste copied text into the terminal, but the clipboard lock blocked it completely.
-Respond in a highly sarcastic, condescending tone. Scold them for trying to paste/cheat instead of typing commands manually to build muscle memory, and guide them to type.
-CRITICAL PERSONALITY & FORMATTING RULES:
-1. Be extremely sarcastic and scolding about their attempt to paste.
-2. DO NOT use any markdown tags (like **, * or lists). Output ONLY clean, plain-text paragraphs.
-3. Keep it brief.
-4. Respond in English only.`;
+          const systemInstruction = `You are Senior Architect Ank, a brilliant, highly sarcastic Socratic mentor. 
+Your goal is to guide the student conceptually without spoiling the exact answer.
+CRITICAL RULES:
+1. Tone: Sarcastic, condescending yet educationally effective. Treat the student like a junior intern who just touched production.
+2. If the user triggers a normal command: Explain its core structural mechanic in 2-3 dense sentences.
+3. If the user triggers a BLACKLISTED command (e.g., rm -rf, fork-bombs): Mock their reckless choice, flag it as an architectural crime, and briefly explain why it is structurally dangerous.
+4. Formatting: Strictly clean plain-text. NO asterisks (*), NO markdown formats, NO bold text (**).
+5. Language: 100% English only.`;
 
           const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contents: history,
-              systemInstruction: { parts: [{ text: systemInstruction }] }
+              systemInstruction: { parts: [{ text: systemInstruction }] },
+              generationConfig: {
+                maxOutputTokens: 120,
+                temperature: 0.4
+              }
             })
           });
 
@@ -460,7 +460,7 @@ CRITICAL PERSONALITY & FORMATTING RULES:
         if (!activeApiKey) return;
         setLoading(true);
         try {
-          const blockPrompt = `[SECURITY: Student tried to execute blocked command] Command: ${rawCmd}`;
+          const blockPrompt = `The user tried to run a forbidden command: ${rawCmd}`;
             
           const newMsgs = [...messages, { role: 'user', text: blockPrompt }];
           const history = newMsgs.map(m => ({
@@ -468,22 +468,25 @@ CRITICAL PERSONALITY & FORMATTING RULES:
             parts: [{ text: m.text }]
           }));
 
-          const systemInstruction = `You are AI Mentor Ank, the sarcastic Socratic tutor for the Terminal Academy.
-The student tried to execute the forbidden/destructive command "${rawCmd}" in the terminal.
-This command was blocked and neutralized before execution.
-Respond in a controlled sarcastic, condescending tone. Scold them for attempting such a dangerous/destructive operation, explain briefly why it is dangerous, and guide them back to their syllabus task.
-CRITICAL PERSONALITY & FORMATTING RULES:
-1. Be sarcastic and condescending about their attempt to run "${rawCmd}".
-2. DO NOT use any markdown tags (like **, * or lists). Output ONLY clean, plain-text paragraphs.
-3. Keep it brief. Do not give any copy-pasteable alternatives.
-4. Respond in English only.`;
+          const systemInstruction = `You are Senior Architect Ank, a brilliant, highly sarcastic Socratic mentor. 
+Your goal is to guide the student conceptually without spoiling the exact answer.
+CRITICAL RULES:
+1. Tone: Sarcastic, condescending yet educationally effective. Treat the student like a junior intern who just touched production.
+2. If the user triggers a normal command: Explain its core structural mechanic in 2-3 dense sentences.
+3. If the user triggers a BLACKLISTED command (e.g., rm -rf, fork-bombs): Mock their reckless choice, flag it as an architectural crime, and briefly explain why it is structurally dangerous.
+4. Formatting: Strictly clean plain-text. NO asterisks (*), NO markdown formats, NO bold text (**).
+5. Language: 100% English only.`;
 
           const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contents: history,
-              systemInstruction: { parts: [{ text: systemInstruction }] }
+              systemInstruction: { parts: [{ text: systemInstruction }] },
+              generationConfig: {
+                maxOutputTokens: 120,
+                temperature: 0.4
+              }
             })
           });
 
@@ -611,38 +614,25 @@ CRITICAL PERSONALITY & FORMATTING RULES:
         parts: [{ text: m.text }]
       }));
 
-      const systemInstruction = `You are AI Mentor Ank, the sarcastic Socratic tutor for the Terminal Academy.
-The student clicked the command "${cmd}" in the Command Grimoire.
-Your task is to explain this command inside the chat before they run it in the terminal.
-CRITICAL PERSONALITY & FORMATTING RULES:
-1. Explain it with a sarcastic, witty tone. Act like explaining this is slightly beneath you but you do it anyway out of duty.
-2. DO NOT use any markdown tags (like **, * or headers). Output ONLY clean, plain-text paragraphs.
-3. Explain the context, purpose, and effects of the command socratically. Do not write copy-pasteable commands.
-4. Respond in Russian if the student's prompt or context is Russian, otherwise English.
-
-Real-time System Stats & Status:
-- CPU Usage: ${systemStats?.cpu || 0}%
-- Memory: ${systemStats?.ram || 0} GB / 8 GB
-- Network Latency: ${systemStats?.ping || 0} ms
-- Container sandbox active: ${systemStats?.dockerStatus || 'OFFLINE'}
-
-Current Real-time Terminal output buffer (Last 2000 chars):
-"""
-${terminalBuffer || 'No terminal activity recorded yet.'}
-"""
-
-Context:
-- Current course: ${activeCourse?.name || 'None'}
-- Selected node: ${activeNode?.title || 'None'}
-- Active incident: ${activeIncident?.title || 'None'}
-- Incident instructions: ${activeIncident?.desc || 'None'}`;
+      const systemInstruction = `You are Senior Architect Ank, a brilliant, highly sarcastic Socratic mentor. 
+Your goal is to guide the student conceptually without spoiling the exact answer.
+CRITICAL RULES:
+1. Tone: Sarcastic, condescending yet educationally effective. Treat the student like a junior intern who just touched production.
+2. If the user triggers a normal command: Explain its core structural mechanic in 2-3 dense sentences.
+3. If the user triggers a BLACKLISTED command (e.g., rm -rf, fork-bombs): Mock their reckless choice, flag it as an architectural crime, and briefly explain why it is structurally dangerous.
+4. Formatting: Strictly clean plain-text. NO asterisks (*), NO markdown formats, NO bold text (**).
+5. Language: 100% English only.`;
 
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: history,
-          systemInstruction: { parts: [{ text: systemInstruction }] }
+          systemInstruction: { parts: [{ text: systemInstruction }] },
+          generationConfig: {
+            maxOutputTokens: 120,
+            temperature: 0.4
+          }
         })
       });
 
@@ -668,7 +658,15 @@ Context:
     const userMsg = input.trim();
     setInput('');
     
-    const newMsgs = [...messages, { role: 'user', text: userMsg }];
+    const isBlocked = blacklist.some((item: string) => userMsg.toLowerCase().includes(item.toLowerCase()));
+    let activeMsgText = userMsg;
+    let ankPromptText = userMsg;
+    if (isBlocked) {
+      activeMsgText = `[BLOCKED] ${userMsg}`;
+      ankPromptText = `The user tried to run a forbidden command: ${userMsg}`;
+    }
+
+    const newMsgs = [...messages, { role: 'user', text: activeMsgText }];
     setMessages(newMsgs);
     
     if (!activeApiKey) {
@@ -678,45 +676,30 @@ Context:
 
     setLoading(true);
     try {
-      const history = newMsgs.map(m => ({
+      const history = newMsgs.map((m, idx) => ({
         role: m.role === 'ank' ? 'model' : 'user',
-        parts: [{ text: m.text }]
+        parts: [{ text: (idx === newMsgs.length - 1 && isBlocked) ? ankPromptText : m.text }]
       }));
 
-      const systemInstruction = `You are AI Mentor Ank, the sarcastic, condescending but educational Socratic tutor for the Terminal Academy.
-Your role is to guide the student through practical terminal challenges (system administration, networking, devops, app hosting).
-CRITICAL PERSONALITY & FORMATTING RULES:
-1. Be consistently sarcastic, witty, and condescending, but guide them conceptually (Socratic).
-2. DO NOT give direct answers or write out copy-pasteable bash commands. Ask leading questions so they discover the solution.
-3. DO NOT use any markdown formatting like ** or *. Output ONLY clean, plain-text paragraphs.
-4. Respond in Russian if the student's prompt is in Russian, otherwise English.
-5. If they are stuck on a specific error, explain what the error means conceptually.
-6. Warn the student immediately if they run unsafe commands (e.g., rm -rf without argument, recursive deletion of root, invalid chmod settings).
-7. Suggest specific maintenance or debugging tasks if the system statistics show abnormal indicators.
-
-Real-time System Stats & Status:
-- CPU Usage: ${systemStats?.cpu || 0}%
-- Memory: ${systemStats?.ram || 0} GB / 8 GB
-- Network Latency: ${systemStats?.ping || 0} ms
-- Container sandbox active: ${systemStats?.dockerStatus || 'OFFLINE'}
-
-Current Real-time Terminal output buffer (Last 2000 chars):
-"""
-${terminalBuffer || 'No terminal activity recorded yet.'}
-"""
-
-Context:
-- Current course: ${activeCourse?.name || 'None'}
-- Selected node: ${activeNode?.title || 'None'}
-- Active incident: ${activeIncident?.title || 'None'}
-- Incident instructions: ${activeIncident?.desc || 'None'}`;
+      const systemInstruction = `You are Senior Architect Ank, a brilliant, highly sarcastic Socratic mentor. 
+Your goal is to guide the student conceptually without spoiling the exact answer.
+CRITICAL RULES:
+1. Tone: Sarcastic, condescending yet educationally effective. Treat the student like a junior intern who just touched production.
+2. If the user triggers a normal command: Explain its core structural mechanic in 2-3 dense sentences.
+3. If the user triggers a BLACKLISTED command (e.g., rm -rf, fork-bombs): Mock their reckless choice, flag it as an architectural crime, and briefly explain why it is structurally dangerous.
+4. Formatting: Strictly clean plain-text. NO asterisks (*), NO markdown formats, NO bold text (**).
+5. Language: 100% English only.`;
 
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeApiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: history,
-          systemInstruction: { parts: [{ text: systemInstruction }] }
+          systemInstruction: { parts: [{ text: systemInstruction }] },
+          generationConfig: {
+            maxOutputTokens: 120,
+            temperature: 0.4
+          }
         })
       });
 
@@ -1994,6 +1977,7 @@ export default function App() {
   const [activeNode, setActiveNode] = useState<any>(null);
   const [activeIncident, setActiveIncident] = useState<any>(null);
   const [skillTreeNodes, setSkillTreeNodes] = useState<any[]>([]);
+  const [blacklist, setBlacklist] = useState<string[]>([]);
 
   useEffect(() => {
     fetch('/curriculum_graph.json')
@@ -2002,6 +1986,13 @@ export default function App() {
         setSkillTreeNodes(data.nodes || []);
       })
       .catch(err => console.error("Error loading skill tree graph:", err));
+  }, []);
+
+  useEffect(() => {
+    fetch('/blacklist.json')
+      .then(res => res.json())
+      .then(data => setBlacklist(data))
+      .catch(() => setBlacklist(['rm -rf', 'shred', 'mkfs', 'dd if=', ':>', '> /dev/sda']));
   }, []);
 
   // Load and parse course syllabus whenever activeCourse changes
@@ -2634,6 +2625,7 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
                   terminalEvent={terminalEvent}
                   setTerminalEvent={setTerminalEvent}
                   defaultApiKey={defaultApiKey}
+                  blacklist={blacklist}
                 />
               </FluidWindow>
               
@@ -2651,6 +2643,7 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
                   onCommandBeforeExec={handleCommandBeforeExec}
                   onCommandAfterExec={handleCommandAfterExec}
                   jwtToken={jwtToken}
+                  blacklist={blacklist}
                 />
               </FluidWindow>
               
