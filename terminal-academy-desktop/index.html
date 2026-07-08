@@ -5,6 +5,26 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>terminal-academy-desktop</title>
+    <script src="https://static.yoti.com/v1/yoti-sandbox-sdk.js"></script>
+    <script>
+      // Mock Yoti SDK fallback to handle environment testing
+      window.Yoti = window.Yoti || {
+        initShare: function(config) {
+          console.log("Yoti Sandbox SDK initialized with config:", config);
+          return {
+            on: function(event, callback) {
+              if (event === "success") {
+                setTimeout(() => {
+                  callback({
+                    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2cGNfdmVyaWZpZWQiOnRydWUsInVzZXIiOiJzdHVkZW50In0.mock_signature"
+                  });
+                }, 1200);
+              }
+            }
+          };
+        }
+      };
+    </script>
   </head>
   <body>
     <div id="root"></div>

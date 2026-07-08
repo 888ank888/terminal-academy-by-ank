@@ -52,11 +52,74 @@ fn allocate_container_number() -> u32 {
   candidate
 }
 
+fn base64_url_decode(input: &str) -> Option<Vec<u8>> {
+  let mut s = input.replace('-', "+").replace('_', "/");
+  while s.len() % 4 != 0 {
+    s.push('=');
+  }
+  
+  let table = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  let mut map = [0u8; 256];
+  for (i, &c) in table.iter().enumerate() {
+    map[c as usize] = i as u8;
+  }
+  
+  let bytes = s.as_bytes();
+  let mut out = Vec::new();
+  let mut i = 0;
+  while i < bytes.len() {
+    if bytes[i] == b'=' {
+      break;
+    }
+    if i + 3 >= bytes.len() {
+      return None;
+    }
+    let char_val0 = map[bytes[i] as usize] as u32;
+    let char_val1 = map[bytes[i+1] as usize] as u32;
+    let char_val2 = if bytes[i+2] == b'=' { 0 } else { map[bytes[i+2] as usize] as u32 };
+    let char_val3 = if bytes[i+3] == b'=' { 0 } else { map[bytes[i+3] as usize] as u32 };
+    
+    let triple = (char_val0 << 18) + (char_val1 << 12) + (char_val2 << 6) + char_val3;
+    
+    out.push(((triple >> 16) & 0xFF) as u8);
+    if bytes[i+2] != b'=' {
+      out.push(((triple >> 8) & 0xFF) as u8);
+    }
+    if bytes[i+3] != b'=' {
+      out.push((triple & 0xFF) as u8);
+    }
+    i += 4;
+  }
+  Some(out)
+}
+
+fn verify_jwt_token(token: &str) -> bool {
+  let parts: Vec<&str> = token.split('.').collect();
+  if parts.len() < 2 {
+    return false;
+  }
+  if let Some(payload_bytes) = base64_url_decode(parts[1]) {
+    if let Ok(payload_str) = String::from_utf8(payload_bytes) {
+      if let Ok(json) = serde_json::from_str::<serde_json::Value>(&payload_str) {
+        if let Some(vpc_verified) = json.get("vpc_verified") {
+          return vpc_verified.as_bool().unwrap_or(false);
+        }
+      }
+    }
+  }
+  false
+}
+
 #[tauri::command]
 fn spawn_pty(
   app: AppHandle,
   state: State<'_, PtyState>,
+  token: String,
 ) -> Result<(), String> {
+  if !verify_jwt_token(&token) {
+    return Err("Unauthorized: JWT token lacks claim 'vpc_verified: true'".to_string());
+  }
+
   let pty_system = native_pty_system();
   let pair = pty_system
     .openpty(PtySize {

@@ -143,7 +143,7 @@ function parseSyllabus(md: string): SyllabusNode[] {
 }
 
 // --- UI Widgets --- //
-const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, onCommandBeforeExec, onCommandAfterExec }: any) => {
+const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, onCommandBeforeExec, onCommandAfterExec, jwtToken }: any) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const termInstanceRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -279,7 +279,7 @@ const TerminalWidget = ({ bindDrag, lang, onTerminalData, dockerStatus, onComman
       termInstanceRef.current = term;
       fitAddonRef.current = fitAddon;
 
-      invoke('spawn_pty').catch(err => {
+      invoke('spawn_pty', { token: jwtToken }).catch(err => {
         term?.write(`\r\n\x1b[31mError spawning PTY: ${err}\x1b[0m\r\n`);
       });
 
@@ -1839,6 +1839,8 @@ export default function App() {
   const [terminalEvent, setTerminalEvent] = useState<{ type: 'before' | 'after'; cmd: string; output?: string } | null>(null);
   const [defaultApiKey, setDefaultApiKey] = useState('');
   const [bootStage, setBootStage] = useState<'welcome' | 'transitioning' | 'ready'>('welcome');
+  const [jwtToken, setJwtToken] = useState(localStorage.getItem('jwt_token') || '');
+  const [isVerifying, setIsVerifying] = useState(false);
   const APP_VERSION = "2.0.3";
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [updateUrl, setUpdateUrl] = useState<string>('');
@@ -2430,48 +2432,95 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
 
             {bootStage === 'welcome' || bootStage === 'transitioning' ? (
               <>
-                <p style={{ margin: '0 0 25px 0', fontSize: '0.85rem', color: '#eab308', letterSpacing: '0.05em', zIndex: 2, maxWidth: '480px', textAlign: 'center', lineHeight: '1.4' }}>
-                  {'⚠️ RECOMMENDED: Expand the window to fullscreen mode to fit the 4-panel dashboard panels properly.'}
-                </p>
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                  onClick={async () => {
-                    // Go Fullscreen
-                    try {
-                      const { getCurrentWindow } = await import('@tauri-apps/api/window');
-                      const appWindow = getCurrentWindow();
-                      await appWindow.setFullscreen(true);
-                    } catch (e) {
-                      document.documentElement.requestFullscreen().catch(() => {});
-                    }
-                    
-                    setBootStage('transitioning');
-                    setTimeout(() => {
-                      setBootStage('ready');
-                    }, 150);
-                  }}
-                  style={{
-                    padding: '14px 40px',
-                    background: 'rgba(255, 85, 0, 0.1)',
-                    border: '2px solid var(--accent-primary)',
-                    color: 'var(--accent-primary)',
-                    borderRadius: '30px',
-                    fontSize: '0.95rem',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    boxShadow: '0 0 25px rgba(255, 85, 0, 0.25)',
-                    transition: 'all 0.3s ease',
-                    zIndex: 2
-                  }}
-                  whileHover={{ scale: 1.05, boxShadow: '0 0 35px rgba(255, 85, 0, 0.45)', background: 'var(--accent-primary)', color: '#000' }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {'ENTER FULLSCREEN & BOOT'}
-                </motion.button>
+                {!jwtToken ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2, gap: '15px' }}>
+                    <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: '#eab308', letterSpacing: '0.05em', maxWidth: '440px', textAlign: 'center', lineHeight: '1.4' }}>
+                      {'⚠️ IDENTITY VERIFICATION REQUIRED (US/CA 2026 VPC COMPLIANCE). Please verify your identity using Yoti/KWS to provision secure sandbox containers.'}
+                    </p>
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      onClick={() => {
+                        setIsVerifying(true);
+                        // @ts-ignore
+                        const share = window.Yoti.initShare({ clientSdkId: 'academy-desktop-client' });
+                        // @ts-ignore
+                        share.on('success', (result) => {
+                          setIsVerifying(false);
+                          setJwtToken(result.token);
+                          localStorage.setItem('jwt_token', result.token);
+                        });
+                      }}
+                      disabled={isVerifying}
+                      style={{
+                        padding: '12px 30px',
+                        background: 'rgba(59, 130, 246, 0.1)',
+                        border: '2px solid #3b82f6',
+                        color: '#3b82f6',
+                        borderRadius: '30px',
+                        fontSize: '0.85rem',
+                        fontWeight: 'bold',
+                        cursor: isVerifying ? 'not-allowed' : 'pointer',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        boxShadow: '0 0 20px rgba(59, 130, 246, 0.25)',
+                        transition: 'all 0.3s ease'
+                      }}
+                      whileHover={isVerifying ? {} : { scale: 1.03, boxShadow: '0 0 30px rgba(59, 130, 246, 0.45)', background: '#3b82f6', color: '#fff' }}
+                      whileTap={isVerifying ? {} : { scale: 0.98 }}
+                    >
+                      {isVerifying ? 'Verifying Identity...' : 'Verify Identity via Yoti'}
+                    </motion.button>
+                  </div>
+                ) : (
+                  <>
+                    <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: '#22c55e', fontWeight: 'bold', letterSpacing: '0.05em', zIndex: 2 }}>
+                      {'✓ IDENTITY VERIFIED (VPC_VERIFIED: TRUE)'}
+                    </p>
+                    <p style={{ margin: '0 0 25px 0', fontSize: '0.85rem', color: '#eab308', letterSpacing: '0.05em', zIndex: 2, maxWidth: '480px', textAlign: 'center', lineHeight: '1.4' }}>
+                      {'⚠️ RECOMMENDED: Expand the window to fullscreen mode to fit the 4-panel dashboard panels properly.'}
+                    </p>
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                      onClick={async () => {
+                        // Go Fullscreen
+                        try {
+                          const { getCurrentWindow } = await import('@tauri-apps/api/window');
+                          const appWindow = getCurrentWindow();
+                          await appWindow.setFullscreen(true);
+                        } catch (e) {
+                          document.documentElement.requestFullscreen().catch(() => {});
+                        }
+                        
+                        setBootStage('transitioning');
+                        setTimeout(() => {
+                          setBootStage('ready');
+                        }, 150);
+                      }}
+                      style={{
+                        padding: '14px 40px',
+                        background: 'rgba(255, 85, 0, 0.1)',
+                        border: '2px solid var(--accent-primary)',
+                        color: 'var(--accent-primary)',
+                        borderRadius: '30px',
+                        fontSize: '0.95rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.1em',
+                        boxShadow: '0 0 25px rgba(255, 85, 0, 0.25)',
+                        transition: 'all 0.3s ease',
+                        zIndex: 2
+                      }}
+                      whileHover={{ scale: 1.05, boxShadow: '0 0 35px rgba(255, 85, 0, 0.45)', background: 'var(--accent-primary)', color: '#000' }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {'ENTER FULLSCREEN & BOOT'}
+                    </motion.button>
+                  </>
+                )}
               </>
             ) : null}
           </motion.div>
@@ -2595,6 +2644,7 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
                   dockerStatus={stats.dockerStatus}
                   onCommandBeforeExec={handleCommandBeforeExec}
                   onCommandAfterExec={handleCommandAfterExec}
+                  jwtToken={jwtToken}
                 />
               </FluidWindow>
               

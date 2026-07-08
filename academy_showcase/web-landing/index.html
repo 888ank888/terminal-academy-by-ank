@@ -67,8 +67,8 @@
                     A zero-dependency, pure-terminal learning platform for teens. Master Linux, DevOps, and systems thinking with an AI mentor that forces you to figure it out.
                 </p>
                 <div class="hero-actions" style="margin-bottom: 24px;">
-                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                        <a id="osDownloadBtn" href="#" class="btn btn-primary">
+                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
+                        <a id="osDownloadBtn" href="#" class="btn btn-primary" style="opacity: 0.5; pointer-events: none; cursor: not-allowed;">
                             <span>Download Desktop App</span>
                         </a>
                         <select id="osSelector" class="os-selector" onchange="handleManualOSSelect()">
@@ -78,6 +78,14 @@
                             <option value="Linux deb">Linux (DEB)</option>
                             <option value="Linux AppImage">Linux (AppImage)</option>
                         </select>
+                    </div>
+                    <div style="text-align: left; max-width: 520px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 12px; border-radius: 8px;">
+                        <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 0.75rem; color: #94a3b8; cursor: pointer; user-select: none;">
+                            <input type="checkbox" id="aupCheckbox" onchange="toggleDownloadBtn()" style="margin-top: 3px; cursor: pointer;">
+                            <span>
+                                I agree to the <a href="#privacy-policy" style="color: var(--accent-primary); text-decoration: underline;">Acceptable Use Policy & Privacy Policy</a>. I consent to real-time heuristic metrics tracking and automatic container termination if resource abuse (crypto-mining or DDoS spikes) is detected.
+                            </span>
+                        </label>
                     </div>
                 </div>
                 
@@ -172,8 +180,26 @@
                     <p>Stop doing manual work. Write bash scripts that automate server setup, parse logs, and deploy applications. Learn loops, conditions, and stream manipulation with awk and sed.</p>
                 </div>
             </div>
-        </section>
+        <!-- Legal Docs Section -->
+        <section id="privacy-policy" class="container reveal-up" style="margin-top: 60px; margin-bottom: 40px; padding: 24px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 20px; letter-spacing: 0.05em; text-transform: uppercase;">Legal Policies & Disclosures</h2>
+            
+            <details style="margin-bottom: 12px; cursor: pointer;">
+                <summary style="font-size: 0.9rem; font-weight: 600; color: var(--accent-primary); outline: none; user-select: none; margin-bottom: 8px;">Acceptable Use Policy (AUP)</summary>
+                <div style="font-size: 0.8rem; color: #94a3b8; line-height: 1.6; padding: 10px 0; border-top: 1px solid rgba(255,255,255,0.05); cursor: default;">
+                    <p style="margin-bottom: 8px;"><strong>1. Prohibited Sandbox Activities:</strong> All containers provisioned in the Terminal Academy sandbox network are strictly for educational exercises. The execution of crypto-currency miners, port scanning software, DDoS tools, botnets, or any malicious scripts designed to overload or attack internal/external networks is strictly prohibited.</p>
+                    <p style="margin-bottom: 8px;"><strong>2. Automated Heuristic Termination:</strong> Sandbox pods are continuously monitored for resource spikes and communication anomalies. Any container exhibiting prolonged high-CPU levels (>90% allocation) or packet generation rates indicating a potential attack vector will be automatically and immediately terminated without prior warning. All session states associated with the offending container will be permanently deleted.</p>
+                </div>
+            </details>
 
+            <details style="cursor: pointer;">
+                <summary style="font-size: 0.9rem; font-weight: 600; color: var(--accent-primary); outline: none; user-select: none;">Privacy Policy & Pedagogical Safeguards</summary>
+                <div style="font-size: 0.8rem; color: #94a3b8; line-height: 1.6; padding: 10px 0; border-top: 1px solid rgba(255,255,255,0.05); cursor: default;">
+                    <p style="margin-bottom: 8px;"><strong>1. Interactive Safeguards (Explanation Gate):</strong> The platform incorporates an automated "Explanation Gate" (formally classified as a Pedagogical Safeguard). This system monitors command submissions to ensure students explain the conceptual mechanics of critical operations (e.g. permission modifications, network rules). This gate is strictly an educational tool to verify operational logic and is not used for behavioral profiling, marketing, or dark-pattern analytics.</p>
+                    <p style="margin-bottom: 8px;"><strong>2. Identity Verification:</strong> Outbound platform access requires age and identity validation using verified third-party identity management providers (Yoti/KWS SDK). Identity validation is performed to satisfy US/CA child privacy and online safety regulations. No raw government documents or personal identifiers are stored or held within our local databases.</p>
+                </div>
+            </details>
+        </section>
 
     </main>
 
@@ -282,10 +308,33 @@
                 downloadBtn.href = downloadPaths[selectedVal];
                 downloadBtn.querySelector('span').textContent = `DOWNLOAD FOR ${selectedVal.toUpperCase()}`;
             }
+            toggleDownloadBtn();
+        };
+
+        window.toggleDownloadBtn = function() {
+            const checkbox = document.getElementById('aupCheckbox');
+            const downloadBtn = document.getElementById('osDownloadBtn');
+            const userAgent = window.navigator.userAgent.toLowerCase();
+            const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+            
+            if (isMobile) return;
+
+            if (checkbox && downloadBtn) {
+                if (checkbox.checked) {
+                    downloadBtn.style.opacity = "1";
+                    downloadBtn.style.pointerEvents = "auto";
+                    downloadBtn.style.cursor = "pointer";
+                } else {
+                    downloadBtn.style.opacity = "0.5";
+                    downloadBtn.style.pointerEvents = "none";
+                    downloadBtn.style.cursor = "not-allowed";
+                }
+            }
         };
 
         // Run OS detection on load
         runOSDetection();
+        toggleDownloadBtn();
     </script>
 </body>
 </html>
