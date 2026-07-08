@@ -26,3 +26,5 @@ stash/
 start.sh
 terminal_demo.tape
 infra/
+.agents/
+
