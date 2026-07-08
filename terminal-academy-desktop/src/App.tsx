@@ -574,10 +574,11 @@ CRITICAL PERSONALITY & FORMATTING RULES:
       if (prev.length === 0) {
         return [{ role: 'ank', text: t[lang].chatWelcome }];
       }
-      if (prev.length === 1 && (prev[0].text === t.en.chatWelcome || prev[0].text === t.ru.chatWelcome)) {
-        return [{ role: 'ank', text: t[lang].chatWelcome }];
+      const updated = [...prev];
+      if (updated[0] && updated[0].role === 'ank') {
+        updated[0] = { role: 'ank', text: t[lang].chatWelcome };
       }
-      return prev;
+      return updated;
     });
   }, [lang]);
 
@@ -1791,7 +1792,7 @@ export default function App() {
   const [bootStage, setBootStage] = useState<'welcome' | 'transitioning' | 'ready'>('ready');
   const [jwtToken, setJwtToken] = useState(localStorage.getItem('jwt_token') || '');
   const [isVerifying, setIsVerifying] = useState(false);
-  const APP_VERSION = "2.0.5";
+  const APP_VERSION = "2.0.4";
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [updateUrl, setUpdateUrl] = useState<string>('');
 
