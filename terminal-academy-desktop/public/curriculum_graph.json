@@ -1,0 +1,53 @@
+{
+  "nodes": [
+    { "id": "linux-1", "label": "Linux Core", "x": 100, "y": 150, "course": "linux", "nodeId": 1, "desc": "Master CLI navigation, text parsing, file permissions, and environment variables.", "deps": [] },
+    { "id": "linux-2", "label": "CLI Scripting", "x": 250, "y": 100, "course": "linux", "nodeId": 2, "desc": "Write bash automation scripts, pipes, filters, and command chaining.", "deps": ["linux-1"] },
+    { "id": "linux-3", "label": "Permissions & Sudo", "x": 250, "y": 200, "course": "linux", "nodeId": 3, "desc": "Configure sudoers, group boundaries, and standard file ownership.", "deps": ["linux-1"] },
+    
+    { "id": "net-1", "label": "SSH & Port Forwarding", "x": 420, "y": 100, "course": "network", "nodeId": 1, "desc": "Configure SSH servers, key file authenticators, and local/remote tunnel forwards.", "deps": ["linux-2"] },
+    { "id": "net-2", "label": "UFW Firewalls", "x": 580, "y": 100, "course": "network", "nodeId": 2, "desc": "Set up iptables wrappers, block IPs, and enforce network isolation.", "deps": ["net-1"] },
+    { "id": "net-3", "label": "fail2ban Intrusion Defense", "x": 740, "y": 100, "course": "network", "nodeId": 3, "desc": "Configure log jail filters, automated IP bans, and ssh brute-forcing prevention.", "deps": ["net-2"] },
+    
+    { "id": "devops-1", "label": "Docker Containers", "x": 420, "y": 280, "course": "devops", "nodeId": 1, "desc": "Run isolated namespaces, mount volume paths, and compile custom Dockerfiles.", "deps": ["linux-3"] },
+    { "id": "devops-2", "label": "Docker Compose Stack", "x": 580, "y": 280, "course": "devops", "nodeId": 2, "desc": "Orchestrate multi-tier services, depends_on order, and internal virtual networks.", "deps": ["devops-1"] },
+    { "id": "devops-3", "label": "gVisor & eBPF Security", "x": 740, "y": 280, "course": "devops", "nodeId": 3, "desc": "Isolate container syscall kernels and trace sandbox buffers via eBPF probes.", "deps": ["devops-2"] },
+
+    { "id": "host-systemd", "label": "systemd Services", "x": 250, "y": 450, "course": "hosting", "nodeId": 1, "desc": "Create systemd units, startup loops, journalctl troubleshooting, and limits.", "deps": ["linux-3"] },
+    { "id": "host-nginx", "label": "Nginx Web Server", "x": 420, "y": 450, "course": "hosting", "nodeId": 3, "desc": "Deploy static web directories, server blocks, custom ports, and headers.", "deps": ["host-systemd"] },
+    { "id": "host-proxy", "label": "Reverse Proxy & Upstreams", "x": 580, "y": 450, "course": "hosting", "nodeId": 8, "desc": "Proxy WS connections, handle upstream load balancers, and configure SSL (Certbot).", "deps": ["host-nginx"] },
+    
+    { "id": "host-db", "label": "PostgreSQL Server", "x": 420, "y": 550, "course": "hosting", "nodeId": 5, "desc": "Configure database queries, pg_hba credentials, logical dumps, and replication slots.", "deps": ["host-systemd"] },
+    { "id": "host-redis", "label": "Redis Cache & Cluster", "x": 580, "y": 550, "course": "hosting", "nodeId": 6, "desc": "Set up key eviction profiles, Sentinel failovers, and persistence snapshots.", "deps": ["host-systemd"] },
+    
+    { "id": "host-minecraft", "label": "Vanilla Java Server", "x": 740, "y": 420, "course": "hosting", "nodeId": 7, "desc": "Launch server.jar, allocate RAM, update properties, whitelist, and write launch scripts.", "deps": ["host-systemd"] },
+    { "id": "host-bedrock", "label": "Bedrock Server Edition", "x": 880, "y": 420, "course": "hosting", "nodeId": 11, "desc": "Run C++ bedrock servers, named pipes commands control, and back up worlds.", "deps": ["host-minecraft"] },
+    { "id": "host-spigot", "label": "Spigot/Paper Plugins", "x": 880, "y": 490, "course": "hosting", "nodeId": 13, "desc": "Optimize Paper configs, handle LuckPerms nodes, and install plugin integrations.", "deps": ["host-minecraft"] },
+    { "id": "host-bungee", "label": "BungeeCord Waterfall Proxy", "x": 1000, "y": 490, "course": "hosting", "nodeId": 18, "desc": "Link server mode tunnels, block backend direct scans, and balance player lobbies.", "deps": ["host-spigot"] },
+    { "id": "host-modded", "label": "Forge/Fabric Modded Server", "x": 880, "y": 350, "course": "hosting", "nodeId": 15, "desc": "Allocate modpack JVM resources, fix entity tick crashes, and manage registries.", "deps": ["host-minecraft"] },
+    
+    { "id": "host-mon", "label": "Performance logs & htop", "x": 740, "y": 550, "course": "hosting", "nodeId": 19, "desc": "Track process resource leaks, use iotop, tcpdump, and strace diagnostic systems.", "deps": ["host-systemd"] },
+    { "id": "host-cicd", "label": "CI/CD automated deployments", "x": 880, "y": 550, "course": "hosting", "nodeId": 20, "desc": "Automate server backups, write zero-downtime scripts, and configure git hooks.", "deps": ["host-mon"] }
+  ],
+  "edges": [
+    { "id": "e-linux-1-linux-2", "source": "linux-1", "target": "linux-2", "type": "smoothstep" },
+    { "id": "e-linux-1-linux-3", "source": "linux-1", "target": "linux-3", "type": "smoothstep" },
+    { "id": "e-linux-2-net-1", "source": "linux-2", "target": "net-1", "type": "smoothstep" },
+    { "id": "e-net-1-net-2", "source": "net-1", "target": "net-2", "type": "smoothstep" },
+    { "id": "e-net-2-net-3", "source": "net-2", "target": "net-3", "type": "smoothstep" },
+    { "id": "e-linux-3-devops-1", "source": "linux-3", "target": "devops-1", "type": "smoothstep" },
+    { "id": "e-devops-1-devops-2", "source": "devops-1", "target": "devops-2", "type": "smoothstep" },
+    { "id": "e-devops-2-devops-3", "source": "devops-2", "target": "devops-3", "type": "smoothstep" },
+    { "id": "e-linux-3-host-systemd", "source": "linux-3", "target": "host-systemd", "type": "smoothstep" },
+    { "id": "e-host-systemd-host-nginx", "source": "host-systemd", "target": "host-nginx", "type": "smoothstep" },
+    { "id": "e-host-nginx-host-proxy", "source": "host-nginx", "target": "host-proxy", "type": "smoothstep" },
+    { "id": "e-host-systemd-host-db", "source": "host-systemd", "target": "host-db", "type": "smoothstep" },
+    { "id": "e-host-systemd-host-redis", "source": "host-systemd", "target": "host-redis", "type": "smoothstep" },
+    { "id": "e-host-systemd-host-minecraft", "source": "host-systemd", "target": "host-minecraft", "type": "smoothstep" },
+    { "id": "e-host-minecraft-host-bedrock", "source": "host-minecraft", "target": "host-bedrock", "type": "smoothstep" },
+    { "id": "e-host-minecraft-host-spigot", "source": "host-minecraft", "target": "host-spigot", "type": "smoothstep" },
+    { "id": "e-host-spigot-host-bungee", "source": "host-spigot", "target": "host-bungee", "type": "smoothstep" },
+    { "id": "e-host-minecraft-host-modded", "source": "host-minecraft", "target": "host-modded", "type": "smoothstep" },
+    { "id": "e-host-systemd-host-mon", "source": "host-systemd", "target": "host-mon", "type": "smoothstep" },
+    { "id": "e-host-mon-host-cicd", "source": "host-mon", "target": "host-cicd", "type": "smoothstep" }
+  ]
+}

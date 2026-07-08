@@ -1021,40 +1021,6 @@ const MonitoringWidget = ({ bindDrag, lang, stats }: any) => {
   );
 };
 
-const skillTreeNodes = [
-  // --- Linux Branch ---
-  { id: 'linux-1', label: 'Linux Core', x: 100, y: 150, course: 'linux', nodeId: 1, desc: 'Master CLI navigation, text parsing, file permissions, and environment variables.', deps: [] },
-  { id: 'linux-2', label: 'CLI Scripting', x: 250, y: 100, course: 'linux', nodeId: 2, desc: 'Write bash automation scripts, pipes, filters, and command chaining.', deps: ['linux-1'] },
-  { id: 'linux-3', label: 'Permissions & Sudo', x: 250, y: 200, course: 'linux', nodeId: 3, desc: 'Configure sudoers, group boundaries, and standard file ownership.', deps: ['linux-1'] },
-  
-  // --- Networking Branch ---
-  { id: 'net-1', label: 'SSH & Port Forwarding', x: 420, y: 100, course: 'network', nodeId: 1, desc: 'Configure SSH servers, key file authenticators, and local/remote tunnel forwards.', deps: ['linux-2'] },
-  { id: 'net-2', label: 'UFW Firewalls', x: 580, y: 100, course: 'network', nodeId: 2, desc: 'Set up iptables wrappers, block IPs, and enforce network isolation.', deps: ['net-1'] },
-  { id: 'net-3', label: 'fail2ban Intrusion Defense', x: 740, y: 100, course: 'network', nodeId: 3, desc: 'Configure log jail filters, automated IP bans, and ssh brute-forcing prevention.', deps: ['net-2'] },
-  
-  // --- DevOps & Containers ---
-  { id: 'devops-1', label: 'Docker Containers', x: 420, y: 280, course: 'devops', nodeId: 1, desc: 'Run isolated namespaces, mount volume paths, and compile custom Dockerfiles.', deps: ['linux-3'] },
-  { id: 'devops-2', label: 'Docker Compose Stack', x: 580, y: 280, course: 'devops', nodeId: 2, desc: 'Orchestrate multi-tier services, depends_on order, and internal virtual networks.', deps: ['devops-1'] },
-  { id: 'devops-3', label: 'gVisor & eBPF Security', x: 740, y: 280, course: 'devops', nodeId: 3, desc: 'Isolate container syscall kernels and trace sandbox buffers via eBPF probes.', deps: ['devops-2'] },
-
-  // --- Hosting & Game Servers Branch ---
-  { id: 'host-systemd', label: 'systemd Services', x: 250, y: 450, course: 'hosting', nodeId: 1, desc: 'Create systemd units, startup loops, journalctl troubleshooting, and limits.', deps: ['linux-3'] },
-  { id: 'host-nginx', label: 'Nginx Web Server', x: 420, y: 450, course: 'hosting', nodeId: 3, desc: 'Deploy static web directories, server blocks, custom ports, and headers.', deps: ['host-systemd'] },
-  { id: 'host-proxy', label: 'Reverse Proxy & Upstreams', x: 580, y: 450, course: 'hosting', nodeId: 8, desc: 'Proxy WS connections, handle upstream load balancers, and configure SSL (Certbot).', deps: ['host-nginx'] },
-  
-  { id: 'host-db', label: 'PostgreSQL Server', x: 420, y: 550, course: 'hosting', nodeId: 5, desc: 'Configure database queries, pg_hba credentials, logical dumps, and replication slots.', deps: ['host-systemd'] },
-  { id: 'host-redis', label: 'Redis Cache & Cluster', x: 580, y: 550, course: 'hosting', nodeId: 6, desc: 'Set up key eviction profiles, Sentinel failovers, and persistence snapshots.', deps: ['host-systemd'] },
-  
-  { id: 'host-minecraft', label: 'Vanilla Java Server', x: 740, y: 420, course: 'hosting', nodeId: 7, desc: 'Launch server.jar, allocate RAM, update properties, whitelist, and write launch scripts.', deps: ['host-systemd'] },
-  { id: 'host-bedrock', label: 'Bedrock Server Edition', x: 880, y: 420, course: 'hosting', nodeId: 11, desc: 'Run C++ bedrock servers, named pipes commands control, and back up worlds.', deps: ['host-minecraft'] },
-  { id: 'host-spigot', label: 'Spigot/Paper Plugins', x: 880, y: 490, course: 'hosting', nodeId: 13, desc: 'Optimize Paper configs, handle LuckPerms nodes, and install plugin integrations.', deps: ['host-minecraft'] },
-  { id: 'host-bungee', label: 'BungeeCord Waterfall Proxy', x: 1000, y: 490, course: 'hosting', nodeId: 18, desc: 'Link server mode tunnels, block backend direct scans, and balance player lobbies.', deps: ['host-spigot'] },
-  { id: 'host-modded', label: 'Forge/Fabric Modded Server', x: 880, y: 350, course: 'hosting', nodeId: 15, desc: 'Allocate modpack JVM resources, fix entity tick crashes, and manage registries.', deps: ['host-minecraft'] },
-  
-  { id: 'host-mon', label: 'Performance logs & htop', x: 740, y: 550, course: 'hosting', nodeId: 19, desc: 'Track process resource leaks, use iotop, tcpdump, and strace diagnostic systems.', deps: ['host-systemd'] },
-  { id: 'host-cicd', label: 'CI/CD automated deployments', x: 880, y: 550, course: 'hosting', nodeId: 20, desc: 'Automate server backups, write zero-downtime scripts, and configure git hooks.', deps: ['host-mon'] }
-];
-
 const LessonWidget = ({ 
   bindDrag, 
   courses, 
@@ -1067,7 +1033,8 @@ const LessonWidget = ({
   setActiveIncident,
   lang,
   isFullscreen,
-  setFullscreen
+  setFullscreen,
+  skillTreeNodes = []
 }: any) => {
   const [expandedNodeId, setExpandedNodeId] = useState<number | null>(1);
   const [activeSkillNodeId, setActiveSkillNodeId] = useState<string>('linux-1');
@@ -1076,14 +1043,14 @@ const LessonWidget = ({
   // Sync active visual tree node with standard selection changes
   useEffect(() => {
     if (activeNode) {
-      const match = skillTreeNodes.find(n => n.course === activeCourse.id && n.nodeId === activeNode.id);
+      const match = skillTreeNodes.find((n: any) => n.course === activeCourse.id && n.nodeId === activeNode.id);
       if (match) {
         setActiveSkillNodeId(match.id);
       }
     }
   }, [activeNode, activeCourse]);
 
-  const activeNodeInfo = skillTreeNodes.find(n => n.id === activeSkillNodeId);
+  const activeNodeInfo = skillTreeNodes.find((n: any) => n.id === activeSkillNodeId);
 
   if (isFullscreen) {
     return (
@@ -1135,9 +1102,9 @@ const LessonWidget = ({
               <rect width="1080" height="650" fill="url(#skillGrid)" />
               
               {/* Connection Lines */}
-              {skillTreeNodes.map(node => {
-                return node.deps.map(depId => {
-                  const parent = skillTreeNodes.find(n => n.id === depId);
+              {skillTreeNodes.map((node: any) => {
+                return node.deps.map((depId: any) => {
+                  const parent = skillTreeNodes.find((n: any) => n.id === depId);
                   if (!parent) return null;
                   const isSelectedPath = activeSkillNodeId === node.id || activeSkillNodeId === parent.id;
                   return (
@@ -1157,7 +1124,7 @@ const LessonWidget = ({
               })}
               
               {/* Nodes */}
-              {skillTreeNodes.map(node => {
+              {skillTreeNodes.map((node: any) => {
                 const isSelected = activeSkillNodeId === node.id;
                 const isHovered = hoveredNodeId === node.id;
                 
@@ -2026,6 +1993,16 @@ export default function App() {
   const [nodes, setNodes] = useState<any[]>([]);
   const [activeNode, setActiveNode] = useState<any>(null);
   const [activeIncident, setActiveIncident] = useState<any>(null);
+  const [skillTreeNodes, setSkillTreeNodes] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/curriculum_graph.json')
+      .then(res => res.json())
+      .then(data => {
+        setSkillTreeNodes(data.nodes || []);
+      })
+      .catch(err => console.error("Error loading skill tree graph:", err));
+  }, []);
 
   // Load and parse course syllabus whenever activeCourse changes
   useEffect(() => {
@@ -2706,6 +2683,7 @@ const HudHeader = ({ zoomedOut, setZoomedOut, activeScreen, setActiveScreen, act
                   lang={lang}
                   isFullscreen={syllabusExpanded}
                   setFullscreen={setSyllabusExpanded}
+                  skillTreeNodes={skillTreeNodes}
                 />
               </FluidWindow>
  
