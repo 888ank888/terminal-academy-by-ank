@@ -1034,12 +1034,18 @@ const LessonWidget = ({
         
         <div className="fullscreen-body" style={{ flex: 1, display: 'flex', background: '#050506', position: 'relative', overflow: 'hidden' }}>
           {/* SVG Map Canvas */}
-          <div style={{ flex: 1, position: 'relative', overflow: 'auto', borderRight: '1px solid var(--border-color)' }}>
-            <svg 
-              width="1080" 
-              height="650" 
-              style={{ background: 'radial-gradient(circle at center, #08080f 0%, #030305 100%)', display: 'block' }}
+          <div style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRight: '1px solid var(--border-color)', cursor: 'grab' }}>
+            <motion.div
+              drag
+              dragConstraints={{ left: -1320, right: 0, top: -1350, bottom: 0 }}
+              dragElastic={0.15}
+              style={{ width: '2400px', height: '2000px' }}
             >
+              <svg 
+                width="2400" 
+                height="2000" 
+                style={{ background: 'radial-gradient(circle at center, #08080f 0%, #030305 100%)', display: 'block' }}
+              >
               {/* Grid Background Overlay */}
               <defs>
                 <pattern id="skillGrid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -1151,6 +1157,7 @@ const LessonWidget = ({
                 );
               })}
             </svg>
+            </motion.div>
           </div>
           
           {/* Right Side Sidebar - Interactive Lesson Panel */}
@@ -1762,9 +1769,9 @@ export default function App() {
   const [terminalEvent, setTerminalEvent] = useState<{ type: 'before' | 'after'; cmd: string; output?: string } | null>(null);
   const [defaultApiKey, setDefaultApiKey] = useState('');
   const [bootStage, setBootStage] = useState<'welcome' | 'transitioning' | 'ready'>('ready');
-  const [jwtToken, setJwtToken] = useState(localStorage.getItem('jwt_token') || '');
+  const [jwtToken, setJwtToken] = useState(localStorage.getItem('jwt_token') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2cGNfdmVyaWZpZWQiOnRydWUsInVzZXIiOiJzdHVkZW50In0.mock_signature');
   const [isVerifying, setIsVerifying] = useState(false);
-  const APP_VERSION = "2.0.4";
+  const APP_VERSION = "2.1.0";
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [updateUrl, setUpdateUrl] = useState<string>('');
 

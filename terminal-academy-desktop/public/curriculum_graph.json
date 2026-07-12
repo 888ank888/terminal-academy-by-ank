@@ -19,14 +19,29 @@
     { "id": "host-db", "label": "PostgreSQL Server", "x": 420, "y": 550, "course": "hosting", "nodeId": 5, "desc": "Configure database queries, pg_hba credentials, logical dumps, and replication slots.", "deps": ["host-systemd"] },
     { "id": "host-redis", "label": "Redis Cache & Cluster", "x": 580, "y": 550, "course": "hosting", "nodeId": 6, "desc": "Set up key eviction profiles, Sentinel failovers, and persistence snapshots.", "deps": ["host-systemd"] },
     
-    { "id": "host-minecraft", "label": "Vanilla Java Server", "x": 740, "y": 420, "course": "hosting", "nodeId": 7, "desc": "Launch server.jar, allocate RAM, update properties, whitelist, and write launch scripts.", "deps": ["host-systemd"] },
-    { "id": "host-bedrock", "label": "Bedrock Server Edition", "x": 880, "y": 420, "course": "hosting", "nodeId": 11, "desc": "Run C++ bedrock servers, named pipes commands control, and back up worlds.", "deps": ["host-minecraft"] },
-    { "id": "host-spigot", "label": "Spigot/Paper Plugins", "x": 880, "y": 490, "course": "hosting", "nodeId": 13, "desc": "Optimize Paper configs, handle LuckPerms nodes, and install plugin integrations.", "deps": ["host-minecraft"] },
-    { "id": "host-bungee", "label": "BungeeCord Waterfall Proxy", "x": 1000, "y": 490, "course": "hosting", "nodeId": 18, "desc": "Link server mode tunnels, block backend direct scans, and balance player lobbies.", "deps": ["host-spigot"] },
-    { "id": "host-modded", "label": "Forge/Fabric Modded Server", "x": 880, "y": 350, "course": "hosting", "nodeId": 15, "desc": "Allocate modpack JVM resources, fix entity tick crashes, and manage registries.", "deps": ["host-minecraft"] },
+    { "id": "host-minecraft", "label": "Vanilla Java Server", "x": 760, "y": 420, "course": "hosting", "nodeId": 7, "desc": "Launch server.jar, allocate RAM, update properties, whitelist, and write launch scripts.", "deps": ["host-systemd"] },
+    { "id": "host-bedrock", "label": "Bedrock Server Edition", "x": 940, "y": 380, "course": "hosting", "nodeId": 11, "desc": "Run C++ bedrock servers, named pipes commands control, and back up worlds.", "deps": ["host-minecraft"] },
+    { "id": "host-spigot", "label": "Spigot/Paper Plugins", "x": 940, "y": 460, "course": "hosting", "nodeId": 13, "desc": "Optimize Paper configs, handle LuckPerms nodes, and install plugin integrations.", "deps": ["host-minecraft"] },
+    { "id": "host-bungee", "label": "BungeeCord Waterfall Proxy", "x": 1120, "y": 460, "course": "hosting", "nodeId": 18, "desc": "Link server mode tunnels, block backend direct scans, and balance player lobbies.", "deps": ["host-spigot"] },
+    { "id": "host-modded", "label": "Forge/Fabric Modded Server", "x": 940, "y": 300, "course": "hosting", "nodeId": 15, "desc": "Allocate modpack JVM resources, fix entity tick crashes, and manage registries.", "deps": ["host-minecraft"] },
     
-    { "id": "host-mon", "label": "Performance logs & htop", "x": 740, "y": 550, "course": "hosting", "nodeId": 19, "desc": "Track process resource leaks, use iotop, tcpdump, and strace diagnostic systems.", "deps": ["host-systemd"] },
-    { "id": "host-cicd", "label": "CI/CD automated deployments", "x": 880, "y": 550, "course": "hosting", "nodeId": 20, "desc": "Automate server backups, write zero-downtime scripts, and configure git hooks.", "deps": ["host-mon"] }
+    { "id": "host-mon", "label": "Performance logs & htop", "x": 760, "y": 560, "course": "hosting", "nodeId": 19, "desc": "Track process resource leaks, use iotop, tcpdump, and strace diagnostic systems.", "deps": ["host-systemd"] },
+    { "id": "host-cicd", "label": "CI/CD automated deployments", "x": 940, "y": 560, "course": "hosting", "nodeId": 20, "desc": "Automate server backups, write zero-downtime scripts, and configure git hooks.", "deps": ["host-mon"] },
+
+    { "id": "git-1", "label": "Git Local Control", "x": 200, "y": 1200, "course": "hosting", "nodeId": 21, "desc": "Initialize local repositories, track index changes, commit trees, and review logs.", "deps": ["host-cicd"] },
+    { "id": "git-2", "label": "Remote Git Remotes", "x": 200, "y": 1350, "course": "hosting", "nodeId": 22, "desc": "Configure ssh authentication keys, map remote upstream origins, pull branch changes, and push updates.", "deps": ["git-1"] },
+    { "id": "git-3", "label": "Conflict Resolutions", "x": 200, "y": 1500, "course": "hosting", "nodeId": 23, "desc": "Handle simultaneous merge conflicts, perform clean interactive rebase operations, and inspect cherry-pick commits.", "deps": ["git-2"] },
+    { "id": "git-4", "label": "Production Git Hooks", "x": 200, "y": 1650, "course": "hosting", "nodeId": 24, "desc": "Deploy post-receive hooks, pre-commit validation tests, and automate bare repos triggers.", "deps": ["git-3"] },
+
+    { "id": "log-1", "label": "Syslog & System Logs", "x": 400, "y": 1200, "course": "hosting", "nodeId": 25, "desc": "Manage configuration routes for rsyslog, query active system streams, and debug crash outputs.", "deps": ["host-mon"] },
+    { "id": "log-2", "label": "Log Rotation Policies", "x": 400, "y": 1350, "course": "hosting", "nodeId": 26, "desc": "Implement custom logrotate rules, set compress schedules, and vacuum systemd files.", "deps": ["log-1"] },
+    { "id": "log-3", "label": "Grafana Loki Logs", "x": 400, "y": 1500, "course": "hosting", "nodeId": 27, "desc": "Deploy Promtail daemon configurations, parse log formats, and index labels.", "deps": ["log-2"] },
+    { "id": "log-4", "label": "Log Analysis Aggregators", "x": 400, "y": 1650, "course": "hosting", "nodeId": 28, "desc": "Configure logstash streams, format inputs, and output reports.", "deps": ["log-3"] },
+
+    { "id": "hard-1", "label": "Disk File Systems", "x": 600, "y": 1200, "course": "hosting", "nodeId": 29, "desc": "Format ext4 partitions, query UUID mount tables, and manage fstab mounts.", "deps": ["linux-3"] },
+    { "id": "hard-2", "label": "Logical Volume LVM", "x": 600, "y": 1350, "course": "hosting", "nodeId": 30, "desc": "Allocate physical volumes, pool virtual groups, and dynamically resize logical partition structures.", "deps": ["hard-1"] },
+    { "id": "hard-3", "label": "RAID Array Storage", "x": 600, "y": 1500, "course": "hosting", "nodeId": 31, "desc": "Build RAID-1 mirror configurations, handle hot-plug drives, and query array statuses.", "deps": ["hard-2"] },
+    { "id": "hard-4", "label": "Linux Kernel Tuning", "x": 600, "y": 1650, "course": "hosting", "nodeId": 32, "desc": "Tune sysctl parameters, control network buffers, and tweak swapiness allocations.", "deps": ["hard-3"] }
   ],
   "edges": [
     { "id": "e-linux-1-linux-2", "source": "linux-1", "target": "linux-2", "type": "smoothstep" },
@@ -48,6 +63,21 @@
     { "id": "e-host-spigot-host-bungee", "source": "host-spigot", "target": "host-bungee", "type": "smoothstep" },
     { "id": "e-host-minecraft-host-modded", "source": "host-minecraft", "target": "host-modded", "type": "smoothstep" },
     { "id": "e-host-systemd-host-mon", "source": "host-systemd", "target": "host-mon", "type": "smoothstep" },
-    { "id": "e-host-mon-host-cicd", "source": "host-mon", "target": "host-cicd", "type": "smoothstep" }
+    { "id": "e-host-mon-host-cicd", "source": "host-mon", "target": "host-cicd", "type": "smoothstep" },
+
+    { "id": "e-host-cicd-git-1", "source": "host-cicd", "target": "git-1", "type": "smoothstep" },
+    { "id": "e-git-1-git-2", "source": "git-1", "target": "git-2", "type": "smoothstep" },
+    { "id": "e-git-2-git-3", "source": "git-2", "target": "git-3", "type": "smoothstep" },
+    { "id": "e-git-3-git-4", "source": "git-3", "target": "git-4", "type": "smoothstep" },
+
+    { "id": "e-host-mon-log-1", "source": "host-mon", "target": "log-1", "type": "smoothstep" },
+    { "id": "e-log-1-log-2", "source": "log-1", "target": "log-2", "type": "smoothstep" },
+    { "id": "e-log-2-log-3", "source": "log-2", "target": "log-3", "type": "smoothstep" },
+    { "id": "e-log-3-log-4", "source": "log-3", "target": "log-4", "type": "smoothstep" },
+
+    { "id": "e-linux-3-hard-1", "source": "linux-3", "target": "hard-1", "type": "smoothstep" },
+    { "id": "e-hard-1-hard-2", "source": "hard-1", "target": "hard-2", "type": "smoothstep" },
+    { "id": "e-hard-2-hard-3", "source": "hard-2", "target": "hard-3", "type": "smoothstep" },
+    { "id": "e-hard-3-hard-4", "source": "hard-3", "target": "hard-4", "type": "smoothstep" }
   ]
 }
