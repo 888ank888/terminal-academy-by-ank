@@ -4,7 +4,7 @@ An international, systems-first educational platform teaching real-world Linux a
 
 ---
 
-### **v2.1.0 (Minor Feature Release)**
+### **v2.1.1 (Patch Release)**
 
 `t//a` features an ultra-lightweight cross-platform client compile using **Tauri v2** and Rust, resulting in an exceptionally small installer footprint compared to resource-heavy Electron alternatives:
 * **macOS DMG Installer:** ~6 MB

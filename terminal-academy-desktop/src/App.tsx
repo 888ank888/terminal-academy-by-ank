@@ -1771,7 +1771,7 @@ export default function App() {
   const [bootStage, setBootStage] = useState<'welcome' | 'transitioning' | 'ready'>('ready');
   const [jwtToken, setJwtToken] = useState(localStorage.getItem('jwt_token') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2cGNfdmVyaWZpZWQiOnRydWUsInVzZXIiOiJzdHVkZW50In0.mock_signature');
   const [isVerifying, setIsVerifying] = useState(false);
-  const APP_VERSION = "2.1.0";
+  const APP_VERSION = "2.1.1";
   const [updateAvailable, setUpdateAvailable] = useState<string | null>(null);
   const [updateUrl, setUpdateUrl] = useState<string>('');
 
