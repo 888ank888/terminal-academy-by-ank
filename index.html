@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Academy</title>
+    <meta name="description" content="A terminal-based EdTech platform for systems thinking and Linux.">
+    
+    <!-- Web App / Home Screen settings -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="t // a">
+    <meta name="application-name" content="t // a">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" href="./assets/app-icon-CDNXivow.png?v=2">
+    <link rel="apple-touch-icon" href="./assets/app-icon-CDNXivow.png?v=2">
+    <!-- Styles -->
+  <script type="module" crossorigin src="./assets/index-BdlmZu1s.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-C9p_xliM.css">
+</head>
+<body>
+    <div class="glow-bg"></div>
+    <div class="glow-bg glow-bg-2"></div>
+    <canvas id="network-canvas"></canvas>
+    
+    <nav class="navbar reveal-down">
+        <div class="container nav-content">
+            <div class="logo">
+                <img src="data:image/svg+xml,%3csvg%20viewBox='0%200%20512%20512'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3e%3crect%20x='0.5'%20y='0.5'%20width='511'%20height='511'%20rx='89.5'%20stroke='black'/%3e%3cpath%20d='M128.135%20343C120.635%20343%20114.635%20340.75%20110.135%20336.25C105.801%20331.75%20103.635%20325.75%20103.635%20318.25V241.5H69.6348V219.75H103.635V179H129.385V219.75H166.135V241.5H129.385V313.75C129.385%20318.75%20131.718%20321.25%20136.385%20321.25H162.135V343H128.135ZM362.078%20346.5C353.245%20346.5%20345.328%20345%20338.328%20342C331.495%20339%20325.995%20334.583%20321.828%20328.75C317.828%20322.917%20315.828%20315.833%20315.828%20307.5C315.828%20299%20317.828%20292%20321.828%20286.5C325.995%20280.833%20331.578%20276.583%20338.578%20273.75C345.745%20270.917%20353.828%20269.5%20362.828%20269.5H400.328V261.5C400.328%20254.333%20398.161%20248.583%20393.828%20244.25C389.495%20239.917%20382.828%20237.75%20373.828%20237.75C364.995%20237.75%20358.245%20239.833%20353.578%20244C348.911%20248.167%20345.828%20253.583%20344.328%20260.25L320.328%20252.5C322.328%20245.833%20325.495%20239.833%20329.828%20234.5C334.328%20229%20340.245%20224.583%20347.578%20221.25C354.911%20217.917%20363.745%20216.25%20374.078%20216.25C390.078%20216.25%20402.661%20220.333%20411.828%20228.5C420.995%20236.667%20425.578%20248.25%20425.578%20263.25V314C425.578%20319%20427.911%20321.5%20432.578%20321.5H443.078V343H423.828C417.995%20343%20413.245%20341.5%20409.578%20338.5C405.911%20335.5%20404.078%20331.417%20404.078%20326.25V325.5H400.328C398.995%20328%20396.995%20330.917%20394.328%20334.25C391.661%20337.583%20387.745%20340.5%20382.578%20343C377.411%20345.333%20370.578%20346.5%20362.078%20346.5ZM365.828%20325.25C376.161%20325.25%20384.495%20322.333%20390.828%20316.5C397.161%20310.5%20400.328%20302.333%20400.328%20292V289.5H364.328C357.495%20289.5%20351.995%20291%20347.828%20294C343.661%20296.833%20341.578%20301.083%20341.578%20306.75C341.578%20312.417%20343.745%20316.917%20348.078%20320.25C352.411%20323.583%20358.328%20325.25%20365.828%20325.25Z'%20fill='%23FF5500'/%3e%3cpath%20d='M174.8%20381L255.65%20133.5H283.975L203.125%20381H174.8Z'%20fill='%23FF5500'/%3e%3cpath%20d='M226.8%20381L307.65%20133.5H335.975L255.125%20381H226.8Z'%20fill='%23FF5500'/%3e%3c/svg%3e" alt="terminal academy Logo" class="brand-logo">
+                terminal // academy
+            </div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#demo">Curriculum</a>
+                <button id="theme-toggle" class="btn btn-secondary theme-toggle-btn" aria-label="Toggle Theme" style="display: flex; align-items: center; justify-content: center;">
+                    <svg id="theme-icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg id="theme-icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+                <a href="https://github.com/888ank888/terminal-academy-by-ank" target="_blank" class="btn btn-secondary">View Repo</a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <section class="hero container">
+            <div class="hero-content reveal-up">
+                <div class="badge">v2.1.1 released 🚀</div>
+                <h1 class="hero-title">
+                    Don't play with blocks.<br>
+                    <span class="gradient-text">Build real systems.</span>
+                </h1>
+                <p class="hero-subtitle">
+                    A zero-dependency, pure-terminal learning platform for teens. Master Linux, DevOps, and systems thinking with an AI mentor that forces you to figure it out.
+                </p>
+                <div class="hero-actions" style="margin-bottom: 24px;">
+                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
+                        <a id="osDownloadBtn" href="#" class="btn btn-primary">
+                            <span>Download Desktop App</span>
+                        </a>
+                        <select id="osSelector" class="os-selector" onchange="handleManualOSSelect()">
+                            <option value="macOS Apple Silicon">macOS (M1/M2/M3/M4)</option>
+                            <option value="macOS Intel">macOS (Intel)</option>
+                            <option value="Windows x64">Windows (MSI)</option>
+                            <option value="Linux deb">Linux (DEB)</option>
+                            <option value="Linux AppImage">Linux (AppImage)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="stats-row reveal-up" style="--delay: 200ms;">
+                    <div class="stat-item">
+                        <div class="stat-value"><span class="count-up" data-val="100">0</span>%</div>
+                        <div class="stat-label">Terminal Native</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value"><span class="count-up" data-val="5">0</span></div>
+                        <div class="stat-label">Mission Modules</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value"><span class="count-up" data-val="0">1</span></div>
+                        <div class="stat-label">External Dependencies</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-visual reveal-up" style="--delay: 400ms;" id="demo">
+                <div class="terminal-mockup">
+                    <div class="terminal-header">
+                        <div class="terminal-dots">
+                            <span class="dot close"></span>
+                            <span class="dot min"></span>
+                            <span class="dot max"></span>
+                        </div>
+                        <div class="terminal-title">ank@ai-mentor ~</div>
+                    </div>
+                    <div class="terminal-body" id="typewriter-container">
+                        <!-- JS infinite scrolling log injected here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Infinite Marquee -->
+        <div class="marquee-container">
+            <div class="marquee-content">
+                <!-- Double content for seamless looping -->
+                <span class="marquee-item">* LINUX</span>
+                <span class="marquee-item">* DEVOPS</span>
+                <span class="marquee-item">* SECURITY</span>
+                <span class="marquee-item">* DOCKER</span>
+                <span class="marquee-item">* FIREWALLS</span>
+                <span class="marquee-item">* BASH</span>
+                <span class="marquee-item">* LINUX</span>
+                <span class="marquee-item">* DEVOPS</span>
+                <span class="marquee-item">* SECURITY</span>
+                <span class="marquee-item">* DOCKER</span>
+                <span class="marquee-item">* FIREWALLS</span>
+                <span class="marquee-item">* BASH</span>
+            </div>
+        </div>
+
+        <section id="features" class="features container">
+            <h2 class="section-title reveal-up">Why Terminal Academy?</h2>
+            <div class="features-grid">
+                <div class="feature-card reveal-up" style="--delay: 0.1s">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
+                    <h3>Sandboxed Environments</h3>
+                    <p>Every session runs in isolated Alpine Linux containers built directly into the core engine. You have complete freedom to explore network configurations, manage system processes, and deliberately break the OS without risking your host machine. True engineering requires a safe place to fail.</p>
+                </div>
+                <div class="feature-card reveal-up" style="--delay: 0.2s">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+                    <h3>AI Mentor</h3>
+                    <p>Ank operates as your dedicated Mission Controller. Instead of tedious tutorials, you execute scenario-based Incidents. Ank tracks your live terminal state automatically, meaning you rarely have to explain what you're doing—he just knows. He guides you, validates your solutions, and rewards you upon completion.</p>
+                </div>
+                <div class="feature-card reveal-up" style="--delay: 0.3s">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></div>
+                    <h3>4-Screen Workspace</h3>
+                    <p>Your entire workspace is organized across 4 dedicated panels: Terminal, AI Mentor Chat, Command Grimoire, and System Monitoring. Zoom out to see the full overview, scroll to snap into any individual screen with pixel-perfect fluid physics.</p>
+                </div>
+                <div class="feature-card reveal-up" style="--delay: 0.4s">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg></div>
+                    <h3>Interactive Branching Skill Tree</h3>
+                    <p>Ditch linear learning paths. Visualize your career across an interconnected 20-Node Skill Tree. Unlock advanced branches from Linux Core to Networking, Docker container compose stacks, and game servers deployment hosting.</p>
+                </div>
+                <div class="feature-card reveal-up" style="--delay: 0.5s">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg></div>
+                    <h3>File Systems & VFS</h3>
+                    <p>Go deeper than "folders and files." Understand inodes, hard links, mount points, and permissions. Learn exactly what happens at the kernel level when you execute an rm command.</p>
+                </div>
+                <div class="feature-card reveal-up" style="--delay: 0.6s">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg></div>
+                    <h3>Process Management</h3>
+                    <p>Control the CPU. Learn to use tools like top, ps, and kill. Understand process trees, signals, daemonization, and how to background and foreground jobs like a true power user.</p>
+                </div>
+                <div class="feature-card reveal-up" style="--delay: 0.7s">
+                    <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
+                    <h3>Shell Scripting</h3>
+                    <p>Stop doing manual work. Write bash scripts that automate server setup, parse logs, and deploy applications. Learn loops, conditions, and stream manipulation with awk and sed.</p>
+                </div>
+            </div>
+    </main>
+
+    <footer class="footer container">
+        <div class="footer-content">
+            <p>© 2026 Terminal Academy. Building real engineers.</p>
+        </div>
+    </footer>
+
+    <script>
+        // OS Detection and Dynamic Download configuration for Desktop
+        const defaultVersion = "2.1.1"; // Default fallback
+        const downloadPaths = {
+            "macOS Apple Silicon": `https://github.com/888ank888/terminal-academy-by-ank/releases/download/v${defaultVersion}/terminal-academy_${defaultVersion}_universal.dmg`,
+            "macOS Intel": `https://github.com/888ank888/terminal-academy-by-ank/releases/download/v${defaultVersion}/terminal-academy_${defaultVersion}_universal.dmg`,
+            "Windows x64": `https://github.com/888ank888/terminal-academy-by-ank/releases/download/v${defaultVersion}/terminal-academy_${defaultVersion}_x64_en-US.msi`,
+            "Linux deb": `https://github.com/888ank888/terminal-academy-by-ank/releases/download/v${defaultVersion}/terminal-academy_${defaultVersion}_amd64.deb`,
+            "Linux AppImage": `https://github.com/888ank888/terminal-academy-by-ank/releases/download/v${defaultVersion}/terminal-academy_${defaultVersion}_amd64.AppImage`
+        };
+
+        // Query the latest release dynamically
+        fetch("https://api.github.com/repos/888ank888/terminal-academy-by-ank/releases/latest")
+            .then(res => res.json())
+            .then(data => {
+                const tag = data.tag_name;
+                if (tag) {
+                    const ver = tag.replace("v", "");
+                    const baseUrl = `https://github.com/888ank888/terminal-academy-by-ank/releases/download/${tag}`;
+                    
+                    downloadPaths["macOS Apple Silicon"] = `${baseUrl}/terminal-academy_${ver}_universal.dmg`;
+                    downloadPaths["macOS Intel"] = `${baseUrl}/terminal-academy_${ver}_universal.dmg`;
+                    downloadPaths["Windows x64"] = `${baseUrl}/terminal-academy_${ver}_x64_en-US.msi`;
+                    downloadPaths["Linux deb"] = `${baseUrl}/terminal-academy_${ver}_amd64.deb`;
+                    downloadPaths["Linux AppImage"] = `${baseUrl}/terminal-academy_${ver}_amd64.AppImage`;
+                    
+                    runOSDetection();
+                }
+            })
+            .catch(err => console.error("Error fetching latest release:", err));
+
+        function runOSDetection() {
+            const userAgent = window.navigator.userAgent.toLowerCase();
+            const downloadBtn = document.getElementById('osDownloadBtn');
+            const selector = document.getElementById('osSelector');
+            if (!downloadBtn) return;
+            const spanText = downloadBtn.querySelector('span');
+
+            // Detect mobile devices first and block downloads
+            const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+            if (isMobile) {
+                downloadBtn.href = "#";
+                downloadBtn.style.opacity = "0.5";
+                downloadBtn.style.cursor = "not-allowed";
+                downloadBtn.style.pointerEvents = "none";
+                spanText.textContent = "DESKTOP APPLICATION ONLY";
+                if (selector) selector.style.display = "none";
+                return;
+            }
+
+            let detectedOS = "macOS Apple Silicon"; // default fallback
+            let label = "DOWNLOAD FOR MACOS (M1/M2/M3/M4)";
+
+            if (userAgent.indexOf("win") !== -1) {
+                detectedOS = "Windows x64";
+                label = "DOWNLOAD FOR WINDOWS (MSI)";
+            } else if (userAgent.indexOf("mac") !== -1) {
+                let isAppleSilicon = true;
+                try {
+                    const canvas = document.createElement("canvas");
+                    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+                    if (gl) {
+                        const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+                        if (debugInfo) {
+                            const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_VENDOR_ID || 0x9245) || "";
+                            if (renderer.toLowerCase().indexOf("intel") !== -1 || renderer.toLowerCase().indexOf("amd") !== -1 || renderer.toLowerCase().indexOf("nvidia") !== -1) {
+                                isAppleSilicon = false;
+                            }
+                        }
+                    }
+                } catch (e) {}
+
+                if (isAppleSilicon) {
+                    detectedOS = "macOS Apple Silicon";
+                    label = "DOWNLOAD FOR MACOS (M1/M2/M3/M4)";
+                } else {
+                    detectedOS = "macOS Intel";
+                    label = "DOWNLOAD FOR MACOS (INTEL)";
+                }
+            } else if (userAgent.indexOf("linux") !== -1) {
+                detectedOS = "Linux deb";
+                label = "DOWNLOAD FOR LINUX (DEB)";
+            }
+
+            downloadBtn.href = downloadPaths[detectedOS] || "https://github.com/888ank888/terminal-academy-by-ank/releases";
+            spanText.textContent = label;
+            if (selector) selector.value = detectedOS;
+        }
+
+        window.handleManualOSSelect = function() {
+            const selector = document.getElementById('osSelector');
+            const downloadBtn = document.getElementById('osDownloadBtn');
+            if (!selector || !downloadBtn) return;
+            const selectedVal = selector.value;
+            if (downloadPaths[selectedVal]) {
+                downloadBtn.href = downloadPaths[selectedVal];
+                downloadBtn.querySelector('span').textContent = `DOWNLOAD FOR ${selectedVal.toUpperCase()}`;
+            }
+        };
+
+        // Run OS detection on load
+        runOSDetection();
+    </script>
+</body>
+</html>
