@@ -38,7 +38,7 @@
         <!-- Hero Section -->
         <section class="hero-section" id="hero">
             <h1 class="glitch-title">SCALE YOUR ENGINEERING TEAM</h1>
-            <p class="sub-label">A high-fidelity retro-digital training system for future systems engineers.</p>
+            <p class="sub-label">A high-performance desktop sandbox with Figma-style draggable roadmap maps, instant terminal provisioning, and private DevOps simulations.</p>
             
             <!-- Dynamic OS Download Button -->
             <div class="download-container" style="margin: 1.5rem auto 2.5rem auto; display: flex; flex-direction: column; align-items: center; gap: 0.8rem; z-index: 10; max-width: 480px;">
@@ -134,7 +134,7 @@
                 <hr class="pixel-divider">
                 <div class="role-line">
                     <h2>FRONTEND ENGINEERING</h2>
-                    <span class="tags">REACT // TAURI // DESKTOP v2.0.0</span>
+                    <span class="tags">REACT // TAURI // DESKTOP v2.1.0</span>
                 </div>
                 <hr class="pixel-divider">
                 <div class="role-line">
@@ -220,7 +220,7 @@
                         <span>GitHub</span>
                     </a>
                 </div>
-                <div class="footer-meta">NODE: ACTIVE // SEC_STREAM: SECURE // VER: 2026.07.01</div>
+                <div class="footer-meta">NODE: ACTIVE // SEC_STREAM: SECURE // VER: 2.1.0</div>
             </div>
         </footer>
     </div>
@@ -250,28 +250,6 @@
                 <button class="form-submit-btn" style="width: auto; padding: 0.4rem 0.8rem; font-size: 0.9rem; font-weight: bold; margin-left: 10px;" onclick="copyToken()">COPY</button>
             </div>
             <button class="form-submit-btn" style="width: auto; padding: 0.8rem 1.6rem;" onclick="closeTokenModal()">Return to Console</button>
-        </div>
-    </div>
-
-    <!-- KWS Parental Verification Modal Overlay -->
-    <div class="overlay" id="kwsOverlay">
-        <div class="modal" style="max-width: 480px;">
-            <div class="modal-icon" style="color: var(--color-amber); border-color: var(--color-amber);">⚠</div>
-            <h3 class="modal-title">KWS PARENT_GRAPH GATE</h3>
-            <p class="modal-desc">
-                [COPPA PROTOCOL] Users aged 12-16 require parental authorization. Enter a parent/guardian email to request credentials via Kids Web Services:
-            </p>
-            <form id="kwsForm" style="width: 100%; display: flex; flex-direction: column; gap: 1rem;">
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label" for="parentEmail">Parent/Guardian Email Address</label>
-                    <input class="form-control" type="email" id="parentEmail" placeholder="ENTER PARENT EMAIL" required>
-                </div>
-                <button type="submit" class="form-submit-btn" style="background: var(--color-amber); box-shadow: 0 0 12px rgba(255, 153, 0, 0.3);">
-                    <span>AUTHORIZE VIA KWS</span>
-                    <span class="submit-arrow">-&gt;</span>
-                </button>
-            </form>
-            <button class="form-submit-btn" style="width: auto; padding: 0.6rem 1.2rem; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); box-shadow: none;" onclick="closeKwsModal()">Cancel</button>
         </div>
     </div>
 
@@ -313,9 +291,6 @@
         const formStatus = document.getElementById('formStatus');
         const successOverlay = document.getElementById('successOverlay');
 
-        let isParentVerified = false;
-        let pendingWaitlistPayload = null;
-
         waitlistForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -327,15 +302,6 @@
             if (!email && !discord) {
                 formStatus.style.color = 'var(--color-red)';
                 formStatus.textContent = '> ERR: At least Email or Discord must be filled.';
-                return;
-            }
-
-            // Check COPPA constraint for users aged 12-16
-            if (age >= 12 && age <= 16 && !isParentVerified) {
-                pendingWaitlistPayload = { email, discord, age, primaryOS };
-                document.getElementById('kwsOverlay').classList.add('active');
-                formStatus.style.color = 'var(--color-amber)';
-                formStatus.textContent = '> KWS parental verification challenge pending...';
                 return;
             }
 
@@ -375,43 +341,6 @@
                     }
                 }
             }, 1000);
-        }
-
-        // KWS Parental Verification submit listener
-        const kwsForm = document.getElementById('kwsForm');
-        kwsForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const parentEmail = document.getElementById('parentEmail').value.trim();
-            const kwsSubmitBtn = kwsForm.querySelector('button[type="submit"]');
-            kwsSubmitBtn.disabled = true;
-            kwsSubmitBtn.querySelector('span').textContent = 'VERIFYING PARENT GRAPH...';
-
-            // Simulate Kids Web Services ParentGraph verification handshake
-            setTimeout(() => {
-                isParentVerified = true;
-                kwsSubmitBtn.disabled = false;
-                kwsSubmitBtn.querySelector('span').textContent = 'AUTHORIZE VIA KWS';
-                document.getElementById('kwsOverlay').classList.remove('active');
-                
-                if (pendingWaitlistPayload) {
-                    formStatus.style.color = 'var(--color-green)';
-                    formStatus.textContent = '> KWS consent token registered. Resuming deployment...';
-                    submitWaitlist(
-                        pendingWaitlistPayload.email,
-                        pendingWaitlistPayload.discord,
-                        pendingWaitlistPayload.age,
-                        pendingWaitlistPayload.primaryOS
-                    );
-                    pendingWaitlistPayload = null;
-                }
-            }, 1200);
-        });
-
-        window.closeKwsModal = function() {
-            document.getElementById('kwsOverlay').classList.remove('active');
-            formStatus.style.color = 'var(--color-red)';
-            formStatus.textContent = '> ERR: Parental authorization cancelled.';
-            pendingWaitlistPayload = null;
         }
 
         function showSuccess() {
@@ -507,13 +436,13 @@
         };
 
         // OS Detection and Dynamic Download configuration
-        const repoReleases = "https://github.com/888ank888/terminal-academy-by-ank/releases/latest/download";
+        const repoReleases = "https://github.com/888ank888/terminal-academy-by-ank/releases/download/v2.1.0";
         const downloadPaths = {
-            "macOS Apple Silicon": `${repoReleases}/terminal-academy_aarch64.dmg`,
-            "macOS Intel": `${repoReleases}/terminal-academy_x64.dmg`,
-            "Windows x64": `${repoReleases}/terminal-academy_x64_en-US.msi`,
-            "Linux deb": `${repoReleases}/terminal-academy_amd64.deb`,
-            "Linux AppImage": `${repoReleases}/terminal-academy_amd64.AppImage`
+            "macOS Apple Silicon": `${repoReleases}/terminal-academy_2.1.0_universal.dmg`,
+            "macOS Intel": `${repoReleases}/terminal-academy_2.1.0_universal.dmg`,
+            "Windows x64": `${repoReleases}/terminal-academy_2.1.0_x64_en-US.msi`,
+            "Linux deb": `${repoReleases}/terminal-academy_2.1.0_amd64.deb`,
+            "Linux AppImage": `${repoReleases}/terminal-academy_2.1.0_amd64.AppImage`
         };
 
         function detectOS() {
