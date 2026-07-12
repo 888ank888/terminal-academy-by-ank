@@ -58,7 +58,7 @@
     <main>
         <section class="hero container">
             <div class="hero-content reveal-up">
-                <div class="badge">v2.0.0 released 🚀</div>
+                <div class="badge">v2.1.0 released 🚀</div>
                 <h1 class="hero-title">
                     Don't play with blocks.<br>
                     <span class="gradient-text">Build real systems.</span>
@@ -196,7 +196,7 @@
                 <summary style="font-size: 0.9rem; font-weight: 600; color: var(--accent-primary); outline: none; user-select: none;">Privacy Policy & Pedagogical Safeguards</summary>
                 <div style="font-size: 0.8rem; color: #94a3b8; line-height: 1.6; padding: 10px 0; border-top: 1px solid rgba(255,255,255,0.05); cursor: default;">
                     <p style="margin-bottom: 8px;"><strong>1. Interactive Safeguards (Explanation Gate):</strong> The platform incorporates an automated "Explanation Gate" (formally classified as a Pedagogical Safeguard). This system monitors command submissions to ensure students explain the conceptual mechanics of critical operations (e.g. permission modifications, network rules). This gate is strictly an educational tool to verify operational logic and is not used for behavioral profiling, marketing, or dark-pattern analytics.</p>
-                    <p style="margin-bottom: 8px;"><strong>2. Identity Verification:</strong> Outbound platform access requires age and identity validation using verified third-party identity management providers (Yoti/KWS SDK). Identity validation is performed to satisfy US/CA child privacy and online safety regulations. No raw government documents or personal identifiers are stored or held within our local databases.</p>
+                    <p style="margin-bottom: 8px;"><strong>2. Identity Verification:</strong> Outbound platform access uses offline-first developer mode authentication. Local docker execution requires no remote identification tokens or private personal data to be shared.</p>
                 </div>
             </details>
         </section>
@@ -212,7 +212,7 @@
     <script type="module" src="script.js?v=2"></script>
     <script>
         // OS Detection and Dynamic Download configuration for Desktop
-        const defaultVersion = "1.1.0"; // Default fallback
+        const defaultVersion = "2.1.0"; // Default fallback
         const downloadPaths = {
             "macOS Apple Silicon": `https://github.com/888ank888/terminal-academy-by-ank/releases/download/v${defaultVersion}/terminal-academy_${defaultVersion}_universal.dmg`,
             "macOS Intel": `https://github.com/888ank888/terminal-academy-by-ank/releases/download/v${defaultVersion}/terminal-academy_${defaultVersion}_universal.dmg`,
