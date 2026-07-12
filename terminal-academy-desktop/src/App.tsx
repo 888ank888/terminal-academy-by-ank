@@ -377,9 +377,7 @@ const ChatWidget = ({ bindDrag, activeCourse, activeNode, activeIncident, lang, 
   const lastQueryTimeRef = useRef<number>(0);
   const activeApiKey = apiKey || defaultApiKey;
   
-  // Bypass noUnusedLocals TS checks
-  const _unused = { bindDrag, activeCourse, activeNode, activeIncident, terminalBuffer, systemStats };
-  if (false as any) console.log(_unused);
+
 
   useEffect(() => {
     if (explainCommand) {
@@ -728,50 +726,22 @@ CRITICAL RULES:
       .trim();
   };
 
+  // Bypass noUnusedLocals TS checks
+  const _unused = { bindDrag, activeCourse, activeNode, activeIncident, terminalBuffer, systemStats, showSettings, setShowSettings, apiKey, setApiKey, saveKey, activeApiKey };
+  if (false as any) console.log(_unused);
+
   return (
     <div className="widget-content">
       <div className="widget-header chat-header" {...(bindDrag ? bindDrag() : {})}>
-        <div className="title" style={{ touchAction: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+        <div className="title" style={{ touchAction: 'none', display: 'flex', alignItems: 'center', width: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-primary)', display: 'inline-block', boxShadow: '0 0 8px var(--accent-primary)' }}></span>
             AI Mentor Ank
           </div>
-          <button 
-            onClick={() => setShowSettings(!showSettings)} 
-            style={{ 
-              background: 'transparent', 
-              border: 'none', 
-              color: 'var(--text-muted)', 
-              cursor: 'pointer', 
-              fontSize: '0.75rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              padding: '2px 8px',
-              borderRadius: '4px',
-              transition: 'var(--transition-smooth)'
-            }}
-            onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-primary)'}
-            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-          >
-            {showSettings ? 'Close Key' : 'Set API Key'}
-          </button>
         </div>
       </div>
 
       <div className="widget-body chat-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '14px', position: 'relative' }}>
-        {(!activeApiKey || showSettings) && (
-          <div className="chat-settings-panel" style={{ padding: '12px', background: 'rgba(255, 85, 0, 0.04)', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '12px' }}>
-            <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Gemini API Key</label>
-            <input 
-              type="password" 
-              placeholder="AI Studio API Key" 
-              value={apiKey} 
-              onChange={e => setApiKey(e.target.value)}
-              style={{ width: '100%', padding: '6px', background: '#050506', border: '1px solid rgba(255, 85, 0, 0.3)', color: '#fff', fontSize: '0.9rem', borderRadius: '4px', marginBottom: '8px', outline: 'none' }}
-            />
-            <button onClick={saveKey} style={{ background: 'var(--accent-primary)', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.9rem', transition: 'var(--transition-smooth)' }}>{t[lang].saveKey}</button>
-          </div>
-        )}
 
         <div className="chat-messages" style={{ flex: 1, overflowY: 'auto', marginBottom: '12px', paddingRight: '4px' }}>
           {messages.map((m, idx) => (
@@ -1670,6 +1640,8 @@ const FluidWindow = ({ id, slotIdx, zoomedOut, onDragEnd, cellW, cellH, isFullsc
   return (
     <motion.div 
       ref={widgetRef}
+      layout
+      transition={{ duration: 0.3, ease: 'easeInOut' }}
       className="widget-container"
       style={{ x, y, width: w, height: h, position: 'absolute', zIndex }}
     >
